@@ -14,6 +14,8 @@ import React, { useState } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 
+import { useBookingStore } from "@/utils/bookingStore";
+
 export default function SelectDateScreen() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const bookedDates = [
@@ -194,12 +196,15 @@ export default function SelectDateScreen() {
 
       <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
         <Button
-          onPress={() =>
-            router.push({
-              pathname: "/(bookings)/select-time",
-              params: { date: selectedDate },
-            })
-          }
+          onPress={() => {
+            if (selectedDate) {
+              useBookingStore.setState({ date: selectedDate });
+              router.push({
+                pathname: "/(bookings)/select-time",
+                params: { date: selectedDate },
+              });
+            }
+          }}
           disabled={!selectedDate}
         >
           <Text>{t("createBooking.selectDate.continue")}</Text>
