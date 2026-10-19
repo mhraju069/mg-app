@@ -1,0 +1,369 @@
+{
+  "welcome": "Welcome",
+  "hello": "Hello, {{name}}!",
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "changeLanguage": "Change Language",
+    "continue": "Continue"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address"
+  },
+  "language": {
+    "title": "Choose Your Language",
+    "subtitle": "Select your preferred language"
+  },
+  "tabs": {
+    "home": "Home",
+    "booking": "Bookings",
+    "access": "Access",
+    "profile": "Profile"
+  },
+  "profile": {
+    "title": "Profile",
+    "logout": "Log Out",
+    "sections": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "privacy": "Privacy & Security"
+    },
+    "menu": {
+      "push": "Push Notifications",
+      "pushSub": "Booking reminders & updates",
+      "premium": "Premium Member",
+      "privacy": "Privacy Policy",
+      "help": "Help & Support",
+      "terms": "Terms & Conditions"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to continue to Heaven Wellness",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "forgotPassword": "Forgot Password?",
+      "submit": "Login",
+      "orContinue": "or continue with",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign Up"
+    },
+    "signup": {
+      "title": "Create Account",
+      "subtitle": "Join Heaven Wellness today",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "John Doe",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "example@email.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Create a password",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "login": "Login"
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to reset password",
+      "submit": "Send Reset Link",
+      "backToLogin": "Back to Login"
+    }
+  },
+  "home": {
+    "welcomeBack": "Welcome back",
+    "journey": "Your wellness journey continues today.",
+    "search": "Search Services...",
+    "hero": {
+      "tagline": "Where heavenly food, relaxation and special moments come together.",
+      "headline": "Heaven is a place on earth. Lunch. Relax. Celebrate.",
+      "description": "Enjoy our cosy restaurant, relaxing sauna and beautiful event spaces for every occasion.",
+      "bookNow": "Book now"
+    },
+    "nextVisit": {
+      "label": "Next Visit",
+      "details": "View Details"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newBooking": "New Booking",
+      "newBookingSub": "Reserve service",
+      "myBookings": "My Bookings",
+      "myBookingsSub": "{{count}} upcoming"
+    },
+    "upcoming": {
+      "title": "Upcoming Visits"
+    },
+    "ourServices": {
+      "title": "Our Services",
+      "lunchroom": {
+        "title": "The Lunchroom",
+        "description": "Enjoy, fresh food, great coffee, and a welcoming atmosphere. A place to relax, connect, and enjoy life's simple pleasures."
+      },
+      "sauna": {
+        "title": "Sauna",
+        "description": "Escape the rush of a daily life and enjoy a moment of pure relaxation in our peaceful wellness environment."
+      },
+      "events": {
+        "title": "Events & Activities",
+        "subtitle": "Multifunctional space",
+        "description": "From private celebrations and business gatherings to mindfulness sessions and workshops. A versatile space designed to connect, inspire and create memorable moments."
+      }
+    },
+    "relaxEnjoy": {
+      "title": "Relax. Enjoy.",
+      "subtitle": "A place where life slows down and moments matter.",
+      "description1": "At heaven on Earth, every visit is an invitation to enjoy. Start your day with a wholesome breakfast, have a fresh lunch, enjoy a coffee or a ice-cream on our sunny terrace, relax in our wellness facilities, or gather with friends, family and colleagues to celebrate life special moments.",
+      "description2": "Whether you're seeking relaxation, connection, or simply a beautiful place to spend your time, you'll find it here."
+    },
+    "activities": {
+      "title": "Activities",
+      "weddings": {
+        "title": "Weddings",
+        "description": "From intimate ceremonies, to elegant receptions & dinners to a big celebration party. Heaven on Earth offers a warm and beautiful atmosphere where cherished memories are made and every detail is thoughtfully considered."
+      },
+      "babyshowers": {
+        "title": "Babyshowers & Gender Reveals",
+        "subtitle": "A beautiful place to start new beginnings.",
+        "description": "Gather with family and friends in a charming setting and make a baby shower or gender reveal a moment to remember."
+      },
+      "bachelorParties": {
+        "title": "Bachelor & Bachelorette Parties",
+        "subtitle": "Celebrate before the big day in style.",
+        "description": "Whether you're planning a relaxed gathering, a high beer, wine, cocktail, a wellness experience, or an workshop for a unforgettable day with friends, Heaven on Earth offers the perfect setting to celebrate this special occasion together."
+      },
+      "corporateEvents": {
+        "title": "Corporate Events & Meetings",
+        "subtitle": "Bring your team together in a unique setting.",
+        "description": "From productive meetings and inspiring team building workshops to company celebrations and networking events, Heaven on Earth provides the perfect atmosphere to connect, collaborate and create lasting impressions."
+      },
+      "mindfulness": {
+        "title": "Mindfulness & Workshops",
+        "description": "From meditation and breathwork to coaching and inspiring workshops. A place to slow down, release stress, and let go of built-up tension. Discover different ways to cultivate more calm, balance, and meaningful connection in everyday life."
+      },
+      "saltRoom": {
+        "title": "Salt Room & Halotherapy",
+        "description": "Step into a calming salt room designed for deep relaxation and natural well-being. Halotherapy uses microscopic salt particles released into the air, creating a soothing environment that supports comfortable breathing and skin wellness while helping you slow down, unwind and recharge."
+      }
+    },
+    "contact": {
+      "title": "Get in touch",
+      "addressTitle": "Address",
+      "address": "Slotweg 1, 1934CM in Egmond aan den Hoef.",
+      "lunchroomHoursTitle": "Opening hours Lunchroom",
+      "wellnessHoursTitle": "Opening hours Wellness en Events",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday",
+      "closed": "Closed",
+      "phoneTitle": "Phone number",
+      "phone": "072 – 3030548"
+    },
+    "bookingFooter": {
+      "title": "Begin Your Wellness Journey",
+      "subtitle": "Reconnect with your inner balance in a space where time slows down and clarity begins.",
+      "ctaText": "Book here for all our services",
+      "welcomeText": "We look forward to welcoming you in Heaven."
+    },
+    "categories": {
+      "sauna": {
+        "title": "Sauna & Wellness",
+        "subtitle": "Heat. Release. Renew.",
+        "services": {
+          "private-sauna": {
+            "title": "Private Sauna",
+            "description": "Your own exclusive sanctuary for ultimate privacy and relaxation.",
+            "capacity": "Up to 6 persons",
+            "duration": "2-hour sessions",
+            "requirement": "Prepayment required"
+          },
+          "wellness-pool": {
+            "title": "Heated Wellness Pool",
+            "description": "Serenity in every stroke. Experience the warmth of our thermal waters.",
+            "capacity": "Up to 10 persons",
+            "duration": "1-hour sessions",
+            "requirement": "Booking required"
+          }
+        }
+      },
+      "arrangements": {
+        "title": "Arrangements",
+        "subtitle": "Curated journeys of renewal",
+        "services": {
+          "wellness-escape": {
+            "title": "Wellness Escape",
+            "description": "Sauna + Massage + Lunch. A complete day of relaxation combining our finest wellness services.",
+            "capacity": "2-4 people",
+            "duration": "6-hour duration",
+            "requirement": "Full prepayment"
+          }
+        }
+      },
+      "lunchroom": {
+        "title": "Lunchroom",
+        "subtitle": "Nourishment for body and soul",
+        "services": {
+          "lunch-exp": {
+            "title": "Lunchroom Experience",
+            "description": "Seasonal, organic cuisine. Payment at location.",
+            "capacity": "1-6 people",
+            "duration": "120 minutes",
+            "requirement": "Table reservation"
+          }
+        }
+      },
+      "activities": {
+        "title": "Activities",
+        "subtitle": "Movement. Breath. Flow.",
+        "services": {
+          "yoga": {
+            "title": "Morning Flow Yoga",
+            "description": "Find your center with guided movement in our serenity studio.",
+            "capacity": "12 people",
+            "duration": "8:00 AM - 9:00 AM",
+            "requirement": "Movement Studio"
+          }
+        }
+      }
+    }
+  },
+  "booking": {
+    "title": "My Reservations",
+    "subtitle": "View and manage your wellness experiences",
+    "tabs": {
+      "upcoming": "Upcoming ({{count}})",
+      "past": "Past ({{count}})"
+    },
+    "empty": {
+      "title": "No past bookings",
+      "subtitle": "Your completed bookings will appear here",
+      "button": "Book Now"
+    },
+    "details": {
+      "title": "Booking Details",
+      "labels": {
+        "date": "Date",
+        "time": "Time",
+        "duration": "Duration",
+        "guests": "Guests",
+        "payment": "Payment",
+        "status": "Status",
+        "amount": "Amount"
+      },
+      "policy": {
+        "title": "Cancellation Policy",
+        "text": "You may cancel or modify your booking up to 24 hours before your scheduled time. Cancellations made within 24 hours may be subject to a cancellation fee.",
+        "button": "Cancel This Booking"
+      },
+      "modal": {
+        "title": "Cancel Reservation",
+        "subtitle": "Are you sure you want to cancel this reservation?",
+        "warning": "Cancellations made within 24 hours of your visit may be subject to a cancellation fee.",
+        "keep": "Keep",
+        "cancel": "Cancel"
+      }
+    }
+  },
+  "access": {
+    "title": "Access Codes",
+    "subtitle": "Your sauna access information",
+    "label": "Your Access Code",
+    "copy": "Copy",
+    "instruction": "Your access code becomes active during your reserved time. Please keep it safe and present it upon arrival.",
+    "copied": "Copied {{code}}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "items": {
+      "bookingConfirmed": {
+        "title": "Booking Confirmed",
+        "description": "Your reservation has been successfully confirmed. We look forward to welcoming you."
+      },
+      "reminder": {
+        "title": "Upcoming Visit Reminder",
+        "description": "This is a friendly reminder of your upcoming wellness experience. We are preparing everything for your arrival."
+      },
+      "accessCode": {
+        "title": "Access Code Available",
+        "description": "Your personal sauna access code is now available and will be active during your reserved time."
+      },
+      "cancelled": {
+        "title": "Reservation Cancelled",
+        "description": "Your reservation has been cancelled as requested. If you wish to book again, we will be happy to welcome you."
+      }
+    }
+  },
+  "createBooking": {
+    "selectServices": {
+      "title": "Select Services",
+      "subtitle": "Choose your wellness experience"
+    },
+    "selectDate": {
+      "title": "Select Date",
+      "subtitle": "Choose your preferred date",
+      "available": "Available",
+      "booked": "Booked",
+      "selectedDate": "Selected Date",
+      "continue": "Continue to Time Selection"
+    },
+    "selectTime": {
+      "title": "Select Time",
+      "subtitle": "Choose your preferred time slot",
+      "selectedTime": "Selected Time",
+      "continue": "Continue to Guests"
+    },
+    "guests": {
+      "title": "Number of Guests",
+      "subtitle": "How many people will attend?",
+      "maxGuests": "Maximum 4 guests",
+      "quickSelect": "Quick Select",
+      "continue": "Continue to Confirmation"
+    },
+    "information": {
+      "title": "Your Information",
+      "subtitle": "Tell us a bit about yourself",
+      "labels": {
+        "fullName": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone",
+        "specialRequests": "Special Requests (Optional)"
+      },
+      "placeholders": {
+        "fullName": "John Doe",
+        "email": "example@email.com",
+        "phone": "+1234567890"
+      },
+      "continue": "Continue to Confirmation"
+    },
+    "confirmation": {
+      "title": "Confirm Booking",
+      "subtitle": "Review your reservation details",
+      "labels": {
+        "payment": "Payment",
+        "total": "Total",
+        "cancellationPolicy": "Cancellation Policy"
+      },
+      "notes": {
+        "payment": "Payment will be processed securely. You'll receive a receipt via email.",
+        "accessCode": "Your unique access code will be generated after booking confirmation. It will be available in your bookings.",
+        "policy": "Free cancellation up to 24 hours before your booking. Cancellations within 24 hours may incur a fee."
+      },
+      "button": "Confirm & Pay {{amount}}"
+    }
+  }
+}

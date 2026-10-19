@@ -1,0 +1,368 @@
+{
+  "welcome": "Welkom",
+  "hello": "Hallo, {{name}}!",
+  "settings": {
+    "title": "Instellingen",
+    "language": "Taal",
+    "theme": "Thema"
+  },
+  "buttons": {
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "changeLanguage": "Taal wijzigen",
+    "continue": "Doorgaan"
+  },
+  "errors": {
+    "required": "Dit veld is verplicht",
+    "invalidEmail": "Ongeldig e-mailadres"
+  },
+  "language": {
+    "title": "Kies je taal",
+    "subtitle": "Selecteer je voorkeurstaal"
+  },
+  "tabs": {
+    "home": "Home",
+    "booking": "Boekingen",
+    "access": "Toegang",
+    "profile": "Profiel"
+  },
+  "profile": {
+    "title": "Profiel",
+    "logout": "Uitloggen",
+    "sections": {
+      "account": "Account",
+      "preferences": "Voorkeuren",
+      "privacy": "Privacy & Beveiliging"
+    },
+    "menu": {
+      "push": "Pushberichten",
+      "pushSub": "Boekingsherinneringen & updates",
+      "premium": "Premium Lid",
+      "privacy": "Privacybeleid",
+      "help": "Hulp & Ondersteuning",
+      "terms": "Algemene Voorwaarden"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Welkom terug",
+      "subtitle": "Log in om verder te gaan met Heaven Wellness",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "voorbeeld@email.com",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "Voer je wachtwoord in",
+      "forgotPassword": "Wachtwoord vergeten?",
+      "submit": "Inloggen",
+      "noAccount": "Nog geen account?",
+      "signUp": "Aanmelden"
+    },
+    "signup": {
+      "title": "Account aanmaken",
+      "subtitle": "Word vandaag nog lid van Heaven Wellness",
+      "nameLabel": "Volledige naam",
+      "namePlaceholder": "Jan Janssen",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "voorbeeld@email.com",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "Maak een wachtwoord aan",
+      "submit": "Account aanmaken",
+      "hasAccount": "Heb je al een account?",
+      "login": "Inloggen"
+    },
+    "forgotPassword": {
+      "title": "Wachtwoord vergeten",
+      "subtitle": "Voer je e-mailadres in om je wachtwoord te resetten",
+      "submit": "Resetlink verzenden",
+      "backToLogin": "Terug naar inloggen"
+    }
+  },
+  "home": {
+    "welcomeBack": "Welkom terug",
+    "journey": "Je wellness-reis gaat vandaag verder.",
+    "search": "Services zoeken...",
+    "hero": {
+      "tagline": "Waar lekker eten, ontspanning en bijzondere momenten samenkomen.",
+      "headline": "Heaven is a place on earth. Lunch. Relax. Celebrate.",
+      "description": "Geniet van ons sfeervolle hemelse restaurant, de ontspanning in onze sauna en onze unieke locatie voor elke gelegenheid.",
+      "bookNow": "Reserveer hier"
+    },
+    "nextVisit": {
+      "label": "Volgende bezoek",
+      "details": "Details bekijken"
+    },
+    "quickActions": {
+      "title": "Snelle acties",
+      "newBooking": "Nieuwe boeking",
+      "newBookingSub": "Service reserveren",
+      "myBookings": "Mijn boekingen",
+      "myBookingsSub": "{{count}} gepland"
+    },
+    "upcoming": {
+      "title": "Geplande bezoeken"
+    },
+    "ourServices": {
+      "title": "Onze diensten",
+      "lunchroom": {
+        "title": "De Lunchroom",
+        "description": "Geniet van verse gerechten, goede koffie en een ontspannen sfeer. Een plek om even tot rust te komen, bij te praten en te genieten van het moment."
+      },
+      "sauna": {
+        "title": "Sauna",
+        "description": "Kom tot rust, laad op en geniet van een moment voor jezelf en in onze sfeervolle wellness omgeving."
+      },
+      "events": {
+        "title": "Events & Activiteiten",
+        "subtitle": "Multifunctionele ruimte",
+        "description": "Van privé feestgelegenheden en bedrijfsbijeenkomsten tot mindfulness sessies en workshops. Een veelzijdige plek om samen te komen, genieten een mooie momenten te creëren."
+      }
+    },
+    "relaxEnjoy": {
+      "title": "Relax. Enjoy.",
+      "subtitle": "Een plek om even te vertragen en in het moment te zijn.",
+      "description1": "Bij Heaven on Earth is elk bezoek een uitnodiging om te genieten van het leven. Begin de dag met een lekker ontbijt, een verse lunch of verwen je zelf met een ambachtelijk ijsje op ons zonnige terras. Kom tot rust in onze welness faciliteiten of kom samen met vrienden, familie en collega's om de bijzondere momenten van het leven te vieren.",
+      "description2": "Of je nu op zoek bent naar ontspanning, verbinding of gewoon een mooie plek om je tijd door te brengen, hier ben je op de juiste plek."
+    },
+    "activities": {
+      "title": "Activiteiten",
+      "weddings": {
+        "title": "Bruiloften",
+        "description": "Van intieme ceremonies tot sfeervolle recepties en diners. Of een onvergetelijke feestavond. Heaven on Earth bied een warme en prachtige ruimte waar bijzondere herinneringen ontstaan en elk detail met liefde en aandacht wordt verzorgd."
+      },
+      "babyshowers": {
+        "title": "Babyshowers & Gender Reveals",
+        "subtitle": "Een prachtige plek om nieuw leven te vieren.",
+        "description": "Kom samen met familie en vrienden in een warme sfeervolle omgeving en maak van een babyshower of gender reveal een onvergetelijk moment."
+      },
+      "bachelorParties": {
+        "title": "Vrijgezellenfeesten",
+        "subtitle": "Vier het voor de grote dag in stijl.",
+        "description": "Of je nu kiest voor een ontspannen wellness ervaring, een gezellige high beer, wine of cocktail of leuke workshop voor een onvergetelijke dag met je vriend(inn)en. Heaven on Earth biedt de perfecte setting om samen onvergetelijke herinneringen te maken."
+      },
+      "corporateEvents": {
+        "title": "Bedrijfsfeesten & Vergaderingen",
+        "subtitle": "Breng je team samen in een unieke omgeving.",
+        "description": "Van vergaderen en teambuilding workshops tot bedrijfsuitjes en feesten: Heaven on Earth biedt een professionele en sfeervolle omgeving waar verbinding, samenwerking en inspiratie centraal staan."
+      },
+      "mindfulness": {
+        "title": "Mindfulness & Workshops",
+        "description": "Van meditatie en ademwerk tot coaching en inspirerende workshops. Een plek om te vertragen, stress los te laten en spanning te ontladen. Ontdek verschillende manieren om meer rust, balans en verbinding te ervaren en burn-outklachten te helpen voorkomen."
+      },
+      "saltRoom": {
+        "title": "Zoutkamer & Halotherapie",
+        "description": "Kom tot rust in onze sfeervolle zoutkamer en ervaar halotherapie in een ontspannen omgeving. Microscopisch kleine zoutdeeltjes worden door de ruimte verspreid en ondersteunen de luchtwegen en huid, terwijl je volledig kunt ontspannen, vertragen en weer opladen."
+      }
+    },
+    "contact": {
+      "title": "Neem contact met ons op",
+      "addressTitle": "Adres",
+      "address": "Slotweg 1\n1934 CM Egmond aan den Hoef",
+      "lunchroomHoursTitle": "Openingstijden lunchroom",
+      "wellnessHoursTitle": "Openingstijden Wellness en Events",
+      "mon": "Maandag",
+      "tue": "Dinsdag",
+      "wed": "Woensdag",
+      "thu": "Donderdag",
+      "fri": "Vrijdag",
+      "sat": "Zaterdag",
+      "sun": "Zondag",
+      "closed": "Gesloten",
+      "phoneTitle": "Telefoonnummer",
+      "phone": "072 - 303 05 48"
+    },
+    "bookingFooter": {
+      "title": "Begin je wellness-reis",
+      "subtitle": "Herstel je innerlijke balans auf een plek waar de tijd vertraagt.",
+      "ctaText": "Reserveer hier voor al onze diensten",
+      "welcomeText": "We kijken er naar uit u te verwelkomen in Heaven."
+    },
+    "categories": {
+      "sauna": {
+        "title": "Sauna & Wellness",
+        "subtitle": "Warmte. Ontspanning. Verjonging.",
+        "services": {
+          "private-sauna": {
+            "title": "Privé Sauna",
+            "description": "Je eigen exclusieve toevluchtsoord voor ultieme privacy en ontspanning.",
+            "capacity": "Tot 6 personen",
+            "duration": "Sessies van 2 uur",
+            "requirement": "Vooruitbetaling vereist"
+          },
+          "wellness-pool": {
+            "title": "Verwarmd Wellnesszwembad",
+            "description": "Sereniteit bij elke slag. Ervaar de warmte van ons thermale water.",
+            "capacity": "Tot 10 personen",
+            "duration": "Sessies van 1 uur",
+            "requirement": "Reserveren verplicht"
+          }
+        }
+      },
+      "arrangements": {
+        "title": "Arrangementen",
+        "subtitle": "Zorgvuldig samengestelde reizen van vernieuwing",
+        "services": {
+          "wellness-escape": {
+            "title": "Wellness Ontsnapping",
+            "description": "Sauna + Massage + Lunch. Een complete dag ontspanning met onze beste wellness-diensten.",
+            "capacity": "2-4 personen",
+            "duration": "Duur van 6 uur",
+            "requirement": "Volledige vooruitbetaling"
+          }
+        }
+      },
+      "lunchroom": {
+        "title": "Lunchroom",
+        "subtitle": "Voeding voor lichaam en ziel",
+        "services": {
+          "lunch-exp": {
+            "title": "Lunchroom Ervaring",
+            "description": "Seizoensgebonden, biologische keuken. Betaling ter plaatse.",
+            "capacity": "1-6 personen",
+            "duration": "120 minuten",
+            "requirement": "Tafelreservering"
+          }
+        }
+      },
+      "activities": {
+        "title": "Activiteiten",
+        "subtitle": "Beweging. Ademhaling. Flow.",
+        "services": {
+          "yoga": {
+            "title": "Ochtend Flow Yoga",
+            "description": "Vind je middelpunt met begeleide beweging in onze sereniteitsstudio.",
+            "capacity": "12 personen",
+            "duration": "8:00 - 9:00",
+            "requirement": "Bewegingsstudio"
+          }
+        }
+      }
+    }
+  },
+  "booking": {
+    "title": "Mijn Reserveringen",
+    "subtitle": "Bekijk en beheer je wellness-ervaringen",
+    "tabs": {
+      "upcoming": "Gepland ({{count}})",
+      "past": "Verleden ({{count}})"
+    },
+    "empty": {
+      "title": "Geen eerdere boekingen",
+      "subtitle": "Je voltooide boekingen verschijnen hier",
+      "button": "Nu boeken"
+    },
+    "details": {
+      "title": "Boekingsdetails",
+      "labels": {
+        "date": "Datum",
+        "time": "Tijd",
+        "duration": "Duur",
+        "guests": "Gasten",
+        "payment": "Betaling",
+        "status": "Status",
+        "amount": "Bedrag"
+      },
+      "policy": {
+        "title": "Annuleringsvoorwaarden",
+        "text": "Je kunt je boeking tot 24 uur voor de geplande tijd annuleren of wijzigen. Annuleringen binnen 24 uur kunnen onderworpen zijn aan annuleringskosten.",
+        "button": "Annuleer deze boeking"
+      },
+      "modal": {
+        "title": "Reservering annuleren",
+        "subtitle": "Weet je zeker dat je deze reservering wilt annuleren?",
+        "warning": "Annuleringen binnen 24 uur voor je bezoek kunnen onderworpen zijn aan annuleringskosten.",
+        "keep": "Behouden",
+        "cancel": "Annuleren"
+      }
+    }
+  },
+  "access": {
+    "title": "Toegangscodes",
+    "subtitle": "Je sauna toegangsinformatie",
+    "label": "Je toegangscode",
+    "copy": "Kopiëren",
+    "instruction": "Je toegangscode wordt actief tijdens je gereserveerde tijd. Bewaar deze goed en toon deze bij aankomst.",
+    "copied": "{{code}} gekopieerd"
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "groups": {
+      "today": "Vandaag",
+      "yesterday": "Gisteren"
+    },
+    "items": {
+      "bookingConfirmed": {
+        "title": "Boeking bevestigd",
+        "description": "Je reservering is succesvol bevestigd. We kijken ernaar uit je te verwelkomen."
+      },
+      "reminder": {
+        "title": "Herinnering volgend bezoek",
+        "description": "Dit is een vriendelijke herinnering aan je volgende wellness-ervaring. We bereiden alles voor op je komst."
+      },
+      "accessCode": {
+        "title": "Toegangscode beschikbaar",
+        "description": "Je persoonlijke sauna toegangscode is nu beschikbaar en zal actief zijn tijdens je gereserveerde tijd."
+      },
+      "cancelled": {
+        "title": "Reservering geannuleerd",
+        "description": "Je reservering is geannuleerd zoals gevraagd. Als je opnieuw wilt boeken, verwelkomen we je graag."
+      }
+    }
+  },
+  "createBooking": {
+    "selectServices": {
+      "title": "Services selecteren",
+      "subtitle": "Kies je wellness-ervaring"
+    },
+    "selectDate": {
+      "title": "Datum selecteren",
+      "subtitle": "Kies je gewenste datum",
+      "available": "Beschikbaar",
+      "booked": "Geboekt",
+      "selectedDate": "Geselecteerde datum",
+      "continue": "Doorgaan naar tijdselectie"
+    },
+    "selectTime": {
+      "title": "Tijd selecteren",
+      "subtitle": "Kies je gewenste tijdstip",
+      "selectedTime": "Geselecteerde tijd",
+      "continue": "Doorgaan naar gasten"
+    },
+    "guests": {
+      "title": "Aantal gasten",
+      "subtitle": "Hoeveel mensen komen er?",
+      "maxGuests": "Maximaal 4 gasten",
+      "quickSelect": "Snelle selectie",
+      "continue": "Doorgaan naar bevestiging"
+    },
+    "information": {
+      "title": "Jouw informatie",
+      "subtitle": "Vertel ons iets over jezelf",
+      "labels": {
+        "fullName": "Volledige naam",
+        "email": "E-mailadres",
+        "phone": "Telefoonnummer",
+        "specialRequests": "Speciale verzoeken (optioneel)"
+      },
+      "placeholders": {
+        "fullName": "Jan Janssen",
+        "email": "voorbeeld@email.com",
+        "phone": "+31612345678"
+      },
+      "continue": "Doorgaan naar bevestiging"
+    },
+    "confirmation": {
+      "title": "Boeking bevestigen",
+      "subtitle": "Controleer je reserveringsgegevens",
+      "labels": {
+        "payment": "Betaling",
+        "total": "Totaal",
+        "cancellationPolicy": "Annuleringsvoorwaarden"
+      },
+      "notes": {
+        "payment": "De betaling wordt veilig verwerkt. Je ontvangt een ontvangstbewijs per e-mail.",
+        "accessCode": "Je unieke toegangscode wordt gegenereerd na de boekingsbevestiging. Deze zal beschikbaar zijn in je boekingen.",
+        "policy": "Gratis annuleren tot 24 uur voor je boeking. Bij annuleringen binnen 24 uur kunnen kosten in rekening worden gebracht."
+      },
+      "button": "Bevestigen & Betalen {{amount}}"
+    }
+  }
+}

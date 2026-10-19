@@ -1,0 +1,287 @@
+{
+  "welcome": "Bienvenue",
+  "hello": "Bonjour, {{name}} !",
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "theme": "Thème"
+  },
+  "buttons": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "changeLanguage": "Changer de langue",
+    "continue": "Continuer"
+  },
+  "errors": {
+    "required": "Ce champ est obligatoire",
+    "invalidEmail": "Adresse e-mail invalide"
+  },
+  "language": {
+    "title": "Choisissez votre langue",
+    "subtitle": "Sélectionnez votre langue préférée"
+  },
+  "tabs": {
+    "home": "Accueil",
+    "booking": "Réservations",
+    "access": "Accès",
+    "profile": "Profil"
+  },
+  "profile": {
+    "title": "Profil",
+    "logout": "Déconnexion",
+    "sections": {
+      "account": "Compte",
+      "preferences": "Préférences",
+      "privacy": "Confidentialité et sécurité"
+    },
+    "menu": {
+      "push": "Notifications push",
+      "pushSub": "Rappels et mises à jour de réservation",
+      "premium": "Membre Premium",
+      "privacy": "Politique de confidentialité",
+      "help": "Aide et assistance",
+      "terms": "Conditions générales"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Bon retour",
+      "subtitle": "Connectez-vous pour continuer sur Heaven Wellness",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "exemple@email.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Entrez votre mot de passe",
+      "forgotPassword": "Mot de passe oublié ?",
+      "submit": "Connexion",
+      "noAccount": "Vous n'avez pas de compte ?",
+      "signUp": "S'inscrire"
+    },
+    "signup": {
+      "title": "Créer un compte",
+      "subtitle": "Rejoignez Heaven Wellness dès aujourd'hui",
+      "nameLabel": "Nom complet",
+      "namePlaceholder": "Jean Dupont",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "exemple@email.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "Créez un mot de passe",
+      "submit": "Créer un compte",
+      "hasAccount": "Vous avez déjà un compte ?",
+      "login": "Connexion"
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Entrez votre e-mail pour réinitialiser le mot de passe",
+      "submit": "Envoyer le lien de réinitialisation",
+      "backToLogin": "Retour à la connexion"
+    }
+  },
+  "home": {
+    "welcomeBack": "Bon retour",
+    "journey": "Votre voyage bien-être continue aujourd'hui.",
+    "search": "Rechercher des services...",
+    "nextVisit": {
+      "label": "Prochaine visite",
+      "details": "Voir les détails"
+    },
+    "quickActions": {
+      "title": "Actions rapides",
+      "newBooking": "Nouvelle réservation",
+      "newBookingSub": "Réserver un service",
+      "myBookings": "Mes réservations",
+      "myBookingsSub": "{{count}} à venir"
+    },
+    "upcoming": {
+      "title": "Prochaines visites"
+    },
+    "categories": {
+      "sauna": {
+        "title": "Sauna & Bien-être",
+        "subtitle": "Chaleur. Libération. Renouveau.",
+        "services": {
+          "private-sauna": {
+            "title": "Sauna Privé",
+            "description": "Votre propre sanctuaire exclusif pour une intimité et une relaxation ultimes.",
+            "capacity": "Jusqu'à 6 personnes",
+            "duration": "Séances de 2 heures",
+            "requirement": "Prépaiement requis"
+          },
+          "wellness-pool": {
+            "title": "Piscine Bien-être Chauffée",
+            "description": "La sérénité dans chaque mouvement. Découvrez la chaleur de nos eaux thermales.",
+            "capacity": "Jusqu'à 10 personnes",
+            "duration": "Séances de 1 heure",
+            "requirement": "Réservation obligatoire"
+          }
+        }
+      },
+      "arrangements": {
+        "title": "Formules",
+        "subtitle": "Parcours de renouveau soigneusement élaborés",
+        "services": {
+          "wellness-escape": {
+            "title": "Évasion Bien-être",
+            "description": "Sauna + Massage + Déjeuner. Une journée complète de relaxation combinant nos meilleurs services bien-être.",
+            "capacity": "2-4 personnes",
+            "duration": "Durée de 6 heures",
+            "requirement": "Prépaiement total"
+          }
+        }
+      },
+      "lunchroom": {
+        "title": "Restaurant",
+        "subtitle": "Nourriture pour le corps et l'esprit",
+        "services": {
+          "lunch-exp": {
+            "title": "Expérience Restauration",
+            "description": "Cuisine de saison, biologique. Paiement sur place.",
+            "capacity": "1-6 personnes",
+            "duration": "120 minutes",
+            "requirement": "Réservation de table"
+          }
+        }
+      },
+      "activities": {
+        "title": "Activités",
+        "subtitle": "Mouvement. Souffle. Équilibre.",
+        "services": {
+          "yoga": {
+            "title": "Yoga Flow Matinal",
+            "description": "Trouvez votre centre grâce à des mouvements guidés dans notre studio de sérénité.",
+            "capacity": "12 personnes",
+            "duration": "8h00 - 9h00",
+            "requirement": "Studio de mouvement"
+          }
+        }
+      }
+    }
+  },
+  "booking": {
+    "title": "Mes Réservations",
+    "subtitle": "Consultez et gérez vos expériences bien-être",
+    "tabs": {
+      "upcoming": "À venir ({{count}})",
+      "past": "Passées ({{count}})"
+    },
+    "empty": {
+      "title": "Aucune réservation passée",
+      "subtitle": "Vos réservations terminées apparaîtront ici",
+      "button": "Réserver maintenant"
+    },
+    "details": {
+      "title": "Détails de la réservation",
+      "labels": {
+        "date": "Date",
+        "time": "Heure",
+        "duration": "Durée",
+        "guests": "Invités",
+        "payment": "Paiement",
+        "status": "Statut",
+        "amount": "Montant"
+      },
+      "policy": {
+        "title": "Politique d'annulation",
+        "text": "Vous pouvez annuler ou modifier votre réservation jusqu'à 24 heures avant l'heure prévue. Les annulations effectuées dans les 24 heures peuvent être soumises à des frais d'annulation.",
+        "button": "Annuler cette réservation"
+      },
+      "modal": {
+        "title": "Annuler la réservation",
+        "subtitle": "Êtes-vous sûr de vouloir annuler cette réservation ?",
+        "warning": "Les annulations effectuées dans les 24 heures précédant votre visite peuvent être soumises à des frais d'annulation.",
+        "keep": "Garder",
+        "cancel": "Annuler"
+      }
+    }
+  },
+  "access": {
+    "title": "Codes d'accès",
+    "subtitle": "Vos informations d'accès au sauna",
+    "label": "Votre code d'accès",
+    "copy": "Copier",
+    "instruction": "Votre code d'accès devient actif pendant votre période réservée. Veuillez le garder en sécurité et le présenter à votre arrivée.",
+    "copied": "Copié {{code}}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "groups": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "items": {
+      "bookingConfirmed": {
+        "title": "Réservation confirmée",
+        "description": "Votre réservation a été confirmée avec succès. Nous avons hâte de vous accueillir."
+      },
+      "reminder": {
+        "title": "Rappel de visite à venir",
+        "description": "Ceci est un rappel amical de votre prochaine expérience bien-être. Nous préparons tout pour votre arrivée."
+      },
+      "accessCode": {
+        "title": "Code d'accès disponible",
+        "description": "Votre code d'accès personnel au sauna est maintenant disponible et sera actif pendant votre période réservée."
+      },
+      "cancelled": {
+        "title": "Réservation annulée",
+        "description": "Votre réservation a été annulée comme demandé. Si vous souhaitez réserver à nouveau, nous serons heureux de vous accueillir."
+      }
+    }
+  },
+  "createBooking": {
+    "selectServices": {
+      "title": "Sélectionner les services",
+      "subtitle": "Choisissez votre expérience bien-être"
+    },
+    "selectDate": {
+      "title": "Sélectionner la date",
+      "subtitle": "Choisissez votre date préférée",
+      "available": "Disponible",
+      "booked": "Complet",
+      "selectedDate": "Date sélectionnée",
+      "continue": "Continuer vers la sélection de l'heure"
+    },
+    "selectTime": {
+      "title": "Sélectionner l'heure",
+      "subtitle": "Choisissez votre créneau horaire préféré",
+      "selectedTime": "Heure sélectionnée",
+      "continue": "Continuer vers les invités"
+    },
+    "guests": {
+      "title": "Nombre d'invités",
+      "subtitle": "Combien de personnes seront présentes ?",
+      "maxGuests": "Maximum 4 invités",
+      "quickSelect": "Sélection rapide",
+      "continue": "Continuer vers la confirmation"
+    },
+    "information": {
+      "title": "Vos informations",
+      "subtitle": "Dites-nous en un peu plus sur vous",
+      "labels": {
+        "fullName": "Nom complet",
+        "email": "Adresse e-mail",
+        "phone": "Téléphone",
+        "specialRequests": "Demandes spéciales (Optionnel)"
+      },
+      "placeholders": {
+        "fullName": "Jean Dupont",
+        "email": "exemple@email.com",
+        "phone": "+33123456789"
+      },
+      "continue": "Continuer vers la confirmation"
+    },
+    "confirmation": {
+      "title": "Confirmer la réservation",
+      "subtitle": "Vérifiez les détails de votre réservation",
+      "labels": {
+        "payment": "Paiement",
+        "total": "Total",
+        "cancellationPolicy": "Politique d'annulation"
+      },
+      "notes": {
+        "payment": "Le paiement sera traité de manière sécurisée. Vous recevrez un reçu par e-mail.",
+        "accessCode": "Votre code d'accès unique sera généré après la confirmation de la réservation. Il sera disponible dans vos réservations.",
+        "policy": "Annulation gratuite jusqu'à 24 heures avant votre réservation. Les annulations effectuées dans les 24 heures peuvent entraîner des frais."
+      },
+      "button": "Confirmer et payer {{amount}}"
+    }
+  }
+}

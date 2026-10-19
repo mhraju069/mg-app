@@ -1,0 +1,308 @@
+{
+  "welcome": "Willkommen",
+  "hello": "Hallo, {{name}}!",
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Thema"
+  },
+  "buttons": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "changeLanguage": "Sprache ändern",
+    "continue": "Weiter",
+    "bookNow": "Jetzt buchen"
+  },
+  "errors": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse"
+  },
+  "language": {
+    "title": "Wählen Sie Ihre Sprache",
+    "subtitle": "Wählen Sie Ihre bevorzugte Sprache"
+  },
+  "tabs": {
+    "home": "Home",
+    "booking": "Buchungen",
+    "access": "Zugang",
+    "profile": "Profil"
+  },
+  "profile": {
+    "title": "Profil",
+    "logout": "Abmelden",
+    "sections": {
+      "account": "Konto",
+      "preferences": "Einstellungen",
+      "privacy": "Datenschutz & Sicherheit"
+    },
+    "menu": {
+      "push": "Push-Benachrichtigungen",
+      "pushSub": "Erinnerungen & Updates zu Buchungen",
+      "premium": "Premium-Mitglied",
+      "privacy": "Datenschutz-Bestimmungen",
+      "help": "Hilfe & Support",
+      "terms": "Allgemeine Geschäftsbedingungen"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Melden Sie sich an, um bei Heaven Wellness fortzufahren",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "beispiel@email.com",
+      "passwordLabel": "Passwort",
+      "passwordPlaceholder": "Geben Sie Ihr Passwort ein",
+      "forgotPassword": "Passwort vergessen?",
+      "submit": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "signUp": "Registrieren"
+    },
+    "signup": {
+      "title": "Konto erstellen",
+      "subtitle": "Werden Sie noch heute Mitglied bei Heaven Wellness",
+      "nameLabel": "Vollständiger Name",
+      "namePlaceholder": "Max Mustermann",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "beispiel@email.com",
+      "passwordLabel": "Passwort",
+      "passwordPlaceholder": "Passwort erstellen",
+      "submit": "Konto erstellen",
+      "hasAccount": "Haben Sie bereits ein Konto?",
+      "login": "Anmelden"
+    },
+    "forgotPassword": {
+      "title": "Passwort vergessen",
+      "subtitle": "Geben Sie Ihre E-Mail ein, um das Passwort zurückzusetzen",
+      "submit": "Link zum Zurücksetzen senden",
+      "backToLogin": "Zurück zur Anmeldung"
+    }
+  },
+  "home": {
+    "welcomeBack": "Willkommen zurück",
+    "journey": "Ihre Wellness-Reise geht heute weiter.",
+    "search": "Angebote suchen...",
+    "hero": {
+      "tagline": "Wo himmlischer Genuss, Entspannung und besondere Momente zusammenkommen.",
+      "headline": "Heaven is a place on earth. Lunch. Relax. Celebrate.",
+      "description": "Genießen Sie unser gemütliches Restaurant, unsere entspannende Sauna und unsere wunderschöne Location für jeden Anlass.",
+      "bookNow": "Jetzt buchen"
+    },
+    "nextVisit": {
+      "label": "Nächster Besuch",
+      "details": "Details anzeigen"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "newBooking": "Neue Buchung",
+      "newBookingSub": "Angebot reservieren",
+      "myBookings": "Meine Buchungen",
+      "myBookingsSub": "{{count}} bevorstehend"
+    },
+    "upcoming": {
+      "title": "Bevorstehende Besuche"
+    },
+    "ourServices": {
+      "title": "Unsere Angebote",
+      "lunchroom": {
+        "title": "Unser Café & Bistro",
+        "description": "Genießen Sie frische Gerichte, guten Kaffee und eine einladende Atmosphäre. Ein Ort, um zur Ruhe zu kommen, sich auszutauschen und die kleinen Freuden des Lebens zu genießen."
+      },
+      "sauna": {
+        "title": "Sauna",
+        "description": "Entfliehen Sie dem Trubel des Alltags und genießen Sie einen Moment vollkommener Entspannung in unserer stimmungsvollen Wellnesswelt."
+      },
+      "events": {
+        "title": "Events & Aktivitäten",
+        "subtitle": "Multifunktionaler Raum",
+        "description": "Von privaten Feiern und geschäftlichen Zusammenkünften bis hin zu Achtsamkeitssessions und Workshops: ein vielseitiger Ort, der Menschen verbindet, inspiriert und unvergessliche Momente entstehen lässt."
+      }
+    },
+    "relaxEnjoy": {
+      "title": "Relax. Enjoy.",
+      "subtitle": "Ein Ort, an dem das Leben langsamer wird und die besonderen Momente zählen.",
+      "description1": "Bei Heaven on Earth ist jeder Besuch eine Einladung, das Leben zu genießen. Beginnen Sie den Tag mit einem köstlichen Frühstück oder einem frischen Lunch, genießen Sie einen Kaffee oder ein handwerklich hergestelltes Eis auf unserer sonnigen Terrasse, entspannen Sie in unserem Wellnessbereich oder feiern Sie gemeinsam mit Freunden, Familie und Kollegen die besonderen Momente des Lebens.",
+      "description2": "Ob Sie Entspannung, Verbundenheit oder einfach einen wunderschönen Ort zum Verweilen suchen – hier sind Sie genau richtig."
+    },
+    "activities": {
+      "title": "Aktivitäten",
+      "weddings": {
+        "title": "Hochzeiten",
+        "description": "Von intimen Zeremonien über stilvolle Empfänge und Dinner bis hin zu einer unvergesslichen Hochzeitsfeier: Heaven on Earth bietet eine warme und wunderschöne Atmosphäre, in der besondere Erinnerungen entstehen und jedes Detail mit Liebe und Sorgfalt gestaltet wird."
+      },
+      "babyshowers": {
+        "title": "Babyshowers & Gender Reveals",
+        "subtitle": "Ein wunderschöner Ort, um neues Leben zu feiern.",
+        "description": "Kommen Sie mit Familie und Freunden in einem warmen, stimmungsvollen Ambiente zusammen und machen Sie Ihre Babyshower oder Gender-Reveal-Party zu einem unvergesslichen Moment."
+      },
+      "bachelorParties": {
+        "title": "Junggesellen- & Junggesellinnenabschiede",
+        "subtitle": "Feiern Sie stilvoll vor dem großen Tag.",
+        "description": "Ob Sie sich für ein entspanntes Wellnesserlebnis, ein geselliges High Beer, High Wine, einen Cocktail-Nachmittag oder einen inspirierenden Workshop entscheiden: Heaven on Earth bietet den perfekten Rahmen für einen unvergesslichen Tag mit Ihren Freundinnen und Freunden."
+      },
+      "corporateEvents": {
+        "title": "Firmenfeiern & Meetings",
+        "subtitle": "Bringen Sie Ihr Team in einer einzigartigen Umgebung zusammen.",
+        "description": "Von produktiven Meetings und inspirierenden Teambuilding-Workshops bis hin zu Betriebsausflügen und Firmenfeiern: Heaven on Earth bietet eine professionelle und stimmungsvolle Umgebung, in der Verbindung, Zusammenarbeit und Inspiration im Mittelpunkt stehen."
+      },
+      "mindfulness": {
+        "title": "Achtsamkeit & Workshops",
+        "description": "Von Meditation und Atemübungen bis hin zu Coaching und inspirierenden Workshops. Ein Ort, um langsamer zu werden, Stress loszulassen und angestaute Anspannung abzubauen. Entdecken Sie verschiedene Wege zu mehr Ruhe, Balance und echter Verbundenheit im Alltag und beugen Sie Erschöpfungs- und Burn-out-Beschwerden vor."
+      },
+      "saltRoom": {
+        "title": "Salzraum & Halotherapie",
+        "description": "Kommen Sie in unserem stimmungsvollen Salzraum zur Ruhe und erleben Sie Halotherapie in einer entspannten Umgebung. Mikroskopisch kleine Salzpartikel werden in der Raumluft verteilt und unterstützen die Atemwege und die Haut, während Sie vollkommen abschalten, entschleunigen und neue Energie tanken können."
+      }
+    },
+    "contact": {
+      "title": "Kontakt",
+      "addressTitle": "Adresse",
+      "address": "Slotweg 1\n1934 CM Egmond aan den Hoef\nNiederlande",
+      "lunchroomHoursTitle": "Öffnungszeiten Café & Bistro",
+      "wellnessHoursTitle": "Öffnungszeiten Wellness & Events",
+      "mon": "Montag",
+      "tue": "Dienstag",
+      "wed": "Mittwoch",
+      "thu": "Donnerstag",
+      "fri": "Freitag",
+      "sat": "Samstag",
+      "sun": "Sonntag",
+      "closed": "geschlossen",
+      "phoneTitle": "Telefonnummer",
+      "phone": "+31 (0)72 303 05 48"
+    },
+    "bookingFooter": {
+      "title": "Beginnen Sie Ihre Wellness-Reise",
+      "subtitle": "Finden Sie Ihre innere Balance an einem Ort, an dem die Zeit langsamer wird und Klarheit beginnt.",
+      "ctaText": "Entdecken und buchen Sie hier unsere Angebote.",
+      "welcomeText": "Wir freuen uns darauf, Sie im Heaven on Earth willkommen zu heißen."
+    }
+  },
+  "booking": {
+    "title": "Meine Reservierungen",
+    "subtitle": "Ansehen und Verwalten Ihrer Wellness-Erlebnisse",
+    "tabs": {
+      "upcoming": "Bevorstehend ({{count}})",
+      "past": "Vergangen ({{count}})"
+    },
+    "empty": {
+      "title": "Keine vergangenen Buchungen",
+      "subtitle": "Ihre abgeschlossenen Buchungen erscheinen hier",
+      "button": "Jetzt buchen"
+    },
+    "details": {
+      "title": "Buchungsdetails",
+      "labels": {
+        "date": "Datum",
+        "time": "Uhrzeit",
+        "duration": "Dauer",
+        "guests": "Gäste",
+        "payment": "Zahlung",
+        "status": "Status",
+        "amount": "Betrag"
+      },
+      "policy": {
+        "title": "Stornierungsbedingungen",
+        "text": "Sie können Ihre Buchung bis zu 24 Stunden vor der geplanten Zeit stornieren oder ändern. Bei Stornierungen innerhalb von 24 Stunden kann eine Stornierungsgebühr anfallen.",
+        "button": "Diese Buchung stornieren"
+      },
+      "modal": {
+        "title": "Reservierung stornieren",
+        "subtitle": "Sind Sie sicher, dass Sie diese Reservierung stornieren möchten?",
+        "warning": "Stornierungen innerhalb von 24 Stunden vor Ihrem Besuch können gebührenpflichtig sein.",
+        "keep": "Behalten",
+        "cancel": "Stornieren"
+      }
+    }
+  },
+  "access": {
+    "title": "Zugangscodes",
+    "subtitle": "Ihre Sauna-Zugangsinformationen",
+    "label": "Ihr Zugangscode",
+    "copy": "Kopieren",
+    "instruction": "Ihr Zugangscode wird während Ihrer reservierten Zeit aktiv. Bitte bewahren Sie ihn sicher auf und zeigen Sie ihn bei der Ankunft vor.",
+    "copied": "{{code}} kopiert"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "groups": {
+      "today": "Heute",
+      "yesterday": "Gestern"
+    },
+    "items": {
+      "bookingConfirmed": {
+        "title": "Buchung bestätigt",
+        "description": "Ihre Reservierung wurde erfolgreich bestätigt. Wir freuen uns darauf, Sie willkommen zu heißen."
+      },
+      "reminder": {
+        "title": "Erinnerung an bevorstehenden Besuch",
+        "description": "Dies ist eine freundliche Erinnerung an Ihr bevorstehendes Wellness-Erlebnis. Wir bereiten alles für Ihre Ankunft vor."
+      },
+      "accessCode": {
+        "title": "Zugangscode verfügbar",
+        "description": "Ihr persönlicher Sauna-Zugangscode ist jetzt verfügbar und während Ihrer gebuchten Zeit aktiv."
+      },
+      "cancelled": {
+        "title": "Reservierung storniert",
+        "description": "Ihre Reservierung wurde wie gewünscht storniert."
+      }
+    }
+  },
+  "createBooking": {
+    "selectServices": {
+      "title": "Angebote auswählen",
+      "subtitle": "Wählen Sie Ihr Wellness-Erlebnis"
+    },
+    "selectDate": {
+      "title": "Datum auswählen",
+      "subtitle": "Wählen Sie Ihr bevorzugtes Datum",
+      "available": "Verfügbar",
+      "booked": "Ausgebucht",
+      "selectedDate": "Ausgewähltes Datum",
+      "continue": "Weiter zur Zeitauswahl"
+    },
+    "selectTime": {
+      "title": "Zeit auswählen",
+      "subtitle": "Wählen Sie Ihr bevorzugtes Zeitfenster",
+      "selectedTime": "Ausgewählte Zeit",
+      "continue": "Weiter zu den Gästen"
+    },
+    "guests": {
+      "title": "Anzahl der Gäste",
+      "subtitle": "Wie viele Personen werden teilnehmen?",
+      "maxGuests": "Maximal 4 Gäste",
+      "quickSelect": "Schnellauswahl",
+      "continue": "Weiter zur Bestätigung"
+    },
+    "information": {
+      "title": "Ihre Informationen",
+      "subtitle": "Erzählen Sie uns ein wenig über sich",
+      "labels": {
+        "fullName": "Vollständiger Name",
+        "email": "E-Mail-Adresse",
+        "phone": "Telefonnummer",
+        "specialRequests": "Besondere Wünsche (Optional)"
+      },
+      "placeholders": {
+        "fullName": "Max Mustermann",
+        "email": "beispiel@email.com",
+        "phone": "+49123456789"
+      },
+      "continue": "Weiter zur Bestätigung"
+    },
+    "confirmation": {
+      "title": "Buchung bestätigen",
+      "subtitle": "Überprüfen Sie Ihre Reservierungsdetails",
+      "labels": {
+        "payment": "Zahlung",
+        "total": "Gesamt",
+        "cancellationPolicy": "Stornierungsbedingungen"
+      },
+      "notes": {
+        "payment": "Die Zahlung wird sicher verarbeitet. Sie erhalten eine Quittung per E-Mail.",
+        "accessCode": "Ihr eindeutiger Zugangscode wird nach der Buchungsbestätigung generiert.",
+        "policy": "Kostenlose Stornierung bis zu 24 Stunden vor Ihrer Buchung."
+      },
+      "button": "Bestätigen & Bezahlen {{amount}}"
+    }
+  }
+}
