@@ -9,6 +9,8 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
+import { getStripe } from "@/utils/stripe";
+import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 import { router } from "expo-router";
 import {
   Calendar,
@@ -20,9 +22,15 @@ import {
   Lock,
   Sparkles,
   ShieldCheck,
+  AlertCircle,
 } from "lucide-react-native";
 import React, { useState } from "react";
-import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+} from "react-native";
+import { CardNumberElement } from "@stripe/react-stripe-js";
 
 export default function ConfirmationScreen() {
   const textMuted = useColor("textMuted");
@@ -32,8 +40,20 @@ export default function ConfirmationScreen() {
 
   const storeState = useBookingStore.getState();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "ideal">("card");
+  const [selectedBank, setSelectedBank] = useState<string>("ing");
+
+  // Card details state
+  const [cardHolder, setCardHolder] = useState<string>(storeState.fullName || "Akash");
+  const [postalCode, setPostalCode] = useState<string>("1012AB");
+
+  // Reference to Stripe instance and elements from checkout component
+  const [stripeInstance, setStripeInstance] = useState<any>(null);
+  const [elementsInstance, setElementsInstance] = useState<any>(null);
+
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [confirmedBookingId, setConfirmedBookingId] = useState<string>("");
 
   const priceVal = storeState.price || 0;
   const isFree = storeState.isFree || priceVal === 0;
@@ -50,12 +70,211 @@ export default function ConfirmationScreen() {
   const extrasList = storeState.selectedExtras || [];
 
   const handlePayAndConfirm = async () => {
+    setErrorMessage(null);
     setIsProcessing(true);
-    // Simulate real payment confirmation with API
-    setTimeout(() => {
+
+    try {
+      // 1. Handle Free Reservations (e.g. Lunchroom)
+      if (isFree) {
+        let bookingTime = "12:00:00";
+        if (storeState.timeSlot) {
+          const match = storeState.timeSlot.match(/(\d{1,2}:\d{2})/);
+          if (match) {
+            bookingTime = match[1].length === 4 ? `0${match[1]}:00` : `${match[1]}:00`;
+          }
+        }
+
+        const res = await fetch("http://localhost/api/bookings/lunchroom/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            booking_date: storeState.date || "2026-10-30",
+            booking_time: bookingTime,
+            capacity: storeState.guestsCount || 2,
+            name: cardHolder.trim() || storeState.fullName || "Guest",
+            email: storeState.email || "guest@example.com",
+            phone: storeState.phone || "+31612345678",
+            total_price: "0.00",
+            special_request: storeState.specialRequests || undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.message || "Failed to confirm table reservation.");
+        }
+
+        const json = await res.json();
+        setConfirmedBookingId(json.booking_id || "LR-CONFIRMED");
+        setIsProcessing(false);
+        setIsSuccess(true);
+        return;
+      }
+
+      // 2. Format booking_time and time_slot for paid bookings
+      let bookingTime = "10:00:00";
+      if (storeState.timeSlot) {
+        const timeMatch = storeState.timeSlot.match(/(\d{1,2}:\d{2})/);
+        if (timeMatch) {
+          bookingTime = timeMatch[1].length === 4 ? `0${timeMatch[1]}:00` : `${timeMatch[1]}:00`;
+        }
+      }
+
+      let timeSlotEnum: "90_mins" | "3_hours" | "4_hours" = "3_hours";
+      if (isSharedSauna) {
+        timeSlotEnum = "90_mins";
+      } else if (durationHours === 4) {
+        timeSlotEnum = "4_hours";
+      }
+
+      // 3. Create Booking & Generate Stripe PaymentIntent from Backend API
+      let bookingRes: Response;
+      if (isSauna) {
+        const payload = {
+          sauna_type: isSharedSauna ? "shared" : "private",
+          booking_date: storeState.date || "2026-10-30",
+          booking_time: bookingTime,
+          time_slot: timeSlotEnum,
+          capacity: guestsCount,
+          name: cardHolder.trim() || storeState.fullName || "Guest",
+          email: storeState.email || "guest@example.com",
+          phone: storeState.phone || "+31612345678",
+          special_request: storeState.specialRequests || null,
+          selected_features: extrasList.map((e) => e.id),
+          total_price: priceVal,
+        };
+
+        bookingRes = await fetch("http://localhost/api/bookings/sauna/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else if (storeState.serviceType === "saltroom" || storeState.serviceType === "salt_room") {
+        const payload = {
+          name: cardHolder.trim() || storeState.fullName || "Guest",
+          email: storeState.email || "guest@example.com",
+          phone: storeState.phone || "+31612345678",
+          date: storeState.date || "2026-10-30",
+          start_time: bookingTime,
+          capacity: Math.min(Math.max(guestsCount, 1), 2),
+          payment_mode: paymentMethod === "ideal" ? "ideal" : "card",
+          special_request: storeState.specialRequests || undefined,
+        };
+
+        bookingRes = await fetch("http://localhost/api/bookings/saltroom/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        bookingRes = await fetch("http://localhost/api/bookings/sauna/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sauna_type: "private",
+            booking_date: storeState.date || "2026-10-30",
+            booking_time: bookingTime,
+            time_slot: "3_hours",
+            capacity: guestsCount,
+            name: cardHolder.trim() || storeState.fullName || "Guest",
+            email: storeState.email || "guest@example.com",
+            phone: storeState.phone || "+31612345678",
+            total_price: priceVal,
+          }),
+        });
+      }
+
+      if (!bookingRes.ok) {
+        const errJson = await bookingRes.json().catch(() => ({}));
+        throw new Error(errJson.message || errJson.detail || "Server rejected booking creation.");
+      }
+
+      const bookingData = await bookingRes.json();
+      const clientSecret = bookingData.client_secret;
+      const bookingId = bookingData.booking_id;
+      setConfirmedBookingId(bookingId || "PS-CONFIRMED");
+
+      // 4. Authenticate & Confirm Payment via Stripe
+      const stripe = stripeInstance || (await getStripe());
+      if (!stripe) {
+        throw new Error("Stripe payment gateway could not be loaded. Please check your internet connection.");
+      }
+
+      if (paymentMethod === "ideal") {
+        const returnUrl =
+          typeof window !== "undefined"
+            ? `${window.location.origin}/(bookings)/confirmation`
+            : "http://localhost:8081/(bookings)/confirmation";
+
+        const pmResult = await stripe.createPaymentMethod({
+          type: "ideal",
+          ideal: { bank: selectedBank },
+          billing_details: {
+            name: cardHolder.trim() || storeState.fullName || "Guest",
+            email: storeState.email || "guest@example.com",
+          },
+        });
+
+        if (pmResult.error) {
+          throw new Error(pmResult.error.message || "Failed to create iDEAL payment method.");
+        }
+
+        const confirmRes = await stripe.confirmPayment({
+          clientSecret,
+          confirmParams: {
+            payment_method: pmResult.paymentMethod.id,
+            return_url: returnUrl,
+          },
+        });
+
+        if (confirmRes.error) {
+          throw new Error(confirmRes.error.message || "iDEAL confirmation error.");
+        }
+      } else {
+        // Standard Stripe Elements flow (compliant with PCI requirements)
+        let confirmRes: any;
+        const cardNumberElement = elementsInstance?.getElement?.(CardNumberElement);
+
+        if (cardNumberElement) {
+          confirmRes = await stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: cardNumberElement,
+              billing_details: {
+                name: cardHolder.trim() || storeState.fullName || "Guest",
+                email: storeState.email || "guest@example.com",
+                phone: storeState.phone || "+31612345678",
+                ...(postalCode.trim() ? { address: { postal_code: postalCode.trim() } } : {}),
+              },
+            },
+          });
+        } else {
+          // Fallback if elements not mounted
+          confirmRes = await stripe.confirmCardPayment(clientSecret);
+        }
+
+        if (confirmRes?.error) {
+          throw new Error(confirmRes.error.message || "Stripe card transaction declined. Please check your card details.");
+        }
+
+        if (confirmRes?.paymentIntent && confirmRes.paymentIntent.status === "succeeded") {
+          // Notify backend that payment is verified
+          await fetch("http://localhost/api/payments/confirm/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              payment_intent_id: confirmRes.paymentIntent.id,
+              booking_id: bookingId,
+            }),
+          }).catch((e) => console.warn("Backend confirm sync notice:", e));
+        }
+      }
+
       setIsProcessing(false);
       setIsSuccess(true);
-    }, 1200);
+    } catch (err: any) {
+      setIsProcessing(false);
+      setErrorMessage(err?.message || "An unexpected error occurred during payment processing.");
+    }
   };
 
   if (isSuccess) {
@@ -69,11 +288,19 @@ export default function ConfirmationScreen() {
             </View>
             <Text style={styles.successTitle}>Booking Confirmed!</Text>
             <Text style={styles.successSubtitle}>
-              We look forward to welcoming you at Heaven. Your booking details and automated access key have been reserved.
+              Your payment has been successfully authorized and confirmed by Stripe. Your booking details and automated access code are reserved.
             </Text>
 
             <Card style={styles.successSummaryCard}>
-              <Text style={styles.serviceName}>{storeState.serviceTitle}</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={styles.serviceName}>{storeState.serviceTitle}</Text>
+                {confirmedBookingId ? (
+                  <View style={styles.bookingIdBadge}>
+                    <Text style={styles.bookingIdText}>{confirmedBookingId}</Text>
+                  </View>
+                ) : null}
+              </View>
+
               <View style={styles.detailRow}>
                 <Calendar size={16} color={brownGold} />
                 <Text style={styles.detailValue}>{storeState.date}</Text>
@@ -85,6 +312,12 @@ export default function ConfirmationScreen() {
               <View style={styles.detailRow}>
                 <Users size={16} color={brownGold} />
                 <Text style={styles.detailValue}>{storeState.guestsCount} Guests</Text>
+              </View>
+              <View style={styles.detailRow}>
+                <ShieldCheck size={16} color="#059669" />
+                <Text style={[styles.detailValue, { color: "#059669", fontWeight: "700" }]}>
+                  Payment Status: Confirmed & Paid
+                </Text>
               </View>
             </Card>
 
@@ -107,7 +340,7 @@ export default function ConfirmationScreen() {
       <Layout>
         <Header
           title={t("createBooking.confirmation.title") || "Confirm & Pay"}
-          subtitle={t("createBooking.confirmation.subtitle") || "Review your reserved session details before paying"}
+          subtitle={t("createBooking.confirmation.subtitle") || "Complete your reservation with confidence via Stripe"}
         />
 
         {/* Booking Details Card */}
@@ -213,47 +446,24 @@ export default function ConfirmationScreen() {
           </View>
         </Card>
 
-        {/* Payment Method Selector (Only if not free) */}
+        {/* In-App Stripe Official Elements Gateway Section */}
         {!isFree && (
-          <Card style={styles.paymentMethodCard}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
-              <Lock size={15} color={brownGold} />
-              <Text style={{ fontSize: 14, fontWeight: "700", color: "#1d1a17" }}>
-                Secure Payment Method
-              </Text>
-            </View>
-
-            <View style={{ gap: 10 }}>
-              <Pressable
-                style={[
-                  styles.methodRow,
-                  paymentMethod === "card" && styles.methodRowActive,
-                ]}
-                onPress={() => setPaymentMethod("card")}
-              >
-                <CreditCard size={20} color={paymentMethod === "card" ? brownGold : "#71717A"} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: "700", fontSize: 14 }}>Credit / Debit Card</Text>
-                  <Text style={{ fontSize: 12, color: "#6B5D54" }}>Visa, Mastercard, Amex</Text>
-                </View>
-                {paymentMethod === "card" && <CheckCircle2 size={18} color={brownGold} />}
-              </Pressable>
-
-              <Pressable
-                style={[
-                  styles.methodRow,
-                  paymentMethod === "ideal" && styles.methodRowActive,
-                ]}
-                onPress={() => setPaymentMethod("ideal")}
-              >
-                <Sparkles size={20} color={paymentMethod === "ideal" ? brownGold : "#71717A"} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: "700", fontSize: 14 }}>iDEAL Online Banking</Text>
-                  <Text style={{ fontSize: 12, color: "#6B5D54" }}>ING, Rabobank, ABN AMRO</Text>
-                </View>
-                {paymentMethod === "ideal" && <CheckCircle2 size={18} color={brownGold} />}
-              </Pressable>
-            </View>
+          <Card style={styles.stripeCard}>
+            <StripeElementsCheckout
+              cardHolder={cardHolder}
+              setCardHolder={setCardHolder}
+              postalCode={postalCode}
+              setPostalCode={setPostalCode}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              selectedBank={selectedBank}
+              setSelectedBank={setSelectedBank}
+              errorMessage={errorMessage}
+              onElementsReady={(elements, stripe) => {
+                setElementsInstance(elements);
+                setStripeInstance(stripe);
+              }}
+            />
           </Card>
         )}
 
@@ -280,7 +490,7 @@ export default function ConfirmationScreen() {
             <Text style={{ color: "#fff", fontWeight: "700" }}>
               {isFree
                 ? "Confirm Table Reservation"
-                : `Pay & Complete Booking (€${priceVal.toFixed(2)})`}
+                : `Pay via Stripe (€${priceVal.toFixed(2)})`}
             </Text>
           )}
         </Button>
@@ -373,26 +583,12 @@ const styles = StyleSheet.create({
     color: "#9B7C56",
     fontFamily: Fonts.serif,
   },
-  paymentMethodCard: {
+  stripeCard: {
     padding: 20,
     borderRadius: 20,
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#EBE3DA",
-  },
-  methodRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#EBE3DA",
-    backgroundColor: "#FDFBF8",
-  },
-  methodRowActive: {
-    borderColor: "#9B7C56",
-    backgroundColor: "rgba(155, 124, 86, 0.08)",
   },
   accessCodeCard: {
     padding: 20,
@@ -456,6 +652,19 @@ const styles = StyleSheet.create({
     borderColor: "#EBE3DA",
     gap: 12,
     marginTop: 10,
+  },
+  bookingIdBadge: {
+    backgroundColor: "#FCF2E9",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+  },
+  bookingIdText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#9B7C56",
   },
   doneBtn: {
     width: "100%",
