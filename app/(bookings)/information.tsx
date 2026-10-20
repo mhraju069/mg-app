@@ -570,6 +570,62 @@ export default function InformationScreen() {
           </Card>
         )}
 
+        {/* ========================================================================= */}
+        {/* PACKAGE MULTI-SERVICE SCHEDULE CARD (MATCHES WEB INFORMATION FLOW)        */}
+        {/* ========================================================================= */}
+        {(storeState.serviceType === "package" || storeState.serviceType === "packages") && storeState.packageSelections && (
+          <Card style={styles.activitySessionCard}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryBadgeText}>Package Reservation</Text>
+              </View>
+              <Text style={{ fontSize: 12, fontWeight: "700", color: "#059669" }}>
+                ✓ Multi-Service Journey
+              </Text>
+            </View>
+
+            <Text style={styles.activityName}>{storeState.serviceTitle}</Text>
+            <Text style={[styles.activityDesc, { color: textMuted }]}>
+              Scheduled components for {storeState.date} ({storeState.guestsCount} Guests)
+            </Text>
+
+            <View style={{ gap: 8, marginTop: 10 }}>
+              {storeState.packageSelections.saunaSlot && (
+                <View style={styles.packageDetailRow}>
+                  <Text style={styles.packageDetailKey}>Sauna Session:</Text>
+                  <Text style={styles.packageDetailVal}>
+                    {storeState.packageSelections.saunaSlot.startTime} – {storeState.packageSelections.saunaSlot.endTime} ({storeState.packageSelections.saunaSlot.type || "Private"})
+                  </Text>
+                </View>
+              )}
+              {storeState.packageSelections.lunchroomTime && (
+                <View style={styles.packageDetailRow}>
+                  <Text style={styles.packageDetailKey}>Lunchroom Arrival:</Text>
+                  <Text style={styles.packageDetailVal}>
+                    {storeState.packageSelections.lunchroomTime}
+                  </Text>
+                </View>
+              )}
+              {storeState.packageSelections.saltRoomSlot && (
+                <View style={styles.packageDetailRow}>
+                  <Text style={styles.packageDetailKey}>Salt Room Session:</Text>
+                  <Text style={styles.packageDetailVal}>
+                    {storeState.packageSelections.saltRoomSlot.startTime} – {storeState.packageSelections.saltRoomSlot.endTime || ""}
+                  </Text>
+                </View>
+              )}
+              {storeState.packageSelections.activitySession && (
+                <View style={styles.packageDetailRow}>
+                  <Text style={styles.packageDetailKey}>Activity:</Text>
+                  <Text style={styles.packageDetailVal}>
+                    {storeState.packageSelections.activitySession.title} ({storeState.packageSelections.activitySession.startTime} – {storeState.packageSelections.activitySession.endTime})
+                  </Text>
+                </View>
+              )}
+            </View>
+          </Card>
+        )}
+
         {/* Contact Details Card */}
         <View style={styles.formCard}>
           <Text style={styles.tableCardHeading}>Contact & Guest Details</Text>
@@ -994,5 +1050,23 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     borderTopWidth: 1,
     backgroundColor: "#fff",
+  },
+  packageDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1F5F9",
+  },
+  packageDetailKey: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#64748B",
+  },
+  packageDetailVal: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1d1a17",
   },
 });

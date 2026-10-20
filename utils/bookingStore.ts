@@ -59,6 +59,28 @@ export interface BookingState {
     hobbiesInterests?: string;
     otherDetails?: string;
   };
+  // Extended package options (matching Web booking/packages & choose-time)
+  isCustomPackage?: boolean;
+  packageSelections?: {
+    includedServices?: string[];
+    saunaSlot?: {
+      type: "private" | "shared" | string;
+      startTime: string;
+      endTime: string;
+    };
+    lunchroomTime?: string;
+    saltRoomSlot?: {
+      startTime: string;
+      endTime?: string;
+    };
+    activitySession?: {
+      id: number;
+      title: string;
+      startTime?: string;
+      endTime?: string;
+      host?: string;
+    };
+  };
 }
 
 const initialState = {

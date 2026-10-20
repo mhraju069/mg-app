@@ -26,6 +26,9 @@ import {
   Infinity,
   CreditCard,
   AlertCircle,
+  Sliders,
+  Copy,
+  X,
 } from "lucide-react-native";
 import React, { useEffect, useState, useMemo } from "react";
 import { Image, Pressable, StyleSheet, ActivityIndicator, Platform, TextInput, Modal, TouchableOpacity } from "react-native";
@@ -60,6 +63,37 @@ export default function CategoryScreen() {
   const [isSaltDateBlocked, setIsSaltDateBlocked] = useState<boolean>(false);
   const [saltDateBlockedMsg, setSaltDateBlockedMsg] = useState<string | null>(null);
   const [slotDateMembership, setSlotDateMembership] = useState<any | null>(null);
+
+  // Dedicated Packages State & Custom Package Modal
+  const isPackagesCategory = cleanCategory === "package" || cleanCategory === "packages";
+  const [showCustomizeModal, setShowCustomizeModal] = useState<boolean>(false);
+  const [customForm, setCustomForm] = useState({
+    title: "",
+    guests: 2,
+    date: "",
+    duration: "Half Day (4 Hours)",
+    treatments: ["Private Sauna", "Lunchroom", "Yoga Activity"] as string[],
+    otherExperienceDetails: "",
+    specialRequests: "",
+    name: "Akash",
+    email: "akash@example.com",
+    phone: "+31 6 12345678",
+  });
+  const [customSubmitting, setCustomSubmitting] = useState(false);
+  const [customSuccess, setCustomSuccess] = useState(false);
+  const [customError, setCustomError] = useState<string | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+  const [confirmedCustomData, setConfirmedCustomData] = useState<{
+    bookingId: string;
+    name: string;
+    email: string;
+    phone: string;
+    date: string;
+    guests: number;
+    services: string[];
+    notes?: string;
+  } | null>(null);
 
   const primary = useColor("primary");
   const textMuted = useColor("textMuted");
@@ -150,18 +184,44 @@ export default function CategoryScreen() {
               });
             } else if (cleanCategory === "package" || cleanCategory === "packages") {
               const pkgs = Array.isArray(apiData) ? apiData : apiData.packages || [];
-              mappedItems = pkgs.map((pkg: any) => ({
-                id: pkg.id,
-                title: pkg.title || "Curated Wellness Journey",
-                subtitle: "Full-day curated combination",
-                description: pkg.description || "Comprehensive restorative experience.",
-                price: parseFloat(String(pkg.price || 180)),
-                capacity: "2-4 persons",
-                duration: "Full-day experience",
-                requirement: "Combined package",
-                rating: 4.9,
-                image: pkg.image || "http://localhost/media/services/WhatsApp_Image_2026-10-01_at_10.07.11_PM.jpeg",
-              }));
+              mappedItems = pkgs.map((pkg: any) => {
+                let subServicesList: string[] = [];
+                if (Array.isArray(pkg.packages)) {
+                  subServicesList = pkg.packages;
+                } else if (typeof pkg.packages === "string") {
+                  try {
+                    const parsed = JSON.parse(pkg.packages);
+                    if (Array.isArray(parsed)) subServicesList = parsed;
+                    else subServicesList = [pkg.packages];
+                  } catch {
+                    subServicesList = pkg.packages.split(",").map((s: string) => s.trim());
+                  }
+                }
+
+                const formattedCombo = subServicesList.length > 0
+                  ? subServicesList.map((s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())).join(" • ")
+                  : "Sauna • Salt Room • Wellness";
+
+                const featuresList = (pkg.features || []).map((f: any) =>
+                  typeof f === "string" ? f : f.feature || f.feature_en || ""
+                ).filter(Boolean);
+
+                return {
+                  id: pkg.id,
+                  title: pkg.title || "Curated Wellness Journey",
+                  subtitle: formattedCombo,
+                  combo: formattedCombo,
+                  subServicesList,
+                  description: pkg.description || "Comprehensive restorative experience.",
+                  price: parseFloat(String(pkg.price || 180)),
+                  capacity: "2-4 persons",
+                  duration: "Multi-service session",
+                  requirement: "Full Experience",
+                  features: featuresList,
+                  rating: 4.9,
+                  image: pkg.image || "http://localhost/media/services/WhatsApp_Image_2026-10-01_at_10.07.11_PM.jpeg",
+                };
+              });
             } else if (cleanCategory === "lunchroom") {
               const lRoom = Array.isArray(apiData) ? apiData[0] : apiData.lunchroom?.[0];
               mappedItems.push({
@@ -515,7 +575,38 @@ export default function CategoryScreen() {
       return;
     }
 
-    // 4. Other services continue flow (Packages, Lunchroom)
+    // 4. Packages Continue Flow
+    if (isPackagesCategory) {
+      if (!selectedService) return;
+
+      useBookingStore.setState({
+        serviceId: selectedService.id,
+        serviceType: "package",
+        serviceTitle: selectedService.title,
+        serviceSubtitle: selectedService.subtitle || "",
+        serviceImage: selectedService.image || "",
+        price: selectedService.price || 180,
+        isFree: false,
+        isCustomPackage: false,
+        guestsCount: 2,
+        packageSelections: {
+          includedServices: selectedService.subServicesList || [],
+        },
+      });
+
+      router.push({
+        pathname: "/(bookings)/select-date",
+        params: {
+          serviceId: selectedService.id,
+          category: "package",
+          serviceTitle: selectedService.title,
+          price: selectedService.price,
+        },
+      });
+      return;
+    }
+
+    // 5. Other services continue flow (Lunchroom, generic)
     if (!selectedService) return;
 
     useBookingStore.setState({
@@ -1154,6 +1245,28 @@ export default function CategoryScreen() {
           /* STANDARD CATEGORY SERVICES LIST (PACKAGES, LUNCH, ACTIVITIES)             */
           /* ========================================================================= */
           <View style={styles.list}>
+            {/* Packages Action Banner: Signature or Customize */}
+            {isPackagesCategory && (
+              <View style={styles.packageActionBanner}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.packageBannerPreTitle}>
+                    Curated Experiences & Bespoke Packages
+                  </Text>
+                  <Text style={styles.packageBannerSub}>
+                    Select a signature package below or create your own custom wellness journey.
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setShowCustomizeModal(true)}
+                  style={styles.customizePkgBtn}
+                >
+                  <Sliders size={13} color="#9B7C56" />
+                  <Text style={styles.customizePkgBtnText}>Customize</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {servicesList.map((service: any) => {
               const isSelected = selectedService?.id === service.id;
               const isActivity = cleanCategory === "activity" || cleanCategory === "activities";
@@ -1321,6 +1434,405 @@ export default function CategoryScreen() {
           </View>
         )}
       </Layout>
+
+      {/* ========================================================================= */}
+      {/* CUSTOMIZE PACKAGE MODAL (WEB-IDENTICAL BESPOKE PACKAGE BUILDER)           */}
+      {/* ========================================================================= */}
+      <Modal
+        visible={showCustomizeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowCustomizeModal(false);
+          setCustomSuccess(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Sliders size={18} color="#9B7C56" />
+                <Text style={styles.modalTitle}>
+                  {customSuccess ? "Package Confirmed" : "Design Custom Package"}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCustomizeModal(false);
+                  setCustomSuccess(false);
+                }}
+                style={styles.modalCloseBtn}
+              >
+                <X size={16} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {customSuccess && confirmedCustomData ? (
+              <View style={{ alignItems: "center", paddingVertical: 10 }}>
+                <View style={styles.customSuccessCircle}>
+                  <CheckCircle2 size={44} color="#9B7C56" />
+                </View>
+                <Text style={styles.customSuccessBadge}>
+                  Booking Confirmed • No Payment Required
+                </Text>
+                <Text style={styles.customSuccessTitle}>
+                  Custom Package Confirmed!
+                </Text>
+                <Text style={styles.customSuccessSub}>
+                  Your bespoke package inquiry has been confirmed and registered in our system. A confirmation email has been dispatched.
+                </Text>
+
+                {/* Reference ID Box */}
+                <View style={styles.customRefBox}>
+                  <View>
+                    <Text style={styles.customRefLabel}>Booking Reference ID</Text>
+                    <Text style={styles.customRefVal}>{confirmedCustomData.bookingId}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setCopiedRef(true);
+                      setTimeout(() => setCopiedRef(false), 2000);
+                    }}
+                    style={styles.customCopyBtn}
+                  >
+                    <Copy size={13} color={copiedRef ? "#059669" : "#64748B"} />
+                    <Text style={[styles.customCopyText, copiedRef && { color: "#059669" }]}>
+                      {copiedRef ? "Copied" : "Copy"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Details Summary */}
+                <View style={styles.customSummaryBox}>
+                  <View style={styles.customSummaryRow}>
+                    <Text style={styles.customSummaryKey}>Guest</Text>
+                    <Text style={styles.customSummaryVal}>{confirmedCustomData.name}</Text>
+                  </View>
+                  <View style={styles.customSummaryRow}>
+                    <Text style={styles.customSummaryKey}>Date & Guests</Text>
+                    <Text style={styles.customSummaryVal}>
+                      {confirmedCustomData.date} • {confirmedCustomData.guests} Guests
+                    </Text>
+                  </View>
+                  <View style={{ gap: 6, marginTop: 4 }}>
+                    <Text style={styles.customSummaryKey}>Included Experiences</Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                      {confirmedCustomData.services.map((srv, sIdx) => (
+                        <View key={sIdx} style={styles.customServicePill}>
+                          <Text style={styles.customServicePillText}>✓ {srv}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                  {confirmedCustomData.notes ? (
+                    <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#EDE7E1" }}>
+                      <Text style={styles.customSummaryKey}>Notes</Text>
+                      <Text style={[styles.customSummaryVal, { fontStyle: "italic", marginTop: 2 }]}>
+                        {confirmedCustomData.notes}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowCustomizeModal(false);
+                    setCustomSuccess(false);
+                    setConfirmedCustomData(null);
+                  }}
+                  style={styles.customDoneBtn}
+                >
+                  <Text style={styles.customDoneBtnText}>Done & Close</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{ gap: 14 }}>
+                {customError && (
+                  <View style={styles.customErrorAlert}>
+                    <AlertCircle size={16} color="#DC2626" />
+                    <Text style={styles.customErrorText}>{customError}</Text>
+                  </View>
+                )}
+
+                {/* Focus Theme or Title */}
+                <View>
+                  <Text style={styles.modalFieldLabel}>Theme or Concept (Optional)</Text>
+                  <TextInput
+                    value={customForm.title}
+                    onChangeText={(val) => setCustomForm({ ...customForm, title: val })}
+                    placeholder="e.g. Couples Rejuvenation Day"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.modalInput}
+                  />
+                </View>
+
+                {/* Guests & Date */}
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.modalFieldLabel}>Guests *</Text>
+                    <TextInput
+                      value={String(customForm.guests)}
+                      keyboardType="numeric"
+                      onChangeText={(val) => {
+                        const parsed = parseInt(val.replace(/[^0-9]/g, ""), 10) || 1;
+                        setCustomForm({ ...customForm, guests: Math.min(Math.max(parsed, 1), 20) });
+                      }}
+                      style={styles.modalInput}
+                    />
+                  </View>
+
+                  <View style={{ flex: 1.4 }}>
+                    <Text style={styles.modalFieldLabel}>Preferred Date *</Text>
+                    <TouchableOpacity
+                      onPress={() => setShowCustomDatePicker(true)}
+                      style={[styles.modalInput, { justifyContent: "center" }]}
+                    >
+                      <Text style={{ fontSize: 13, color: customForm.date ? "#1d1a17" : "#94A3B8", fontWeight: "600" }}>
+                        {customForm.date || "Select Date"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Duration Options */}
+                <View>
+                  <Text style={styles.modalFieldLabel}>Desired Duration *</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+                    {["2.5 Hours", "Half Day (4 Hours)", "Full Day (6-8 Hours)", "Weekend"].map((dur) => {
+                      const isSel = customForm.duration === dur;
+                      return (
+                        <TouchableOpacity
+                          key={dur}
+                          onPress={() => setCustomForm({ ...customForm, duration: dur })}
+                          style={[
+                            styles.customDurationPill,
+                            isSel && styles.customDurationPillActive,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.customDurationPillText,
+                              isSel && styles.customDurationPillTextActive,
+                            ]}
+                          >
+                            {dur}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Experiences Checkboxes */}
+                <View>
+                  <Text style={styles.modalFieldLabel}>Select Experiences to Include *</Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {[
+                      "Private Sauna",
+                      "Lunchroom",
+                      "Yoga Activity",
+                      "Shared Sauna",
+                      "Salt Room",
+                      "Activities",
+                      "Others",
+                    ].map((exp) => {
+                      const isChecked = customForm.treatments.includes(exp);
+                      return (
+                        <TouchableOpacity
+                          key={exp}
+                          onPress={() => {
+                            const updated = isChecked
+                              ? customForm.treatments.filter((t) => t !== exp)
+                              : [...customForm.treatments, exp];
+                            setCustomForm({ ...customForm, treatments: updated });
+                          }}
+                          style={[
+                            styles.treatmentToggle,
+                            isChecked && styles.treatmentToggleActive,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.treatmentToggleText,
+                              isChecked && styles.treatmentToggleTextActive,
+                            ]}
+                          >
+                            {isChecked ? `✓ ${exp}` : `+ ${exp}`}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Conditional Others Specification */}
+                {customForm.treatments.includes("Others") && (
+                  <View>
+                    <Text style={styles.modalFieldLabel}>Specify Other Experiences *</Text>
+                    <TextInput
+                      value={customForm.otherExperienceDetails}
+                      onChangeText={(val) => setCustomForm({ ...customForm, otherExperienceDetails: val })}
+                      placeholder="e.g. Aromatherapy, Singing Bowl, Ice Bath"
+                      placeholderTextColor="#94A3B8"
+                      style={styles.modalInput}
+                    />
+                  </View>
+                )}
+
+                {/* Contact: Full Name, Email, Phone */}
+                <View style={{ gap: 8 }}>
+                  <Text style={styles.modalFieldLabel}>Contact Details *</Text>
+                  <TextInput
+                    value={customForm.name}
+                    onChangeText={(val) => setCustomForm({ ...customForm, name: val })}
+                    placeholder="Full Name"
+                    placeholderTextColor="#94A3B8"
+                    style={styles.modalInput}
+                  />
+                  <View style={{ flexDirection: "row", gap: 8 }}>
+                    <TextInput
+                      value={customForm.email}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      onChangeText={(val) => setCustomForm({ ...customForm, email: val })}
+                      placeholder="Email"
+                      placeholderTextColor="#94A3B8"
+                      style={[styles.modalInput, { flex: 1.2 }]}
+                    />
+                    <TextInput
+                      value={customForm.phone}
+                      keyboardType="phone-pad"
+                      onChangeText={(val) => setCustomForm({ ...customForm, phone: val })}
+                      placeholder="Phone"
+                      placeholderTextColor="#94A3B8"
+                      style={[styles.modalInput, { flex: 1 }]}
+                    />
+                  </View>
+                </View>
+
+                {/* Submit Custom Package */}
+                <TouchableOpacity
+                  disabled={customSubmitting}
+                  onPress={async () => {
+                    setCustomError(null);
+                    const resolvedServices: string[] = [];
+                    for (const t of customForm.treatments) {
+                      if (t === "Others") {
+                        if (customForm.otherExperienceDetails.trim()) {
+                          resolvedServices.push(customForm.otherExperienceDetails.trim());
+                        }
+                      } else {
+                        resolvedServices.push(t);
+                      }
+                    }
+
+                    if (resolvedServices.length === 0) {
+                      setCustomError("Please select at least one experience or service.");
+                      return;
+                    }
+                    if (!customForm.date) {
+                      setCustomError("Please select a date for your custom package.");
+                      return;
+                    }
+
+                    setCustomSubmitting(true);
+                    try {
+                      const notesParts: string[] = [];
+                      if (customForm.specialRequests.trim()) notesParts.push(customForm.specialRequests.trim());
+                      if (customForm.duration) notesParts.push(`Duration: ${customForm.duration}`);
+                      if (customForm.title.trim()) notesParts.push(`Theme: ${customForm.title.trim()}`);
+                      const notesString = notesParts.join(" • ") || undefined;
+
+                      const payload = {
+                        is_custom: true,
+                        name: customForm.name.trim() || "Guest",
+                        email: customForm.email.trim() || "guest@example.com",
+                        phone: customForm.phone.trim() || "+31612345678",
+                        date: customForm.date,
+                        guests: Number(customForm.guests) || 2,
+                        service_names: resolvedServices,
+                        notes: notesString,
+                      };
+
+                      const res = await fetch("http://localhost/api/bookings/packages/", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                      });
+
+                      const resJson = await res.json().catch(() => ({}));
+                      if (res.ok && (resJson.success || resJson.booking_id)) {
+                        const bookingId = resJson.booking_id || (resJson.data && resJson.data.booking_id) || "PKG-CONFIRMED";
+                        setConfirmedCustomData({
+                          bookingId,
+                          name: customForm.name.trim(),
+                          email: customForm.email.trim(),
+                          phone: customForm.phone.trim(),
+                          date: customForm.date,
+                          guests: Number(customForm.guests) || 2,
+                          services: resolvedServices,
+                          notes: notesString,
+                        });
+                        setCustomSuccess(true);
+                      } else {
+                        setCustomError(resJson.message || "Failed to submit custom package inquiry.");
+                      }
+                    } catch (err: any) {
+                      setCustomError(err?.message || "Failed to connect to the server.");
+                    } finally {
+                      setCustomSubmitting(false);
+                    }
+                  }}
+                  style={styles.customSubmitBtn}
+                >
+                  {customSubmitting ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.customSubmitBtnText}>Submit Custom Package</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date picker modal for Custom Package */}
+      <Modal
+        visible={showCustomDatePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCustomDatePicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Preferred Date</Text>
+              <TouchableOpacity
+                onPress={() => setShowCustomDatePicker(false)}
+                style={styles.modalCloseBtn}
+              >
+                <X size={16} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+            <Calendar
+              minDate={todayStr}
+              onDayPress={(day: any) => {
+                setCustomForm({ ...customForm, date: day.dateString });
+                setShowCustomDatePicker(false);
+              }}
+              theme={{
+                calendarBackground: "#FAF8F5",
+                todayTextColor: "#9B7C56",
+                selectedDayBackgroundColor: "#9B7C56",
+                selectedDayTextColor: "#ffffff",
+                arrowColor: "#9B7C56",
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
         <Button
@@ -1985,5 +2497,264 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     borderTopWidth: 1,
     backgroundColor: "#fff",
+  },
+  // Packages Action Banner & Custom Package Modal Styles
+  packageActionBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: "#FDFBF8",
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+    marginBottom: 10,
+  },
+  packageBannerPreTitle: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#9B7C56",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  packageBannerSub: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  customizePkgBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#9B7C56",
+    backgroundColor: "#FCF2E9",
+  },
+  customizePkgBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#9B7C56",
+    textTransform: "uppercase",
+  },
+  modalFieldLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#1d1a17",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 10,
+    fontSize: 13,
+    color: "#1d1a17",
+    backgroundColor: "#fff",
+  },
+  customDurationPill: {
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  customDurationPillActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#FCF2E9",
+  },
+  customDurationPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  customDurationPillTextActive: {
+    color: "#9B7C56",
+    fontWeight: "700",
+  },
+  treatmentToggle: {
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  treatmentToggleActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#FCF2E9",
+  },
+  treatmentToggleText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  treatmentToggleTextActive: {
+    color: "#9B7C56",
+    fontWeight: "700",
+  },
+  customSubmitBtn: {
+    backgroundColor: "#9B7C56",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  customSubmitBtnText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  customSuccessCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FCF2E9",
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  customSuccessBadge: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#9B7C56",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  customSuccessTitle: {
+    fontSize: 19,
+    fontWeight: "800",
+    fontFamily: Fonts.serif,
+    color: "#1d1a17",
+    marginTop: 4,
+    textAlign: "center",
+  },
+  customSuccessSub: {
+    fontSize: 11,
+    color: "#64748B",
+    textAlign: "center",
+    marginTop: 4,
+    lineHeight: 16,
+    paddingHorizontal: 8,
+  },
+  customRefBox: {
+    width: "100%",
+    backgroundColor: "#FBF6F3",
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 10,
+  },
+  customRefLabel: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#9B7C56",
+    textTransform: "uppercase",
+  },
+  customRefVal: {
+    fontSize: 15,
+    fontWeight: "800",
+    fontFamily: Fonts.serif,
+    color: "#1d1a17",
+  },
+  customCopyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  customCopyText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  customSummaryBox: {
+    width: "100%",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 14,
+    padding: 12,
+    gap: 6,
+  },
+  customSummaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  customSummaryKey: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "600",
+  },
+  customSummaryVal: {
+    fontSize: 11,
+    color: "#1d1a17",
+    fontWeight: "700",
+  },
+  customServicePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: "#FCF2E9",
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+  },
+  customServicePillText: {
+    fontSize: 10,
+    color: "#9B7C56",
+    fontWeight: "700",
+  },
+  customDoneBtn: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 12,
+    backgroundColor: "#F8FAFC",
+  },
+  customDoneBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+    textTransform: "uppercase",
+  },
+  customErrorAlert: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  customErrorText: {
+    fontSize: 11,
+    color: "#DC2626",
+    fontWeight: "600",
+    flex: 1,
   },
 });

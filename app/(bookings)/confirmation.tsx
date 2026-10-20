@@ -196,6 +196,67 @@ export default function ConfirmationScreen() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      } else if (storeState.serviceType === "package" || storeState.serviceType === "packages") {
+        const pkgSelections = storeState.packageSelections;
+
+        let sauna_booking: any = undefined;
+        if (pkgSelections?.saunaSlot) {
+          sauna_booking = {
+            sauna_type: pkgSelections.saunaSlot.type || "private",
+            booking_time: pkgSelections.saunaSlot.startTime ? `${pkgSelections.saunaSlot.startTime}:00` : "14:00:00",
+            time_slot: timeSlotEnum,
+            capacity: guestsCount,
+          };
+        }
+
+        let lunchroom_booking: any = undefined;
+        if (pkgSelections?.lunchroomTime) {
+          lunchroom_booking = {
+            booking_time: `${pkgSelections.lunchroomTime}:00`,
+            capacity: guestsCount,
+          };
+        }
+
+        let activity_booking: any = undefined;
+        if (pkgSelections?.activitySession) {
+          activity_booking = {
+            activity: pkgSelections.activitySession.id || 1,
+            capacity: guestsCount,
+          };
+        }
+
+        let saltroom_booking: any = undefined;
+        if (pkgSelections?.saltRoomSlot) {
+          const rawStart = pkgSelections.saltRoomSlot.startTime || "10:00";
+          const formattedStart = rawStart.length === 5 ? `${rawStart}:00` : rawStart;
+          const rawEnd = pkgSelections.saltRoomSlot.endTime;
+          const formattedEnd = rawEnd ? (rawEnd.length === 5 ? `${rawEnd}:00` : rawEnd) : undefined;
+          saltroom_booking = {
+            start_time: formattedStart,
+            ...(formattedEnd ? { end_time: formattedEnd } : {}),
+          };
+        }
+
+        const pkgPayload: any = {
+          name: cardHolder.trim() || storeState.fullName || "Guest",
+          email: storeState.email || "guest@example.com",
+          phone: storeState.phone || "+31612345678",
+          date: storeState.date || "2026-10-30",
+          guests: guestsCount,
+          total_price: priceVal.toFixed(2),
+          is_custom: false,
+          notes: storeState.specialRequests || undefined,
+          ...(sauna_booking ? { sauna_booking } : {}),
+          ...(lunchroom_booking ? { lunchroom_booking } : {}),
+          ...(activity_booking ? { activity_booking } : {}),
+          ...(saltroom_booking ? { saltroom_booking } : {}),
+        };
+
+        bookingRes = await fetch("http://localhost/api/bookings/packages/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(pkgPayload),
+        });
       } else {
         bookingRes = await fetch("http://localhost/api/bookings/sauna/", {
           method: "POST",
@@ -412,6 +473,35 @@ export default function ConfirmationScreen() {
               <Text style={styles.detailValue}>{storeState.guestsCount} Persons</Text>
             </View>
           </View>
+
+          {/* Package Sub-Services Breakdown */}
+          {(storeState.serviceType === "package" || storeState.serviceType === "packages") && storeState.packageSelections && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#EDE7E1", gap: 6 }}>
+              <Text style={{ fontSize: 11, fontWeight: "800", color: "#9B7C56", textTransform: "uppercase" }}>
+                Scheduled Package Components
+              </Text>
+              {storeState.packageSelections.saunaSlot && (
+                <Text style={{ fontSize: 12, color: "#475569" }}>
+                  • Sauna: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.saunaSlot.startTime} – {storeState.packageSelections.saunaSlot.endTime}</Text>
+                </Text>
+              )}
+              {storeState.packageSelections.lunchroomTime && (
+                <Text style={{ fontSize: 12, color: "#475569" }}>
+                  • Lunchroom: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.lunchroomTime} Arrival</Text>
+                </Text>
+              )}
+              {storeState.packageSelections.saltRoomSlot && (
+                <Text style={{ fontSize: 12, color: "#475569" }}>
+                  • Salt Room: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.saltRoomSlot.startTime} – {storeState.packageSelections.saltRoomSlot.endTime || ""}</Text>
+                </Text>
+              )}
+              {storeState.packageSelections.activitySession && (
+                <Text style={{ fontSize: 12, color: "#475569" }}>
+                  • Activity: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.activitySession.title}</Text>
+                </Text>
+              )}
+            </View>
+          )}
         </Card>
 
         {/* Pricing & Cost Breakdown */}

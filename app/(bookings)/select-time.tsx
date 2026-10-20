@@ -19,17 +19,21 @@ import {
   CheckCircle2,
   Calendar,
   AlertTriangle,
+  UtensilsCrossed,
+  Dumbbell,
+  ChevronDown,
 } from "lucide-react-native";
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useMemo } from "react";
+import { Pressable, StyleSheet, ActivityIndicator, Modal, TouchableOpacity } from "react-native";
 
 export default function SelectTimeScreen() {
   const params = useLocalSearchParams();
   const storeState = useBookingStore.getState();
   const date = (params.date as string) || storeState.date || "2026-10-30";
   const serviceType = storeState.serviceType || "sauna";
-  const isSauna = serviceType === "sauna";
-  const isSaltRoom = serviceType === "saltroom" || serviceType === "salt_room" || storeState.isSaltRoom;
+  const isPackage = serviceType === "package" || serviceType === "packages";
+  const isSauna = !isPackage && serviceType === "sauna";
+  const isSaltRoom = !isPackage && (serviceType === "saltroom" || serviceType === "salt_room" || storeState.isSaltRoom);
   const isSharedSauna = isSauna && (storeState.isSharedSauna || storeState.saunaType === "shared");
   const durationHours = storeState.durationHours || 3;
   const guestsCount = storeState.guestsCount || (isSharedSauna || isSaltRoom ? 1 : 2);
@@ -47,6 +51,68 @@ export default function SelectTimeScreen() {
   const [saltSlots, setSaltSlots] = useState<any[]>([]);
   const [genericSlots, setGenericSlots] = useState<string[]>([]);
 
+  // Package Sub-Service Slots State (matching Web choose-time)
+  const [packageSlotsData, setPackageSlotsData] = useState<any | null>(null);
+  const [pkgSaunaSlot, setPkgSaunaSlot] = useState<string | null>(
+    storeState.packageSelections?.saunaSlot
+      ? `${storeState.packageSelections.saunaSlot.startTime} - ${storeState.packageSelections.saunaSlot.endTime}`
+      : null
+  );
+  const [pkgSaunaType, setPkgSaunaType] = useState<"private" | "shared">("private");
+  const [pkgLunchTime, setPkgLunchTime] = useState<string>(
+    storeState.packageSelections?.lunchroomTime || ""
+  );
+  const [showLunchDropdown, setShowLunchDropdown] = useState<boolean>(false);
+  const [pkgSaltRoomSlot, setPkgSaltRoomSlot] = useState<string | null>(
+    storeState.packageSelections?.saltRoomSlot
+      ? `${storeState.packageSelections.saltRoomSlot.startTime} - ${storeState.packageSelections.saltRoomSlot.endTime || ""}`
+      : null
+  );
+  const [pkgSelectedActivityId, setPkgSelectedActivityId] = useState<number | null>(
+    storeState.packageSelections?.activitySession?.id || null
+  );
+
+  const includedServices: string[] = storeState.packageSelections?.includedServices || [];
+  const normalizedServices = includedServices.map((s) => s.toLowerCase().replace(/[\s_-]+/g, ""));
+  const packageIncludesSauna = isPackage && (
+    normalizedServices.some((s) => s.includes("sauna")) || !includedServices.length
+  );
+  const packageIncludesLunchroom = isPackage && (
+    normalizedServices.some((s) => s.includes("lunchroom") || s.includes("lunch")) || !includedServices.length
+  );
+  const packageIncludesSaltRoom = isPackage && (
+    normalizedServices.some((s) => s.includes("salt") || s.includes("saltroom"))
+  );
+  const packageIncludesActivity = isPackage && (
+    normalizedServices.some((s) => s.includes("activity") || s.includes("yoga"))
+  );
+
+  // Dynamically compute Lunchroom 1-hour interval slots from backend open_time and close_time
+  const dynamicLunchSlots = useMemo(() => {
+    const openTime = packageSlotsData?.lunchroom?.open_time || "06:00";
+    const closeTime = packageSlotsData?.lunchroom?.close_time || "23:59";
+
+    const [startH, startM] = openTime.split(":").map(Number);
+    const [endH, endM] = closeTime.split(":").map(Number);
+    if (isNaN(startH) || isNaN(endH)) {
+      return ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+    }
+
+    const startMinutes = startH * 60 + (startM || 0);
+    const endMinutes = endH * 60 + (endM || 0);
+    if (startMinutes >= endMinutes) {
+      return ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+    }
+
+    const slots: string[] = [];
+    for (let m = startMinutes; m <= endMinutes; m += 60) {
+      const hh = String(Math.floor(m / 60)).padStart(2, "0");
+      const mm = String(m % 60).padStart(2, "0");
+      slots.push(`${hh}:${mm}`);
+    }
+    return slots.length > 0 ? slots : ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+  }, [packageSlotsData?.lunchroom?.open_time, packageSlotsData?.lunchroom?.close_time]);
+
   const textMuted = useColor("textMuted");
   const brownGold = "#9B7C56";
   const { t } = useTranslation();
@@ -60,6 +126,44 @@ export default function SelectTimeScreen() {
 
     const fetchSlots = async () => {
       try {
+        if (isPackage) {
+          const res = await fetch(`http://localhost/api/services/slots/?type=package&date=${date}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (isMounted) {
+              if (json.is_blocked) setIsBlocked(true);
+              if (json.is_closed || json?.data?.is_closed) {
+                setIsClosed(true);
+                setClosedInfo(json?.data?.info || json.message || "Packages are closed on this date.");
+              }
+              const pData = json?.data;
+              setPackageSlotsData(pData);
+
+              // Auto-select initial slots if available
+              if (pData?.sauna?.private_sauna?.slots) {
+                const s3 = pData.sauna.private_sauna.slots["3_hours"] || [];
+                const s4 = pData.sauna.private_sauna.slots["4_hours"] || [];
+                const all = [...s3, ...s4];
+                if (all.length > 0 && !pkgSaunaSlot) {
+                  setPkgSaunaSlot(`${all[0].start_time} - ${all[0].end_time}`);
+                }
+              }
+              if (pData?.saltroom?.slots && Array.isArray(pData.saltroom.slots) && pData.saltroom.slots.length > 0 && !pkgSaltRoomSlot) {
+                const firstAvail = pData.saltroom.slots.find((s: any) => !s.is_fully_booked) || pData.saltroom.slots[0];
+                setPkgSaltRoomSlot(`${firstAvail.start_time} - ${firstAvail.end_time}`);
+              }
+              if (pData?.activities && Array.isArray(pData.activities) && pData.activities.length > 0 && !pkgSelectedActivityId) {
+                const firstAct = pData.activities.find((a: any) => a.available_slots > 0) || pData.activities[0];
+                setPkgSelectedActivityId(firstAct.id);
+              }
+              if (pData?.lunchroom?.open_time && !pkgLunchTime) {
+                setPkgLunchTime(pData.lunchroom.open_time.slice(0, 5));
+              }
+            }
+          }
+          return;
+        }
+
         const queryType = isSaltRoom ? "saltroom" : serviceType;
         const res = await fetch(`http://localhost/api/services/slots/?type=${queryType}&date=${date}`);
         if (res.ok) {
@@ -137,9 +241,61 @@ export default function SelectTimeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [serviceType, isSaltRoom, date, durationHours, isSharedSauna, guestsCount]);
+  }, [serviceType, isSaltRoom, isPackage, date, durationHours, isSharedSauna, guestsCount]);
 
   const handleContinue = () => {
+    if (isPackage) {
+      let saunaSlotData: any = undefined;
+      if (pkgSaunaSlot) {
+        const parts = pkgSaunaSlot.split(" - ");
+        saunaSlotData = {
+          type: pkgSaunaType,
+          startTime: parts[0] || "",
+          endTime: parts[1] || "",
+        };
+      }
+
+      let saltRoomSlotData: any = undefined;
+      if (pkgSaltRoomSlot) {
+        const parts = pkgSaltRoomSlot.split(" - ");
+        saltRoomSlotData = {
+          startTime: parts[0] || "",
+          endTime: parts[1] || "",
+        };
+      }
+
+      let activitySessionData: any = undefined;
+      const actList: any[] = packageSlotsData?.activities || [];
+      if (pkgSelectedActivityId && actList.length > 0) {
+        const found = actList.find((a: any) => a.id === pkgSelectedActivityId);
+        if (found) {
+          activitySessionData = {
+            id: found.id,
+            title: found.title,
+            startTime: found.open_time,
+            endTime: found.close_time,
+            host: found.host,
+          };
+        }
+      }
+
+      const mainTime = pkgSaunaSlot || pkgSaltRoomSlot || pkgLunchTime || "Package Scheduled";
+
+      useBookingStore.setState({
+        timeSlot: mainTime,
+        packageSelections: {
+          ...storeState.packageSelections,
+          saunaSlot: saunaSlotData,
+          saltRoomSlot: saltRoomSlotData,
+          lunchroomTime: pkgLunchTime,
+          activitySession: activitySessionData,
+        },
+      });
+
+      router.push("/(bookings)/information");
+      return;
+    }
+
     useBookingStore.setState({ timeSlot: selectedTime });
 
     // If Salt Room, pass type and guests count were already chosen in step 1, skip redundant guests screen
@@ -465,8 +621,265 @@ export default function SelectTimeScreen() {
               </View>
             )}
 
-            {/* 4. STANDARD / FALLBACK SLOTS */}
-            {!isSauna && !isSaltRoom && (
+            {/* 4. MULTI-SERVICE PACKAGE SLOTS (MATCHES WEB CHOOSE-TIME MULTI-STEP FLOW) */}
+            {isPackage && (
+              <View style={{ gap: 16 }}>
+                {/* 4.1 Sauna Sub-Service Slot (If included) */}
+                {packageIncludesSauna && packageSlotsData?.sauna && (
+                  <Card style={styles.packageSubServiceCard}>
+                    <View style={styles.subServiceHeader}>
+                      <View style={styles.stepBadge}>
+                        <Text style={styles.stepBadgeText}>1</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.subServiceTitle}>
+                          Sauna Session Time Slot
+                        </Text>
+                        <Text style={styles.subServiceDesc}>
+                          {pkgSaunaType === "shared" ? "Shared sauna • 90 mins" : "Private sanctuary session"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {packageSlotsData.sauna.is_closed ? (
+                      <View style={styles.subServiceClosedBox}>
+                        <Info size={16} color="#D97706" />
+                        <Text style={styles.subServiceClosedText}>Sauna is closed on this date.</Text>
+                      </View>
+                    ) : (
+                      <View style={{ gap: 8, marginTop: 10 }}>
+                        {/* Private sauna slots */}
+                        {(() => {
+                          const p3 = packageSlotsData.sauna.private_sauna?.slots?.["3_hours"] || [];
+                          const p4 = packageSlotsData.sauna.private_sauna?.slots?.["4_hours"] || [];
+                          const allSlots = [...p3, ...p4];
+
+                          if (allSlots.length === 0) {
+                            return (
+                              <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic" }}>
+                                No private sauna slots available on this date.
+                              </Text>
+                            );
+                          }
+
+                          return allSlots.map((slot: any, idx: number) => {
+                            const label = `${slot.start_time} - ${slot.end_time}`;
+                            const isSel = pkgSaunaSlot === label;
+                            return (
+                              <Pressable
+                                key={idx}
+                                onPress={() => setPkgSaunaSlot(label)}
+                                style={[
+                                  styles.packageSlotBtn,
+                                  isSel && styles.packageSlotBtnActive,
+                                ]}
+                              >
+                                <View>
+                                  <Text style={[styles.packageSlotBtnTime, isSel && styles.packageSlotBtnTimeActive]}>
+                                    {label}
+                                  </Text>
+                                  <Text style={styles.packageSlotBtnSub}>
+                                    {slot.time_slot === "4_hours" ? "4-hour" : "3-hour"} private session • Buffer until {slot.buffer_end_time}
+                                  </Text>
+                                </View>
+                                {isSel && <CheckCircle2 size={18} color="#9B7C56" />}
+                              </Pressable>
+                            );
+                          });
+                        })()}
+                      </View>
+                    )}
+                  </Card>
+                )}
+
+                {/* 4.2 Lunchroom Dining Arrival (If included) */}
+                {packageIncludesLunchroom && (
+                  <Card style={styles.packageSubServiceCard}>
+                    <View style={styles.subServiceHeader}>
+                      <View style={styles.stepBadge}>
+                        <Text style={styles.stepBadgeText}>2</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.subServiceTitle}>
+                          Lunchroom Preferred Dining Arrival
+                        </Text>
+                        <Text style={styles.subServiceDesc}>
+                          {packageSlotsData?.lunchroom?.open_time && packageSlotsData?.lunchroom?.close_time
+                            ? `Operating hours: ${packageSlotsData.lunchroom.open_time} - ${packageSlotsData.lunchroom.close_time}`
+                            : "Flexible dining during daytime hours (11:00 - 15:00)"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {packageSlotsData?.lunchroom?.is_closed ? (
+                      <View style={styles.subServiceClosedBox}>
+                        <Info size={16} color="#D97706" />
+                        <Text style={styles.subServiceClosedText}>Lunchroom is closed on this date.</Text>
+                      </View>
+                    ) : (
+                      <View style={{ marginTop: 12, gap: 10 }}>
+                        {/* Interactive Dropdown Selector for Compact Display */}
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => setShowLunchDropdown(true)}
+                          style={styles.lunchDropdownButton}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                            <View style={styles.lunchDropdownIconCircle}>
+                              <UtensilsCrossed size={16} color="#9B7C56" />
+                            </View>
+                            <View>
+                              <Text style={styles.lunchDropdownLabel}>Selected Arrival Time</Text>
+                              <Text style={styles.lunchDropdownValue}>
+                                {pkgLunchTime ? `${pkgLunchTime} Arrival` : "Select Arrival Time"}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                            <Text style={styles.lunchDropdownChangeText}>Change</Text>
+                            <ChevronDown size={16} color="#9B7C56" />
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Quick-Pick 1-Hour Interval Pills */}
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
+                          {dynamicLunchSlots.map((tStr) => {
+                            const isSel = pkgLunchTime === tStr;
+                            return (
+                              <Pressable
+                                key={tStr}
+                                onPress={() => setPkgLunchTime(tStr)}
+                                style={[
+                                  styles.lunchPill,
+                                  isSel && styles.lunchPillActive,
+                                ]}
+                              >
+                                <UtensilsCrossed size={12} color={isSel ? "#fff" : "#9B7C56"} />
+                                <Text style={[styles.lunchPillText, isSel && styles.lunchPillTextActive]}>
+                                  {tStr}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    )}
+                  </Card>
+                )}
+
+                {/* 4.3 Salt Room Session (If included) */}
+                {packageIncludesSaltRoom && (
+                  <Card style={styles.packageSubServiceCard}>
+                    <View style={styles.subServiceHeader}>
+                      <View style={styles.stepBadge}>
+                        <Text style={styles.stepBadgeText}>3</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.subServiceTitle}>
+                          Salt Room Session
+                        </Text>
+                        <Text style={styles.subServiceDesc}>
+                          45-minute aerosol halotherapy session
+                        </Text>
+                      </View>
+                    </View>
+
+                    {packageSlotsData?.saltroom?.slots && Array.isArray(packageSlotsData.saltroom.slots) && packageSlotsData.saltroom.slots.length > 0 ? (
+                      <View style={{ gap: 8, marginTop: 10 }}>
+                        {packageSlotsData.saltroom.slots.map((slot: any, idx: number) => {
+                          const label = `${slot.start_time} - ${slot.end_time}`;
+                          const isSel = pkgSaltRoomSlot === label;
+                          const isSoldOut = slot.is_fully_booked || slot.remaining_capacity <= 0;
+                          return (
+                            <Pressable
+                              key={idx}
+                              disabled={isSoldOut}
+                              onPress={() => setPkgSaltRoomSlot(label)}
+                              style={[
+                                styles.packageSlotBtn,
+                                isSel && styles.packageSlotBtnActive,
+                                isSoldOut && { opacity: 0.5 },
+                              ]}
+                            >
+                              <View>
+                                <Text style={[styles.packageSlotBtnTime, isSel && styles.packageSlotBtnTimeActive]}>
+                                  {label}
+                                </Text>
+                                <Text style={styles.packageSlotBtnSub}>
+                                  {isSoldOut ? "Sold Out" : `${slot.remaining_capacity} capacity remaining`}
+                                </Text>
+                              </View>
+                              {isSel && <CheckCircle2 size={18} color="#9B7C56" />}
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
+                        No scheduled salt room sessions on this date.
+                      </Text>
+                    )}
+                  </Card>
+                )}
+
+                {/* 4.4 Activities on Date (If included) */}
+                {packageIncludesActivity && (
+                  <Card style={styles.packageSubServiceCard}>
+                    <View style={styles.subServiceHeader}>
+                      <View style={styles.stepBadge}>
+                        <Text style={styles.stepBadgeText}>4</Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.subServiceTitle}>
+                          Activity Session
+                        </Text>
+                        <Text style={styles.subServiceDesc}>
+                          Scheduled wellness studio activity
+                        </Text>
+                      </View>
+                    </View>
+
+                    {packageSlotsData?.activities && Array.isArray(packageSlotsData.activities) && packageSlotsData.activities.length > 0 ? (
+                      <View style={{ gap: 8, marginTop: 10 }}>
+                        {packageSlotsData.activities.map((act: any) => {
+                          const isSel = pkgSelectedActivityId === act.id;
+                          const isSoldOut = act.available_slots <= 0;
+                          return (
+                            <Pressable
+                              key={act.id}
+                              disabled={isSoldOut}
+                              onPress={() => setPkgSelectedActivityId(act.id)}
+                              style={[
+                                styles.packageSlotBtn,
+                                isSel && styles.packageSlotBtnActive,
+                                isSoldOut && { opacity: 0.5 },
+                              ]}
+                            >
+                              <View style={{ flex: 1 }}>
+                                <Text style={[styles.packageSlotBtnTime, isSel && styles.packageSlotBtnTimeActive]}>
+                                  {act.title}
+                                </Text>
+                                <Text style={styles.packageSlotBtnSub}>
+                                  {act.open_time} - {act.close_time} • Host: {act.host || "Wellness Guide"}
+                                </Text>
+                              </View>
+                              {isSel && <CheckCircle2 size={18} color="#9B7C56" />}
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
+                        No activities scheduled for this date.
+                      </Text>
+                    )}
+                  </Card>
+                )}
+              </View>
+            )}
+
+            {/* 5. STANDARD / FALLBACK SLOTS */}
+            {!isSauna && !isSaltRoom && !isPackage && (
               <View style={styles.grid}>
                 {(genericSlots.length > 0 ? genericSlots : [
                   "10:00 - 13:00",
@@ -510,14 +923,101 @@ export default function SelectTimeScreen() {
         {/* Selected Time Summary */}
         <Card style={styles.selectionSummary}>
           <Text variant="caption" style={{ color: textMuted }}>
-            {t("createBooking.selectTime.selectedTime") || "Selected Time Slot"}
+            {isPackage ? "Scheduled Package Times" : t("createBooking.selectTime.selectedTime") || "Selected Time Slot"}
           </Text>
-          <Text style={styles.summaryValue}>{selectedTime || "No slot selected"}</Text>
+          {isPackage ? (
+            <View style={{ gap: 4, marginTop: 4 }}>
+              {packageIncludesSauna && (
+                <Text style={styles.packageSummaryLine}>
+                  • Sauna: <Text style={{ color: brownGold, fontWeight: "700" }}>{pkgSaunaSlot || "Pending selection"}</Text>
+                </Text>
+              )}
+              {packageIncludesLunchroom && (
+                <Text style={styles.packageSummaryLine}>
+                  • Lunchroom: <Text style={{ color: brownGold, fontWeight: "700" }}>{pkgLunchTime || "12:30"} Arrival</Text>
+                </Text>
+              )}
+              {packageIncludesSaltRoom && (
+                <Text style={styles.packageSummaryLine}>
+                  • Salt Room: <Text style={{ color: brownGold, fontWeight: "700" }}>{pkgSaltRoomSlot || "Pending selection"}</Text>
+                </Text>
+              )}
+              {packageIncludesActivity && (
+                <Text style={styles.packageSummaryLine}>
+                  • Activity: <Text style={{ color: brownGold, fontWeight: "700" }}>{pkgSelectedActivityId ? "Session Selected" : "Pending selection"}</Text>
+                </Text>
+              )}
+            </View>
+          ) : (
+            <Text style={styles.summaryValue}>{selectedTime || "No slot selected"}</Text>
+          )}
         </Card>
+
+        {/* Lunchroom Arrival Time Dropdown Picker Modal */}
+        <Modal
+          visible={showLunchDropdown}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowLunchDropdown(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <UtensilsCrossed size={18} color="#9B7C56" />
+                  <Text style={styles.modalTitle}>Select Lunchroom Arrival</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setShowLunchDropdown(false)}
+                  style={styles.modalCloseBtn}
+                >
+                  <Text style={{ fontSize: 16, color: "#64748B", fontWeight: "700" }}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={{ fontSize: 12, color: "#64748B", marginBottom: 12 }}>
+                Operating Hours: {packageSlotsData?.lunchroom?.open_time || "06:00"} – {packageSlotsData?.lunchroom?.close_time || "23:59"}. Pick your preferred 1-hour interval dining arrival:
+              </Text>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+                {dynamicLunchSlots.map((timeStr) => {
+                  const isSel = pkgLunchTime === timeStr;
+                  return (
+                    <TouchableOpacity
+                      key={timeStr}
+                      onPress={() => {
+                        setPkgLunchTime(timeStr);
+                        setShowLunchDropdown(false);
+                      }}
+                      style={[
+                        styles.dropdownSlotPill,
+                        isSel && styles.dropdownSlotPillActive,
+                      ]}
+                    >
+                      <UtensilsCrossed size={14} color={isSel ? "#fff" : "#9B7C56"} />
+                      <Text style={[styles.dropdownSlotPillText, isSel && styles.dropdownSlotPillTextActive]}>
+                        {timeStr}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        </Modal>
       </Layout>
 
       <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
-        <Button onPress={handleContinue} disabled={!selectedTime || isBlocked || isClosed}>
+        <Button
+          onPress={handleContinue}
+          disabled={
+            isBlocked ||
+            isClosed ||
+            (isPackage
+              ? (packageIncludesSauna && !pkgSaunaSlot && packageSlotsData?.sauna && !packageSlotsData.sauna.is_closed)
+              : !selectedTime)
+          }
+        >
           <Text>{t("createBooking.selectTime.continue") || "Continue"}</Text>
           <ArrowRight size={18} color="#000" />
         </Button>
@@ -755,5 +1255,210 @@ const styles = StyleSheet.create({
     paddingBottom: 36,
     borderTopWidth: 1,
     backgroundColor: "#fff",
+  },
+  // Package Sub-Service Scheduling Styles
+  packageSubServiceCard: {
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: "#FAF7F2",
+    borderWidth: 1,
+    borderColor: "#E8E2DC",
+  },
+  subServiceHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  stepBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: "#9B7C56",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepBadgeText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  subServiceTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    fontFamily: Fonts.serif,
+    color: "#1d1a17",
+  },
+  subServiceDesc: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  subServiceClosedBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 12,
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    marginTop: 10,
+  },
+  subServiceClosedText: {
+    fontSize: 12,
+    color: "#92400E",
+    fontWeight: "600",
+  },
+  packageSlotBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  packageSlotBtnActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#FCF2E9",
+  },
+  packageSlotBtnTime: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1d1a17",
+  },
+  packageSlotBtnTimeActive: {
+    color: "#9B7C56",
+  },
+  packageSlotBtnSub: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  lunchPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  lunchPillActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#9B7C56",
+  },
+  lunchPillText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  lunchPillTextActive: {
+    color: "#fff",
+  },
+  packageSummaryLine: {
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "600",
+  },
+  lunchDropdownButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#fff",
+  },
+  lunchDropdownIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#FCF2E9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lunchDropdownLabel: {
+    fontSize: 11,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  lunchDropdownValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1d1a17",
+    marginTop: 1,
+  },
+  lunchDropdownChangeText: {
+    fontSize: 12,
+    color: "#9B7C56",
+    fontWeight: "700",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1d1a17",
+    fontFamily: Fonts.serif,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dropdownSlotPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FAF7F2",
+  },
+  dropdownSlotPillActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#9B7C56",
+  },
+  dropdownSlotPillText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#475569",
+  },
+  dropdownSlotPillTextActive: {
+    color: "#fff",
   },
 });
