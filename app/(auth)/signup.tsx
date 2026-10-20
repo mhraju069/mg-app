@@ -51,6 +51,74 @@ export default function SignupScreen() {
     }
   };
 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
+
+  const handleRegister = async () => {
+    if (!name.trim() || !email.trim() || !password) {
+      showErrorToast(
+        t("errors.required", "Required fields"),
+        "Please fill in name, email, and password."
+      );
+      return;
+    }
+    if (!email.includes("@")) {
+      showErrorToast(t("errors.invalidEmail", "Invalid Email"), "Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      showErrorToast(t("errors.required", "Password short"), "Password must be at least 6 characters.");
+      return;
+    }
+
+    setSignupError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("http://localhost/api/auth/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status) {
+        // Also trigger OTP request so user receives verification email
+        try {
+          await fetch("http://localhost/api/auth/get-otp/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email.trim(), task: "verification" }),
+          });
+        } catch {
+          // Continue to verification
+        }
+
+        router.push({
+          pathname: "/(auth)/verify-code",
+          params: { email: email.trim() },
+        });
+      } else {
+        const msg = data.log || data.message || "Registration failed. Email may already be in use.";
+        setSignupError(msg);
+        showErrorToast(t("auth.signup.failed", "Signup Failed"), msg);
+      }
+    } catch (e: any) {
+      const msg = e.message || "Failed to connect to authentication service.";
+      setSignupError(msg);
+      showErrorToast(t("auth.signup.failed", "Signup Failed"), msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <AuthLayout
       title={t("auth.signup.title")}
@@ -58,11 +126,19 @@ export default function SignupScreen() {
       showOverlay={false}
     >
       <View style={styles.form}>
+        {signupError ? (
+          <View style={{ backgroundColor: "#FEE2E2", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#FCA5A5" }}>
+            <Text style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}>{signupError}</Text>
+          </View>
+        ) : null}
+
         <Input
           label={t("auth.signup.nameLabel")}
           placeholder={t("auth.signup.namePlaceholder")}
           icon={User}
           variant="outline"
+          value={name}
+          onChangeText={setName}
         />
 
         <Input
@@ -70,12 +146,17 @@ export default function SignupScreen() {
           placeholder={t("auth.signup.emailPlaceholder")}
           icon={Mail}
           variant="outline"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
         />
 
         <Input
           label={t("auth.signup.passwordLabel")}
           placeholder={t("auth.signup.passwordPlaceholder")}
           icon={Lock}
+          value={password}
+          onChangeText={setPassword}
           secureTextEntry={!showPassword}
           variant="outline"
           rightComponent={() => (
@@ -89,9 +170,15 @@ export default function SignupScreen() {
           )}
         />
 
-        <Button onPress={() => router.replace("/(auth)/language")}>
-          <Text>{t("auth.signup.submit")}</Text>
-          <ArrowRight size={18} />
+        <Button onPress={handleRegister} disabled={isSubmitting}>
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Text>{t("auth.signup.submit")}</Text>
+              <ArrowRight size={18} />
+            </>
+          )}
         </Button>
 
         <View style={styles.dividerContainer}>

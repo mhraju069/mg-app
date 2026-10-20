@@ -8,32 +8,94 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { router } from "expo-router";
-import React, { useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import { useAuthStore } from "@/utils/authStore";
+import { useToast } from "@/components/ui/toast";
 
 export default function EditProfileScreen() {
   const textMuted = useColor("textMuted");
+  const authUser = useAuthStore.getState().user;
+  const { error: showErrorToast, success: showSuccessToast } = useToast();
 
-  const [name, setName] = useState("Akash");
-  const [email, setEmail] = useState("akash@example.com");
-  const [phone, setPhone] = useState("+1234567890");
+  const [name, setName] = useState(authUser?.name || "");
+  const [email, setEmail] = useState(authUser?.email || "");
+  const [phone, setPhone] = useState(authUser?.phone || "");
+  const [bio, setBio] = useState(authUser?.bio || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const auth = useAuthStore.getState();
+    if (auth.user) {
+      setName(auth.user.name || "");
+      setEmail(auth.user.email || "");
+      setPhone(auth.user.phone || "");
+      setBio(auth.user.bio || "");
+    }
+  }, []);
+
+  const handleSaveChanges = async () => {
+    const auth = useAuthStore.getState();
+    if (!auth.accessToken) {
+      showErrorToast("Not authenticated", "Please login to update your profile.");
+      return;
+    }
+
+    if (!name.trim()) {
+      showErrorToast("Validation Error", "Full Name is required.");
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsSaving(true);
+
+    try {
+      const res = await fetch("http://localhost/api/auth/user/", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          bio: bio.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        useAuthStore.setUser(data);
+        showSuccessToast("Profile Updated", "Your profile details have been saved.");
+        router.back();
+      } else {
+        const msg = data.detail || data.log || "Failed to update profile.";
+        setErrorMessage(msg);
+        showErrorToast("Update Failed", msg);
+      }
+    } catch (e: any) {
+      const msg = e.message || "Network error while saving profile.";
+      setErrorMessage(msg);
+      showErrorToast("Update Failed", msg);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <>
       <BackHeader />
       <Layout>
         <View style={styles.avatarSection}>
-          {/* <View>
-            <Image
-              source="https://i.pravatar.cc/150?u=akash"
-              style={styles.avatar}
-            />
-            <Pressable style={styles.cameraButton}>
-              <Camera size={20} color="black" />
-            </Pressable>
-          </View> */}
           <Avatar editable={true} />
         </View>
+
+        {errorMessage ? (
+          <View style={{ backgroundColor: "#FEE2E2", padding: 12, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: "#FCA5A5" }}>
+            <Text style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}>{errorMessage}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.form}>
           <Input
@@ -43,11 +105,10 @@ export default function EditProfileScreen() {
             variant="outline"
           />
           <Input
-            label="Email Address"
+            label="Email Address (Registered)"
             value={email}
-            onChangeText={setEmail}
+            editable={false}
             variant="outline"
-            keyboardType="email-address"
           />
           <Input
             label="Phone"
@@ -55,6 +116,14 @@ export default function EditProfileScreen() {
             onChangeText={setPhone}
             variant="outline"
             keyboardType="phone-pad"
+            placeholder="+31 6 12345678"
+          />
+          <Input
+            label="Bio / Notes"
+            value={bio}
+            onChangeText={setBio}
+            variant="outline"
+            placeholder="Tell us about your wellness preferences"
           />
 
           <View style={styles.inputGroup}>
@@ -75,10 +144,12 @@ export default function EditProfileScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Button variant="outline" onPress={() => router.back()}>
+          <Button variant="outline" onPress={() => router.back()} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onPress={() => router.back()}>Save Changes</Button>
+          <Button onPress={handleSaveChanges} disabled={isSaving}>
+            {isSaving ? <ActivityIndicator size="small" color="#fff" /> : "Save Changes"}
+          </Button>
         </View>
       </Layout>
     </>

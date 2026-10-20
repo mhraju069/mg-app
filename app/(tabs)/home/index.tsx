@@ -31,14 +31,32 @@ import {
   Facebook,
   Compass,
   Check,
+  Boxes,
+  Layers,
+  Lock,
+  X,
+  CreditCard,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react-native";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Linking, ActivityIndicator } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Linking,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Layout } from "@/components/layout/Layout";
 import { useTranslation } from "react-i18next";
 import { useBookingStore } from "@/utils/bookingStore";
+import { useAuthStore } from "@/utils/authStore";
+import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
   sauna: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
@@ -74,7 +92,154 @@ export default function HomeScreen() {
   const [services, setServices] = useState<ServiceItemData[]>([]);
   const [loadingServices, setLoadingServices] = useState<boolean>(true);
   const [plans, setPlans] = useState<any[]>([]);
+  const [sessionPasses, setSessionPasses] = useState<any[]>([]);
+  const [activePlanTab, setActivePlanTab] = useState<"subscriptions" | "passes">("subscriptions");
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
+
+  // Purchase Modal State (Direct checkout for Plans and Session Passes)
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [selectedPurchaseItem, setSelectedPurchaseItem] = useState<{
+    type: "subscription" | "session_pass";
+    item: any;
+  } | null>(null);
+  const [checkoutName, setCheckoutName] = useState("");
+  const [checkoutEmail, setCheckoutEmail] = useState("");
+  const [checkoutPostalCode, setCheckoutPostalCode] = useState("1012 AB");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "ideal">("card");
+  const [selectedBank, setSelectedBank] = useState("ing");
+  const [isProcessingPurchase, setIsProcessingPurchase] = useState(false);
+  const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
+  const [purchaseSuccessData, setPurchaseSuccessData] = useState<any | null>(null);
+  const [stripeRefs, setStripeRefs] = useState<{ elements: any; stripe: any } | null>(null);
+
+  // Sync user info from auth store
+  useEffect(() => {
+    const auth = useAuthStore.getState();
+    if (auth.user) {
+      setCheckoutName(auth.user.name || "");
+      setCheckoutEmail(auth.user.email || "");
+    }
+    return useAuthStore.subscribe(() => {
+      const state = useAuthStore.getState();
+      if (state.user) {
+        setCheckoutName(state.user.name || "");
+        setCheckoutEmail(state.user.email || "");
+      }
+    });
+  }, []);
+
+  const openPurchaseModal = (type: "subscription" | "session_pass", item: any) => {
+    const auth = useAuthStore.getState();
+    if (!auth.isAuthenticated) {
+      router.push("/(auth)/login");
+      return;
+    }
+    setSelectedPurchaseItem({ type, item });
+    setPurchaseErrorMessage(null);
+    setPurchaseSuccessData(null);
+    setPurchaseModalVisible(true);
+  };
+
+  const handleExecutePurchase = async () => {
+    if (!selectedPurchaseItem) return;
+    const auth = useAuthStore.getState();
+    if (!auth.accessToken) {
+      router.push("/(auth)/login");
+      return;
+    }
+
+    setPurchaseErrorMessage(null);
+    setIsProcessingPurchase(true);
+
+    try {
+      const { type, item } = selectedPurchaseItem;
+      const payload: any = {
+        purchase_type: type,
+        name: checkoutName.trim() || auth.user?.name || "Member",
+        email: checkoutEmail.trim() || auth.user?.email || "member@heavenwellness.com",
+      };
+
+      if (type === "session_pass") {
+        payload.pass_id = item.id;
+      } else {
+        payload.plan_id = item.id;
+      }
+
+      // 1. Call purchase creation endpoint
+      const res = await fetch("http://localhost/api/payments/purchase/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${auth.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        const errorDetail = resData.detail || resData.error || resData.message || "Could not initialize purchase.";
+        setPurchaseErrorMessage(errorDetail);
+        setIsProcessingPurchase(false);
+        return;
+      }
+
+      const clientSecret = resData.client_secret;
+      const purchaseRecord = resData.purchase;
+
+      // 2. Confirm card payment with Stripe Elements
+      if (clientSecret && stripeRefs?.stripe && stripeRefs?.elements) {
+        const { CardNumberElement } = await import("@stripe/react-stripe-js");
+        const cardEl = stripeRefs.elements.getElement(CardNumberElement);
+
+        if (cardEl) {
+          const confirmResult = await stripeRefs.stripe.confirmCardPayment(clientSecret, {
+            payment_method: {
+              card: cardEl,
+              billing_details: {
+                name: checkoutName || auth.user?.name || "Cardholder",
+                email: checkoutEmail || auth.user?.email,
+                address: {
+                  postal_code: checkoutPostalCode,
+                },
+              },
+            },
+          });
+
+          if (confirmResult.error) {
+            setPurchaseErrorMessage(confirmResult.error.message || "Card verification failed.");
+            setIsProcessingPurchase(false);
+            return;
+          }
+
+          if (confirmResult?.paymentIntent && (confirmResult.paymentIntent.status === "succeeded" || confirmResult.paymentIntent.status === "processing")) {
+            const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
+            try {
+              await fetch("http://localhost/api/payments/confirm-payment/", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${auth.accessToken}`,
+                },
+                body: JSON.stringify({
+                  payment_intent_id: confirmResult.paymentIntent.id,
+                  ...(purchaseId ? { purchase_id: purchaseId } : {}),
+                }),
+              });
+            } catch (confirmErr) {
+              console.warn("Backend confirm payment sync error:", confirmErr);
+            }
+          }
+        }
+      }
+
+      // Payment success!
+      setPurchaseSuccessData(purchaseRecord || resData);
+    } catch (e: any) {
+      setPurchaseErrorMessage(e.message || "Failed to process purchase. Please verify payment details.");
+    } finally {
+      setIsProcessingPurchase(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -148,18 +313,50 @@ export default function HomeScreen() {
       }
     };
 
-    const fetchPlans = async () => {
+    const fetchPlansAndPasses = async () => {
       try {
-        const res = await fetch("http://localhost/api/payments/subscription-plans/");
+        const res = await fetch("http://localhost/api/payments/plans-and-passes/");
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && Array.isArray(data) && data.length > 0) {
-            setPlans(data);
-            return;
+          if (isMounted && data) {
+            const subPlans = Array.isArray(data.subscription_plans) ? data.subscription_plans : [];
+            const sessPasses = Array.isArray(data.session_passes) ? data.session_passes : [];
+
+            if (subPlans.length > 0) setPlans(subPlans);
+            if (sessPasses.length > 0) setSessionPasses(sessPasses);
+
+            if (subPlans.length > 0 || sessPasses.length > 0) return;
           }
         }
       } catch {
-        // Fallback below
+        // Fallback or fallback to separate endpoints
+      }
+
+      // Secondary fallback attempts for individual endpoints
+      try {
+        const [subRes, passRes] = await Promise.all([
+          fetch("http://localhost/api/payments/subscription-plans/").catch(() => null),
+          fetch("http://localhost/api/payments/session-passes/").catch(() => null),
+        ]);
+
+        let hasData = false;
+        if (subRes && subRes.ok) {
+          const subData = await subRes.json();
+          if (Array.isArray(subData) && subData.length > 0) {
+            if (isMounted) setPlans(subData);
+            hasData = true;
+          }
+        }
+        if (passRes && passRes.ok) {
+          const passData = await passRes.json();
+          if (Array.isArray(passData) && passData.length > 0) {
+            if (isMounted) setSessionPasses(passData);
+            hasData = true;
+          }
+        }
+        if (hasData) return;
+      } catch {
+        // Fallback to static defaults
       }
 
       if (isMounted) {
@@ -189,6 +386,19 @@ export default function HomeScreen() {
             ],
           },
         ]);
+        setSessionPasses([
+          {
+            id: 1,
+            name: "10 Session pass",
+            price: "200.00",
+            entry_limit: 10,
+            features: [
+              { id: 1, feature: "10-session salt pass (€20 per session)" },
+              { id: 2, feature: "Linked directly to customer account" },
+              { id: 3, feature: "Valid for 1 full year after purchase" },
+            ],
+          },
+        ]);
       }
     };
 
@@ -196,7 +406,7 @@ export default function HomeScreen() {
       fetchServices().finally(() => {
         if (isMounted) setLoadingServices(false);
       }),
-      fetchPlans().finally(() => {
+      fetchPlansAndPasses().finally(() => {
         if (isMounted) setLoadingPlans(false);
       }),
     ]);
@@ -480,24 +690,69 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Subscription Plans Section */}
+      {/* Memberships, Plans & Passes Section */}
       <View style={styles.sectionHeader}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={styles.sectionTitle}>
-              {t("memberships.title") || "Memberships & Plans"}
+              {t("memberships.title") || "Memberships, Plans & Passes"}
             </Text>
             <Text style={{ fontSize: 13, color: "#6B5D54", marginTop: 2 }}>
-              {t("memberships.subtitle") || "Flexible renewal passes for consistent wellness"}
+              {t("memberships.subtitle") || "Flexible passes and recurring memberships for consistent wellness"}
             </Text>
           </View>
+        </View>
+
+        {/* Tab Toggle: Subscriptions vs Session Passes */}
+        <View style={stylesPlanCard.tabContainer}>
+          <Pressable
+            style={[
+              stylesPlanCard.tabButton,
+              activePlanTab === "subscriptions" && stylesPlanCard.tabButtonActive,
+            ]}
+            onPress={() => setActivePlanTab("subscriptions")}
+          >
+            <Layers
+              size={16}
+              color={activePlanTab === "subscriptions" ? "#fff" : brownGold}
+            />
+            <Text
+              style={[
+                stylesPlanCard.tabText,
+                activePlanTab === "subscriptions" && stylesPlanCard.tabTextActive,
+              ]}
+            >
+              Subscription Plans ({plans.length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            style={[
+              stylesPlanCard.tabButton,
+              activePlanTab === "passes" && stylesPlanCard.tabButtonActive,
+            ]}
+            onPress={() => setActivePlanTab("passes")}
+          >
+            <Boxes
+              size={16}
+              color={activePlanTab === "passes" ? "#fff" : brownGold}
+            />
+            <Text
+              style={[
+                stylesPlanCard.tabText,
+                activePlanTab === "passes" && stylesPlanCard.tabTextActive,
+              ]}
+            >
+              Session Passes ({sessionPasses.length})
+            </Text>
+          </Pressable>
         </View>
 
         {loadingPlans ? (
           <View style={{ padding: 24, alignItems: "center", justifyContent: "center" }}>
             <ActivityIndicator size="small" color={brownGold} />
           </View>
-        ) : (
+        ) : activePlanTab === "subscriptions" ? (
           <View style={{ gap: 16 }}>
             {plans.map((plan, index) => {
               const isPopular = index === 1;
@@ -574,12 +829,7 @@ export default function HomeScreen() {
                         ? { backgroundColor: "#fff" }
                         : { backgroundColor: brownGold },
                     ]}
-                    onPress={() =>
-                      router.push({
-                        pathname: "/(bookings)/[category]",
-                        params: { category: "saltroom" },
-                      })
-                    }
+                    onPress={() => openPurchaseModal("subscription", plan)}
                   >
                     <Text
                       style={[
@@ -587,9 +837,85 @@ export default function HomeScreen() {
                         isPopular ? { color: darkBrown } : { color: "#fff" },
                       ]}
                     >
-                      Choose Plan
+                      Apply Now • Choose Plan
                     </Text>
                     <ChevronRight size={18} color={isPopular ? darkBrown : "#fff"} />
+                  </Button>
+                </Card>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={{ gap: 16 }}>
+            {sessionPasses.map((pass) => {
+              const passName = pass[`name_${i18n?.language?.split("-")[0]}`] || pass.name;
+              const priceNumber = Number(pass.price) || 0;
+              const entryLimit = pass.entry_limit || 10;
+              const pricePerSession = entryLimit > 0 ? (priceNumber / entryLimit).toFixed(0) : 20;
+
+              return (
+                <Card
+                  key={pass.id}
+                  style={[
+                    stylesPlanCard.card,
+                    stylesPlanCard.passCard,
+                  ]}
+                >
+                  <View style={stylesPlanCard.passBadge}>
+                    <Boxes size={12} color="#9B7C56" />
+                    <Text style={stylesPlanCard.passBadgeText}>SESSION PASS</Text>
+                  </View>
+
+                  <View style={{ gap: 6 }}>
+                    <Text style={stylesPlanCard.planName}>
+                      {passName}
+                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "baseline", gap: 4 }}>
+                      <Text style={stylesPlanCard.priceSign}>€</Text>
+                      <Text style={stylesPlanCard.priceValue}>{priceNumber}</Text>
+                      <Text style={stylesPlanCard.priceCycle}>
+                        (€{pricePerSession} per session)
+                      </Text>
+                    </View>
+                    <Text style={stylesPlanCard.reservationLimit}>
+                      Includes {entryLimit} sessions • Valid for 1 year
+                    </Text>
+                  </View>
+
+                  {/* Pass Features */}
+                  <View style={stylesPlanCard.featureList}>
+                    {pass.features?.map((f: any, fIdx: number) => {
+                      const featText = f[`feature_${i18n?.language?.split("-")[0]}`] || f.feature;
+                      return (
+                        <View key={f.id || fIdx} style={stylesPlanCard.featureRow}>
+                          <View
+                            style={[
+                              stylesPlanCard.checkCircle,
+                              { backgroundColor: lightBeige },
+                            ]}
+                          >
+                            <Check size={14} color={brownGold} strokeWidth={2.5} />
+                          </View>
+                          <Text style={stylesPlanCard.featureText}>
+                            {featText}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  {/* Choose Pass Button */}
+                  <Button
+                    style={[
+                      stylesPlanCard.actionBtn,
+                      { backgroundColor: brownGold },
+                    ]}
+                    onPress={() => openPurchaseModal("session_pass", pass)}
+                  >
+                    <Text style={[stylesPlanCard.actionBtnText, { color: "#fff" }]}>
+                      Apply Now • Get Session Pass
+                    </Text>
+                    <ChevronRight size={18} color="#fff" />
                   </Button>
                 </Card>
               );
@@ -716,6 +1042,157 @@ export default function HomeScreen() {
           <Instagram size={36} color={brownGold} />
         </Pressable>
       </View>
+
+      {/* Direct Card Purchase Modal for Plans & Passes */}
+      <Modal
+        visible={purchaseModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setPurchaseModalVisible(false)}
+      >
+        <View style={stylesModalCheckout.overlay}>
+          <View style={stylesModalCheckout.content}>
+            {/* Modal Header */}
+            <View style={stylesModalCheckout.header}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={stylesModalCheckout.headerIconCircle}>
+                  <CreditCard size={18} color="#9B7C56" />
+                </View>
+                <View>
+                  <Text style={stylesModalCheckout.title}>
+                    {purchaseSuccessData ? "Purchase Confirmed" : "Complete Purchase"}
+                  </Text>
+                  <Text style={stylesModalCheckout.subtitle}>
+                    {selectedPurchaseItem?.type === "session_pass" ? "Session Pass Access" : "Recurring Membership"}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => setPurchaseModalVisible(false)}
+                style={stylesModalCheckout.closeBtn}
+              >
+                <X size={18} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+
+            {purchaseSuccessData ? (
+              /* Success View */
+              <View style={{ alignItems: "center", paddingVertical: 20, gap: 12 }}>
+                <View style={stylesModalCheckout.successIconCircle}>
+                  <CheckCircle2 size={40} color="#059669" />
+                </View>
+                <Text style={stylesModalCheckout.successTitle}>Payment Successful!</Text>
+                <Text style={stylesModalCheckout.successSubtitle}>
+                  Your {selectedPurchaseItem?.item?.name} has been activated and linked directly to your account.
+                </Text>
+
+                <View style={stylesModalCheckout.receiptBox}>
+                  <Text style={stylesModalCheckout.receiptText}>
+                    Item: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{selectedPurchaseItem?.item?.name}</Text>
+                  </Text>
+                  <Text style={stylesModalCheckout.receiptText}>
+                    Amount Paid: <Text style={{ fontWeight: "700", color: "#9B7C56" }}>€{selectedPurchaseItem?.item?.price}</Text>
+                  </Text>
+                  <Text style={stylesModalCheckout.receiptText}>
+                    Account: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{checkoutEmail}</Text>
+                  </Text>
+                </View>
+
+                <Button
+                  style={{ width: "100%", backgroundColor: brownGold, marginTop: 10 }}
+                  onPress={() => {
+                    setPurchaseModalVisible(false);
+                    router.push("/(tabs)/profile");
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>View in Profile</Text>
+                </Button>
+              </View>
+            ) : (
+              /* Checkout Form View */
+              <View style={{ gap: 14 }}>
+                {/* Item Summary Card */}
+                <View style={stylesModalCheckout.summaryCard}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={stylesModalCheckout.summaryName}>
+                        {selectedPurchaseItem?.item?.name}
+                      </Text>
+                      <Text style={stylesModalCheckout.summaryDesc}>
+                        {selectedPurchaseItem?.type === "session_pass"
+                          ? `${selectedPurchaseItem?.item?.entry_limit || 10} Salt Room sessions included`
+                          : "Regular recurring halotherapy wellness"}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: "flex-end" }}>
+                      <Text style={stylesModalCheckout.summaryPrice}>
+                        €{selectedPurchaseItem?.item?.price}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "#64748B" }}>Total</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Member Details */}
+                <View style={{ gap: 8 }}>
+                  <Text style={stylesModalCheckout.fieldLabel}>Cardholder Name</Text>
+                  <TextInput
+                    style={stylesModalCheckout.textInput}
+                    placeholder="Full Name"
+                    value={checkoutName}
+                    onChangeText={setCheckoutName}
+                  />
+
+                  <Text style={stylesModalCheckout.fieldLabel}>Email Address</Text>
+                  <TextInput
+                    style={stylesModalCheckout.textInput}
+                    placeholder="email@example.com"
+                    value={checkoutEmail}
+                    onChangeText={setCheckoutEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                {/* Integrated Stripe Official Elements */}
+                <StripeElementsCheckout
+                  cardHolder={checkoutName}
+                  setCardHolder={setCheckoutName}
+                  postalCode={checkoutPostalCode}
+                  setPostalCode={setCheckoutPostalCode}
+                  paymentMethod={paymentMethod}
+                  setPaymentMethod={setPaymentMethod}
+                  selectedBank={selectedBank}
+                  setSelectedBank={setSelectedBank}
+                  errorMessage={purchaseErrorMessage}
+                  onElementsReady={(elements, stripe) => {
+                    setStripeRefs({ elements, stripe });
+                  }}
+                />
+
+                {/* Pay & Confirm Button */}
+                <Button
+                  disabled={isProcessingPurchase}
+                  style={stylesModalCheckout.submitBtn}
+                  onPress={handleExecutePurchase}
+                >
+                  {isProcessingPurchase ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                      <Lock size={16} color="#fff" />
+                      <Text style={stylesModalCheckout.submitBtnText}>
+                        Pay €{selectedPurchaseItem?.item?.price} Securely
+                      </Text>
+                    </View>
+                  )}
+                </Button>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Layout>
   );
 }
@@ -979,6 +1456,64 @@ const stylesPlanCard = StyleSheet.create({
   actionBtnText: {
     fontSize: 14,
     fontWeight: "700",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F1EBE4",
+    padding: 4,
+    borderRadius: 20,
+    gap: 6,
+    marginTop: 4,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+  },
+  tabButtonActive: {
+    backgroundColor: "#9B7C56",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#6B5D54",
+  },
+  tabTextActive: {
+    color: "#fff",
+  },
+  passCard: {
+    borderWidth: 1.5,
+    borderColor: "#E2D3C4",
+    backgroundColor: "#FAF7F3",
+  },
+  passBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#FCF2E9",
+    borderWidth: 1,
+    borderColor: "#F3DECB",
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  passBadgeText: {
+    color: "#9B7C56",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
 });
 
@@ -1413,3 +1948,151 @@ const actionCardStyles = (
       color: textMuted,
     },
   });
+
+const stylesModalCheckout = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  content: {
+    width: "100%",
+    maxWidth: 480,
+    maxHeight: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F1EBE4",
+    paddingBottom: 14,
+    marginBottom: 14,
+  },
+  headerIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#FCF2E9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#1d1a17",
+    fontFamily: Fonts.serif,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 1,
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  summaryCard: {
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#FAF7F2",
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+  },
+  summaryName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1d1a17",
+  },
+  summaryDesc: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  summaryPrice: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#9B7C56",
+    fontFamily: Fonts.serif,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: 4,
+  },
+  textInput: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: "#0F172A",
+    backgroundColor: "#FAF7F2",
+  },
+  submitBtn: {
+    backgroundColor: "#9B7C56",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+  submitBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#ECFDF5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#065F46",
+    fontFamily: Fonts.serif,
+  },
+  successSubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 18,
+    paddingHorizontal: 10,
+  },
+  receiptBox: {
+    width: "100%",
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    gap: 6,
+    marginVertical: 6,
+  },
+  receiptText: {
+    fontSize: 13,
+    color: "#64748B",
+  },
+});
+

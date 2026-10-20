@@ -7,25 +7,72 @@ import { Text } from "@/components/ui/text";
 import { View } from "@/components/ui/view";
 import { Fonts } from "@/theme/colors";
 import { router } from "expo-router";
-import React from "react";
-import { StyleSheet, TextInput } from "react-native";
+import React, { useState, useEffect } from "react";
+import { StyleSheet, TextInput, ActivityIndicator } from "react-native";
+import { useAuthStore } from "@/utils/authStore";
 
 export default function PreviewProfileScreen() {
+  const [profile, setProfile] = useState<any>(useAuthStore.getState().user);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchUserProfile = async () => {
+      const auth = useAuthStore.getState();
+      if (!auth.accessToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost/api/auth/user/", {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setProfile(data);
+            useAuthStore.setUser(data);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to fetch user profile:", e);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <>
       <BackHeader />
       <Layout>
-         <Header title="Profile" subtitle="Manage your personal information" />
+        <Header title="Profile" subtitle="Manage your personal information" />
         <View style={styles.avatarSection}>
           <Avatar editable={false} />
         </View>
 
-        <View style={styles.infoSection}>
-          <InfoItem label="Full Name" value="Akash" />
-          <InfoItem label="Email Address" value="akash@example.com" />
-          <InfoItem label="Phone" value="+1234567890" />
-          <InfoItem label="Preferred Language" value="English" />
-        </View>
+        {loading ? (
+          <View style={{ padding: 40, alignItems: "center" }}>
+            <ActivityIndicator size="small" color="#9B7C56" />
+          </View>
+        ) : (
+          <View style={styles.infoSection}>
+            <InfoItem label="Full Name" value={profile?.name || "Not provided"} />
+            <InfoItem label="Email Address" value={profile?.email || "Not provided"} />
+            <InfoItem label="Phone Number" value={profile?.phone || "Not provided"} />
+            <InfoItem label="Bio / Notes" value={profile?.bio || "Not provided"} />
+            <InfoItem label="Preferred Language" value={profile?.language?.toUpperCase() || "EN"} />
+          </View>
+        )}
 
         <Button onPress={() => router.push("/(tabs)/profile/edit")}>
           Edit Profile

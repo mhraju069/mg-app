@@ -64,6 +64,8 @@ export default function LoginScreen() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginErrorMsg, setLoginErrorMsg] = useState<string | null>(null);
 
   const emailError =
     email && !email.includes("@") ? t("errors.invalidEmail") : "";
@@ -72,6 +74,47 @@ export default function LoginScreen() {
       ? t("errors.required")
       : "";
 
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      showErrorToast(
+        t("errors.required", "Required fields"),
+        "Please enter your email and password"
+      );
+      return;
+    }
+    setLoginErrorMsg(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("http://localhost/api/auth/login/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.status && data.access) {
+        const { useAuthStore } = await import("@/utils/authStore");
+        useAuthStore.login({
+          user: data.user,
+          access: data.access,
+          refresh: data.refresh,
+        });
+        router.replace("/(tabs)/home");
+      } else {
+        const msg = data.log || data.message || "Invalid email or password.";
+        setLoginErrorMsg(msg);
+        showErrorToast(t("auth.login.failed", "Login Failed"), msg);
+      }
+    } catch (e: any) {
+      const msg = e.message || "Unable to connect to server. Please try again.";
+      setLoginErrorMsg(msg);
+      showErrorToast(t("auth.login.failed", "Login Failed"), msg);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <AuthLayout
       title={t("auth.login.title")}
@@ -79,6 +122,12 @@ export default function LoginScreen() {
       showOverlay={false}
     >
       <View style={styles.form}>
+        {loginErrorMsg ? (
+          <View style={{ backgroundColor: "#FEE2E2", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#FCA5A5" }}>
+            <Text style={{ color: "#DC2626", fontSize: 13, fontWeight: "600" }}>{loginErrorMsg}</Text>
+          </View>
+        ) : null}
+
         <Input
           label={t("auth.login.emailLabel")}
           placeholder={t("auth.login.emailPlaceholder")}
@@ -125,9 +174,15 @@ export default function LoginScreen() {
           </Link>
         </View>
 
-        <Button onPress={() => router.replace("/(tabs)/home")}>
-          <Text>{t("auth.login.submit")}</Text>
-          <ArrowRight size={18} />
+        <Button onPress={handleEmailLogin} disabled={isSubmitting}>
+          {isSubmitting ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Text>{t("auth.login.submit")}</Text>
+              <ArrowRight size={18} />
+            </>
+          )}
         </Button>
 
         <View style={styles.dividerContainer}>

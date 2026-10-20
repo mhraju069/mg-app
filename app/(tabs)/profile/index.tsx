@@ -19,9 +19,10 @@ import {
   Crown,
   Thermometer,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet, Switch } from "react-native";
 import { useTranslation } from "react-i18next";
+import { useAuthStore } from "@/utils/authStore";
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -30,21 +31,39 @@ export default function ProfileScreen() {
   const red = "#EF4444";
 
   const [pushEnabled, setPushEnabled] = useState(false);
+  const [currentUser, setCurrentUser] = useState(useAuthStore.getState().user);
+  const [isLoggedIn, setIsLoggedIn] = useState(useAuthStore.getState().isAuthenticated);
+
+  useEffect(() => {
+    return useAuthStore.subscribe(() => {
+      const state = useAuthStore.getState();
+      setCurrentUser(state.user);
+      setIsLoggedIn(state.isAuthenticated);
+    });
+  }, []);
 
   return (
     <Layout title={t("profile.title")}>
       {/* User Info Header */}
       <View style={styles.header}>
         <Image
-          source="https://i.pravatar.cc/150?u=akash"
+          source={`https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || "Guest User")}&background=9B7C56&color=fff`}
           style={styles.avatar}
         />
-        <View>
-          <Text style={styles.userName}>Akash</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.userName}>{currentUser?.name || (isLoggedIn ? "Member" : "Guest User")}</Text>
           <Text variant="caption" style={{ color: textMuted }}>
-            Akash@gmail.com
+            {currentUser?.email || (isLoggedIn ? "" : "Sign in to access memberships and bookings")}
           </Text>
         </View>
+        {!isLoggedIn ? (
+          <Pressable
+            onPress={() => router.push("/(auth)/login")}
+            style={{ backgroundColor: brownGold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}
+          >
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Login</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {/* Account Section */}
@@ -122,13 +141,18 @@ export default function ProfileScreen() {
       </View>
 
       {/* Logout Button */}
-      <Pressable
-        style={styles.logoutButton}
-        onPress={() => router.replace("/(auth)/login")}
-      >
-        <LogOut size={20} color={red} />
-        <Text style={styles.logoutText}>{t("profile.logout")}</Text>
-      </Pressable>
+      {isLoggedIn ? (
+        <Pressable
+          style={styles.logoutButton}
+          onPress={() => {
+            useAuthStore.logout();
+            router.replace("/(auth)/login");
+          }}
+        >
+          <LogOut size={20} color={red} />
+          <Text style={styles.logoutText}>{t("profile.logout")}</Text>
+        </Pressable>
+      ) : null}
     </Layout>
   );
 }

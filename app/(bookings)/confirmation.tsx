@@ -347,16 +347,21 @@ export default function ConfirmationScreen() {
           throw new Error(confirmRes.error.message || "Stripe card transaction declined. Please check your card details.");
         }
 
-        if (confirmRes?.paymentIntent && confirmRes.paymentIntent.status === "succeeded") {
-          // Notify backend that payment is verified
-          await fetch("http://localhost/api/payments/confirm/", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              payment_intent_id: confirmRes.paymentIntent.id,
-              booking_id: bookingId,
-            }),
-          }).catch((e) => console.warn("Backend confirm sync notice:", e));
+        if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
+          // Notify backend that payment is verified so booking & payment statuses become 'paid' and 'confirmed'
+          try {
+            await fetch("http://localhost/api/payments/confirm-payment/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                payment_intent_id: confirmRes.paymentIntent.id,
+                booking_id: bookingId,
+                purchase_id: bookingId,
+              }),
+            });
+          } catch (e) {
+            console.warn("Backend confirm sync notice:", e);
+          }
         }
       }
 
