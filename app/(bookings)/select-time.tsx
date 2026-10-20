@@ -28,9 +28,11 @@ export default function SelectTimeScreen() {
   const storeState = useBookingStore.getState();
   const date = (params.date as string) || storeState.date || "2026-10-30";
   const serviceType = storeState.serviceType || "sauna";
-  const isSharedSauna = storeState.isSharedSauna || storeState.saunaType === "shared";
+  const isSauna = serviceType === "sauna";
+  const isSaltRoom = serviceType === "saltroom" || serviceType === "salt_room" || storeState.isSaltRoom;
+  const isSharedSauna = isSauna && (storeState.isSharedSauna || storeState.saunaType === "shared");
   const durationHours = storeState.durationHours || 3;
-  const guestsCount = storeState.guestsCount || (isSharedSauna ? 1 : 2);
+  const guestsCount = storeState.guestsCount || (isSharedSauna || isSaltRoom ? 1 : 2);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -42,6 +44,7 @@ export default function SelectTimeScreen() {
   const [privateSlots3h, setPrivateSlots3h] = useState<any[]>([]);
   const [privateSlots4h, setPrivateSlots4h] = useState<any[]>([]);
   const [sharedSlots, setSharedSlots] = useState<any[]>([]);
+  const [saltSlots, setSaltSlots] = useState<any[]>([]);
   const [genericSlots, setGenericSlots] = useState<string[]>([]);
 
   const textMuted = useColor("textMuted");
@@ -57,7 +60,7 @@ export default function SelectTimeScreen() {
 
     const fetchSlots = async () => {
       try {
-        const queryType = serviceType === "salt_room" ? "saltroom" : serviceType;
+        const queryType = isSaltRoom ? "saltroom" : serviceType;
         const res = await fetch(`http://localhost/api/services/slots/?type=${queryType}&date=${date}`);
         if (res.ok) {
           const json = await res.json();
@@ -97,8 +100,20 @@ export default function SelectTimeScreen() {
                 }
               }
 
-              // 3. Generic slots (Salt room, activity, lunchroom, etc.)
-              if (Array.isArray(data.slots)) {
+              // 3. Salt Room slots (90/60m sessions with remaining capacity)
+              if (isSaltRoom) {
+                const sSlots = data.slots || data.saltroom?.slots || [];
+                if (Array.isArray(sSlots) && sSlots.length > 0) {
+                  setSaltSlots(sSlots);
+                  if (!selectedTime) {
+                    const firstAvail = sSlots.find((s: any) => !s.is_fully_booked && s.remaining_capacity >= guestsCount) || sSlots[0];
+                    setSelectedTime(`${firstAvail.start_time} - ${firstAvail.end_time}`);
+                  }
+                }
+              }
+
+              // 4. Generic slots (activity, lunchroom, etc.)
+              if (!isSaltRoom && !isSauna && Array.isArray(data.slots)) {
                 const gen = data.slots.map((s: any) =>
                   typeof s === "string" ? s : `${s.start_time || s.time} - ${s.end_time || ""}`.trim()
                 );
@@ -122,20 +137,24 @@ export default function SelectTimeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [serviceType, date, durationHours, isSharedSauna, guestsCount]);
+  }, [serviceType, isSaltRoom, date, durationHours, isSharedSauna, guestsCount]);
 
   const handleContinue = () => {
     useBookingStore.setState({ timeSlot: selectedTime });
-    router.push({
-      pathname: "/(bookings)/guests",
-      params: {
-        date,
-        time: selectedTime,
-      },
-    });
-  };
 
-  const isSauna = serviceType === "sauna";
+    // If Salt Room, pass type and guests count were already chosen in step 1, skip redundant guests screen
+    if (isSaltRoom) {
+      router.push("/(bookings)/information");
+    } else {
+      router.push({
+        pathname: "/(bookings)/guests",
+        params: {
+          date,
+          time: selectedTime,
+        },
+      });
+    }
+  };
 
   return (
     <>
@@ -145,7 +164,9 @@ export default function SelectTimeScreen() {
         <Header
           title={t("createBooking.selectTime.title") || "Select Time Slot"}
           subtitle={
-            isSauna
+            isSaltRoom
+              ? "Choose your 1-hour pure halotherapy session window (10m changeover buffer)"
+              : isSauna
               ? isSharedSauna
                 ? "Choose your 90-minute shared wellness session"
                 : `Choose your ${durationHours}-hour exclusive sanctuary session`
@@ -165,13 +186,35 @@ export default function SelectTimeScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Calendar size={18} color={brownGold} />
               <Text style={{ fontSize: 13, fontWeight: "700", color: brownGold }}>
-                {isSauna ? (isSharedSauna ? "Shared Sauna" : `Private Sauna (${durationHours}h)`) : serviceType}
+                {isSaltRoom
+                  ? "Salt Room (1h)"
+                  : isSauna
+                  ? isSharedSauna
+                    ? "Shared Sauna"
+                    : `Private Sauna (${durationHours}h)`
+                  : serviceType}
               </Text>
             </View>
           </View>
         </Card>
 
         {/* Informative Banner */}
+        {isSaltRoom && (
+          <View style={styles.bufferBanner}>
+            <View style={styles.bufferIconBox}>
+              <Clock size={18} color={brownGold} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bufferTitle}>
+                Salt Room Session (1 Hour + 10 Mins Buffer)
+              </Text>
+              <Text style={styles.bufferDesc}>
+                Includes 10-minute automated ventilation and salt particle recharge buffer. Strict 2 persons per session.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {isSauna && !isSharedSauna && (
           <View style={styles.bufferBanner}>
             <View style={styles.bufferIconBox}>
@@ -234,7 +277,75 @@ export default function SelectTimeScreen() {
           </View>
         ) : !isBlocked && !isClosed ? (
           <View style={{ gap: 14 }}>
-            {/* 1. PRIVATE SAUNA SLOTS (3 Hours or 4 Hours matching duration choice) */}
+            {/* 1. SALT ROOM SLOTS (Identical to Web choose-time) */}
+            {isSaltRoom && (
+              <View style={{ gap: 12 }}>
+                {saltSlots.length === 0 ? (
+                  <Card style={styles.emptyCard}>
+                    <Text style={styles.emptyText}>No Salt Room slots available on {date}.</Text>
+                  </Card>
+                ) : (
+                  saltSlots.map((slot: any, idx: number) => {
+                    const label = `${slot.start_time} - ${slot.end_time}`;
+                    const isSelected = selectedTime === label;
+                    const remaining = slot.remaining_capacity ?? (slot.max_capacity - slot.booked_capacity);
+                    const isFullyBooked = slot.is_fully_booked || remaining <= 0;
+                    const notEnoughCapacity = !isFullyBooked && remaining < guestsCount;
+                    const isDisabled = isFullyBooked || notEnoughCapacity;
+
+                    return (
+                      <Pressable
+                        key={idx}
+                        disabled={isDisabled}
+                        style={[
+                          styles.slotCard,
+                          isSelected && styles.slotCardActive,
+                          isDisabled && styles.slotCardDisabled,
+                        ]}
+                        onPress={() => setSelectedTime(label)}
+                      >
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                          <View>
+                            <Text style={[styles.slotTimeText, isSelected && styles.slotTimeTextActive]}>
+                              {label}
+                            </Text>
+                            <Text style={styles.slotBufferText}>
+                              1h session • Buffer until {slot.buffer_end_time}
+                            </Text>
+                          </View>
+
+                          <View style={{ alignItems: "flex-end", gap: 4 }}>
+                            {isFullyBooked ? (
+                              <View style={styles.badgeSoldOut}>
+                                <Text style={styles.badgeSoldOutText}>Full (0/{slot.max_capacity || 2})</Text>
+                              </View>
+                            ) : notEnoughCapacity ? (
+                              <View style={styles.badgeWarn}>
+                                <Text style={styles.badgeWarnText}>Only {remaining} left</Text>
+                              </View>
+                            ) : (
+                              <View style={[styles.badgeAvailable, isSelected && { borderColor: brownGold }]}>
+                                <Text style={styles.badgeAvailableText}>
+                                  {remaining} {remaining === 1 ? "spot left" : "spots left"}
+                                </Text>
+                              </View>
+                            )}
+
+                            {isSelected && (
+                              <Text style={{ fontSize: 11, fontWeight: "700", color: brownGold }}>
+                                Selected
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })
+                )}
+              </View>
+            )}
+
+            {/* 2. PRIVATE SAUNA SLOTS */}
             {isSauna && !isSharedSauna && (
               <View style={{ gap: 12 }}>
                 {(() => {
@@ -286,7 +397,7 @@ export default function SelectTimeScreen() {
               </View>
             )}
 
-            {/* 2. SHARED SAUNA SLOTS (90 mins sessions with remaining capacity badge) */}
+            {/* 3. SHARED SAUNA SLOTS */}
             {isSauna && isSharedSauna && (
               <View style={{ gap: 12 }}>
                 {sharedSlots.length === 0 ? (
@@ -354,8 +465,8 @@ export default function SelectTimeScreen() {
               </View>
             )}
 
-            {/* 3. STANDARD / FALLBACK SLOTS */}
-            {!isSauna && (
+            {/* 4. STANDARD / FALLBACK SLOTS */}
+            {!isSauna && !isSaltRoom && (
               <View style={styles.grid}>
                 {(genericSlots.length > 0 ? genericSlots : [
                   "10:00 - 13:00",

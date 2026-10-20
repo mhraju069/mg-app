@@ -14,6 +14,7 @@ export interface BookingState {
   phone: string;
   specialRequests: string;
   paymentMethod: "card" | "ideal";
+  isFree?: boolean;
   // Extended sauna & customization options
   saunaType?: "private" | "shared";
   isSharedSauna?: boolean;
@@ -21,6 +22,16 @@ export interface BookingState {
   basePrice?: number;
   extraPersonFee?: number;
   selectedExtras?: Array<{ id: string; name: string; price: number }>;
+
+  // Extended saltroom & pass options
+  isSaltRoom?: boolean;
+  passType?: "single" | "10_session_pass" | "once_a_week" | "unlimited";
+  isPassCovered?: boolean;
+  planId?: number | string;
+  passId?: number | string;
+  purchaseId?: string;
+  paymentMode?: "card" | "pass" | "subscription" | "weekly_subscription" | "unlimited_subscription" | "ideal";
+  activeMembershipInfo?: any;
 }
 
 const initialState = {
@@ -43,16 +54,22 @@ const initialState = {
   isSharedSauna: false,
   durationHours: 3,
   basePrice: 90,
-  extraPersonFee: 50,
-  selectedExtras: [] as Array<{ id: string; name: string; price: number }>,
+  isSaltRoom: false,
+  passType: "single" as const,
+  isPassCovered: false,
+  planId: undefined as number | string | undefined,
+  passId: undefined as number | string | undefined,
+  purchaseId: undefined as string | undefined,
+  paymentMode: "card" as const,
+  activeMembershipInfo: null as any,
 };
 
 let listeners: Array<() => void> = [];
-let memoryState = { ...initialState };
+let memoryState: BookingState = { ...initialState };
 
 export const useBookingStore = {
-  getState: () => memoryState,
-  setState: (updater: Partial<typeof memoryState> | ((prev: typeof memoryState) => Partial<typeof memoryState>)) => {
+  getState: (): BookingState => memoryState,
+  setState: (updater: Partial<BookingState> | ((prev: BookingState) => Partial<BookingState>)) => {
     const next = typeof updater === "function" ? updater(memoryState) : updater;
     memoryState = { ...memoryState, ...next };
     listeners.forEach((l) => l());

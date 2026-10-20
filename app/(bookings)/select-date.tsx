@@ -9,15 +9,29 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { router } from "expo-router";
-import { ArrowRight } from "lucide-react-native";
-import React, { useState } from "react";
+import { ArrowRight, AlertCircle } from "lucide-react-native";
+import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 import { useBookingStore } from "@/utils/bookingStore";
 
 export default function SelectDateScreen() {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const storeState = useBookingStore.getState();
+  const [selectedDate, setSelectedDate] = useState<string | null>(storeState.date || null);
+  const [isBlocked, setIsBlocked] = useState<boolean>(false);
+  const [blockedMessage, setBlockedMessage] = useState<string | null>(null);
+
+  const background = useColor("background");
+  const textMuted = useColor("textMuted");
+  const border = useColor("border");
+  const brownGold = "#9B7C56";
+  const { t } = useTranslation();
+
+  // Today in YYYY-MM-DD
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  // Booked / fully blocked test dates
   const bookedDates = [
     "2026-02-04",
     "2026-02-11",
@@ -25,43 +39,29 @@ export default function SelectDateScreen() {
     "2026-03-25",
     "2026-02-07",
   ];
-  const background = useColor("background");
-  const textMuted = useColor("textMuted");
-  const border = useColor("border");
-  const { t } = useTranslation();
 
-  const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
+  // Check backend slot blocking when date selected
+  const handleDateSelect = async (dateStr: string) => {
+    setSelectedDate(dateStr);
+    setIsBlocked(false);
+    setBlockedMessage(null);
 
-  const markedDates = {
-    ...(selectedDate && {
-      [selectedDate]: {
-        customStyles: {
-          container: {
-            backgroundColor: "#9B7C56",
-            borderRadius: 20,
-          },
-          text: {
-            color: "white",
-            fontWeight: "700",
-          },
-        },
-      },
-    }),
-
-    ...bookedDates.reduce((acc, date) => {
-      acc[date] = {
-        customStyles: {
-          container: {
-            backgroundColor: "#E5E7EB",
-            borderRadius: 20,
-          },
-          text: {
-            color: "#9CA3AF",
-          },
-        },
-      };
-      return acc;
-    }, {} as any),
+    try {
+      const serviceType = storeState.serviceType === "saltroom" ? "saltroom" : storeState.serviceType || "sauna";
+      const res = await fetch(`http://localhost/api/services/slots/?type=${serviceType}&date=${dateStr}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.is_blocked) {
+          setIsBlocked(true);
+          setBlockedMessage(json.message || "This date is currently blocked for reservations.");
+        } else if (json.is_closed || json?.data?.is_closed) {
+          setIsBlocked(true);
+          setBlockedMessage(json?.data?.info || json.message || "Service is closed on this date.");
+        }
+      }
+    } catch (e) {
+      console.warn("Date slot check notice:", e);
+    }
   };
 
   return (
@@ -69,11 +69,15 @@ export default function SelectDateScreen() {
       <BackHeader />
 
       <Layout>
-        <Header title={t("createBooking.selectDate.title")} subtitle={t("createBooking.selectDate.subtitle")} />
+        <Header
+          title={t("createBooking.selectDate.title") || "Select Date"}
+          subtitle={t("createBooking.selectDate.subtitle") || "Choose an available reservation date"}
+        />
 
         <Calendar
           hideExtraDays
           enableSwipeMonths
+          minDate={todayStr}
           renderHeader={(date) => {
             const month = date.toString("MMMM yyyy");
 
@@ -81,7 +85,6 @@ export default function SelectDateScreen() {
               <View style={styles.customHeader}>
                 <Text style={styles.monthName}>{month}</Text>
 
-                {/* 👇 Your extra text here */}
                 <View style={{ flexDirection: "row", gap: 18, marginTop: 12 }}>
                   <View
                     style={{
@@ -107,7 +110,7 @@ export default function SelectDateScreen() {
                         color: textMuted,
                       }}
                     >
-                      {t("createBooking.selectDate.available")}
+                      {t("createBooking.selectDate.available") || "Available"}
                     </Text>
                   </View>
                   <View
@@ -132,7 +135,7 @@ export default function SelectDateScreen() {
                         color: textMuted,
                       }}
                     >
-                      {t("createBooking.selectDate.booked")}
+                      {t("createBooking.selectDate.booked") || "Unavailable"}
                     </Text>
                   </View>
                 </View>
@@ -141,24 +144,27 @@ export default function SelectDateScreen() {
           }}
           dayComponent={({ date }) => {
             if (!date) return null;
-            const isSelected = selectedDate === date.dateString;
-            const isBooked = bookedDates.includes(date.dateString);
+            const dateStr = date.dateString;
+            const isPast = dateStr < todayStr;
+            const isBooked = bookedDates.includes(dateStr);
+            const isSelected = selectedDate === dateStr;
+            const isDisabled = isPast || isBooked;
 
             return (
               <Pressable
-                disabled={isBooked}
-                onPress={() => setSelectedDate(date.dateString)}
+                disabled={isDisabled}
+                onPress={() => handleDateSelect(dateStr)}
                 style={[
                   styles.dayCircle,
                   isSelected && styles.selectedCircle,
-                  isBooked && styles.bookedCircle,
+                  isDisabled && styles.bookedCircle,
                 ]}
               >
                 <Text
                   style={[
                     styles.dayText,
-                    isSelected && { color: "white" },
-                    isBooked && { color: "#9CA3AF" },
+                    isSelected && { color: "white", fontWeight: "700" },
+                    isDisabled && { color: "#CBD5E1" },
                   ]}
                 >
                   {date.day}
@@ -186,18 +192,25 @@ export default function SelectDateScreen() {
           }}
         />
 
+        {isBlocked && (
+          <View style={styles.blockedAlert}>
+            <AlertCircle size={18} color="#DC2626" />
+            <Text style={styles.blockedAlertText}>{blockedMessage}</Text>
+          </View>
+        )}
+
         <Card style={styles.selectionSummary}>
           <Text variant="caption" style={{ color: textMuted }}>
-            {t("createBooking.selectDate.selectedDate")}
+            {t("createBooking.selectDate.selectedDate") || "Selected Date"}
           </Text>
-          <Text style={styles.summaryValue}>{selectedDate}</Text>
+          <Text style={styles.summaryValue}>{selectedDate || "Please pick a date"}</Text>
         </Card>
       </Layout>
 
       <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
         <Button
           onPress={() => {
-            if (selectedDate) {
+            if (selectedDate && !isBlocked) {
               useBookingStore.setState({ date: selectedDate });
               router.push({
                 pathname: "/(bookings)/select-time",
@@ -205,9 +218,9 @@ export default function SelectDateScreen() {
               });
             }
           }}
-          disabled={!selectedDate}
+          disabled={!selectedDate || isBlocked}
         >
-          <Text>{t("createBooking.selectDate.continue")}</Text>
+          <Text>{t("createBooking.selectDate.continue") || "Continue"}</Text>
           <ArrowRight size={18} />
         </Button>
       </View>
@@ -216,22 +229,9 @@ export default function SelectDateScreen() {
 }
 
 const styles = StyleSheet.create({
-  calendarCard: {
-    padding: 20,
-    borderRadius: 24,
-  },
   dayText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  availableIndicator: {
-    position: "absolute",
-    top: 4,
-    right: 4,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#FCD34D",
   },
   selectionSummary: {
     marginTop: 20,
@@ -243,29 +243,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "700",
     fontFamily: Fonts.title,
+    color: "#9B7C56",
   },
   footer: {
     padding: 24,
     paddingBottom: 40,
     borderTopWidth: 1,
-  },
-  continueButton: {
-    backgroundColor: "#9B7C56",
-    borderRadius: 30,
-    height: 56,
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 8,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  calendar: {
-    borderRadius: 24,
-    paddingBottom: 10,
   },
   dayCircle: {
     width: 36,
@@ -277,7 +260,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#F9E4D0",
   },
-
   selectedCircle: {
     backgroundColor: "#9B7C56",
     borderWidth: 1,
@@ -288,24 +270,34 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
-
   bookedCircle: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: "#F1F5F9",
+    borderColor: "#E2E8F0",
   },
   customHeader: {
     paddingVertical: 10,
     alignItems: "center",
   },
-
   monthName: {
     fontSize: 18,
     fontWeight: "700",
     fontFamily: Fonts.title,
   },
-
-  headerSubText: {
+  blockedAlert: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  blockedAlertText: {
+    color: "#DC2626",
     fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: 4,
+    fontWeight: "600",
+    flex: 1,
   },
 });
