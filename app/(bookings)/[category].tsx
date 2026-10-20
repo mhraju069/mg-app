@@ -83,6 +83,22 @@ export default function CategoryScreen() {
           const apiData = resJson?.data;
 
           if (isMounted && apiData) {
+            if (cleanCategory === "lunchroom") {
+              useBookingStore.setState({
+                serviceId: "lunchroom-reservation",
+                serviceType: "lunchroom",
+                serviceTitle: "Lunchroom Table Reservation",
+                serviceSubtitle: "Nourishment for body and soul",
+                price: 0,
+                isFree: true,
+                durationHours: undefined,
+                guestsCount: 2,
+                selectedExtras: [],
+              });
+              router.replace("/(bookings)/information");
+              return;
+            }
+
             if (isSaunaCategory) {
               setSaunaApiData(apiData);
               return;

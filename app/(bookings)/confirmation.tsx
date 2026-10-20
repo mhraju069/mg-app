@@ -84,6 +84,7 @@ export default function ConfirmationScreen() {
           }
         }
 
+        const celebration = storeState.celebration;
         const res = await fetch("http://localhost/api/bookings/lunchroom/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -96,6 +97,16 @@ export default function ConfirmationScreen() {
             phone: storeState.phone || "+31612345678",
             total_price: "0.00",
             special_request: storeState.specialRequests || undefined,
+            ...(celebration?.isCelebrating
+              ? {
+                  celebration_type: celebration.occasion || undefined,
+                  celebration_date: storeState.date || undefined,
+                  name_of_celebrant: celebration.celebrantName || undefined,
+                  age_of_celebrant: celebration.age ? parseInt(String(celebration.age), 10) : undefined,
+                  hobbies: celebration.hobbiesInterests || undefined,
+                  celebration_details: celebration.otherDetails || undefined,
+                }
+              : {}),
           }),
         });
 

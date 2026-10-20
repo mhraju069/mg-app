@@ -50,6 +50,15 @@ export interface BookingState {
     additionalInfo?: string;
     features?: string[];
   };
+  // Extended celebration options (Lunchroom & Packages)
+  celebration?: {
+    isCelebrating: boolean;
+    occasion?: string;
+    celebrantName?: string;
+    age?: string | number;
+    hobbiesInterests?: string;
+    otherDetails?: string;
+  };
 }
 
 const initialState = {

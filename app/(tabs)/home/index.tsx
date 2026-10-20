@@ -38,6 +38,7 @@ import { Pressable, StyleSheet, Linking, ActivityIndicator } from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Layout } from "@/components/layout/Layout";
 import { useTranslation } from "react-i18next";
+import { useBookingStore } from "@/utils/bookingStore";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
   sauna: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
@@ -399,12 +400,28 @@ export default function HomeScreen() {
               return (
                 <Pressable
                   key={item.id}
-                  onPress={() =>
+                  onPress={() => {
+                    if (serviceType === "lunchroom") {
+                      useBookingStore.setState({
+                        serviceId: "lunchroom-reservation",
+                        serviceType: "lunchroom",
+                        serviceTitle: "Lunchroom Table Reservation",
+                        serviceSubtitle: "Nourishment for body and soul",
+                        price: 0,
+                        isFree: true,
+                        durationHours: undefined,
+                        guestsCount: 2,
+                        selectedExtras: [],
+                      });
+                      router.push("/(bookings)/information");
+                      return;
+                    }
+
                     router.push({
                       pathname: "/(bookings)/[category]",
                       params: { category: serviceType || "sauna" },
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Card style={stylesServiceCard.card}>
                     {/* Service Image with Dark Gradient Overlay */}
