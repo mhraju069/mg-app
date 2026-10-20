@@ -417,6 +417,15 @@ export default function HomeScreen() {
                       return;
                     }
 
+                    if (
+                      serviceType === "eventspace" ||
+                      serviceType === "event" ||
+                      serviceType === "events"
+                    ) {
+                      router.push("/(bookings)/eventspace");
+                      return;
+                    }
+
                     router.push({
                       pathname: "/(bookings)/[category]",
                       params: { category: serviceType || "sauna" },

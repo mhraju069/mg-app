@@ -21,6 +21,10 @@ export default function BookingLayout() {
         options={{ title: "Your Information" }}
       />
       <Stack.Screen
+        name="eventspace"
+        options={{ title: "Events & Party Room" }}
+      />
+      <Stack.Screen
         name="confirmation"
         options={{ title: "Confirm Booking" }}
       />

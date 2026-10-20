@@ -99,6 +99,15 @@ export default function CategoryScreen() {
               return;
             }
 
+            if (
+              cleanCategory === "eventspace" ||
+              cleanCategory === "event" ||
+              cleanCategory === "events"
+            ) {
+              router.replace("/(bookings)/eventspace");
+              return;
+            }
+
             if (isSaunaCategory) {
               setSaunaApiData(apiData);
               return;
