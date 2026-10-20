@@ -29,9 +29,27 @@ export interface BookingState {
   isPassCovered?: boolean;
   planId?: number | string;
   passId?: number | string;
-  purchaseId?: string;
   paymentMode?: "card" | "pass" | "subscription" | "weekly_subscription" | "unlimited_subscription" | "ideal";
   activeMembershipInfo?: any;
+  // Extended activity options
+  isActivity?: boolean;
+  activityDetails?: {
+    id: number | string;
+    name: string;
+    category?: string;
+    description?: string;
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+    price: number;
+    maxParticipants?: number;
+    bookedParticipants?: number;
+    availableSlots?: number;
+    bookedSlots?: number;
+    teacherHost?: string;
+    additionalInfo?: string;
+    features?: string[];
+  };
 }
 
 const initialState = {

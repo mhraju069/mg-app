@@ -149,6 +149,25 @@ export default function ConfirmationScreen() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      } else if (storeState.serviceType === "activity" || Boolean(storeState.activityDetails)) {
+        const actId = storeState.activityDetails?.id || storeState.serviceId || 1;
+        const parsedActId = typeof actId === "string" && !isNaN(Number(actId)) ? parseInt(actId, 10) : actId;
+
+        const payload = {
+          activity: parsedActId,
+          capacity: storeState.guestsCount || 1,
+          name: cardHolder.trim() || storeState.fullName || "Guest",
+          email: storeState.email || "guest@example.com",
+          phone: storeState.phone || "+31612345678",
+          special_request: storeState.specialRequests || undefined,
+          total_price: priceVal.toFixed(2),
+        };
+
+        bookingRes = await fetch("http://localhost/api/bookings/activities/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
       } else if (storeState.serviceType === "saltroom" || storeState.serviceType === "salt_room") {
         const payload = {
           name: cardHolder.trim() || storeState.fullName || "Guest",
@@ -424,6 +443,13 @@ export default function ConfirmationScreen() {
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>
                 Shared Sauna ({guestsCount} × €30.00)
+              </Text>
+              <Text style={styles.priceValue}>€{priceVal.toFixed(2)}</Text>
+            </View>
+          ) : storeState.serviceType === "activity" || Boolean(storeState.activityDetails) ? (
+            <View style={styles.priceRow}>
+              <Text style={styles.priceLabel}>
+                {storeState.serviceTitle} ({guestsCount} × €{((storeState.activityDetails?.price || priceVal / guestsCount) || 15).toFixed(2)})
               </Text>
               <Text style={styles.priceValue}>€{priceVal.toFixed(2)}</Text>
             </View>

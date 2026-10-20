@@ -96,18 +96,33 @@ export default function CategoryScreen() {
             let mappedItems: any[] = [];
             if (cleanCategory === "activity" || cleanCategory === "activities") {
               const acts = Array.isArray(apiData) ? apiData : apiData.activities || [];
-              mappedItems = acts.map((act: any) => ({
-                id: act.id,
-                title: act.title || "Yoga & Movement Session",
-                subtitle: act.host ? `Host: ${act.host}` : "Guided movement in our serenity studio",
-                description: act.description || "Find your center with guided movement.",
-                price: parseFloat(String(act.price || 15)),
-                capacity: `Capacity: ${act.capacity || 10} persons`,
-                duration: act.open_time && act.close_time ? `${act.open_time.slice(0, 5)} - ${act.close_time.slice(0, 5)}` : "60 mins",
-                requirement: act.date || "Scheduled class",
-                rating: 4.9,
-                image: act.images || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2070&auto=format&fit=crop",
-              }));
+              mappedItems = acts.map((act: any) => {
+                const availableSlots = typeof act.available_slots === "number" ? act.available_slots : (act.capacity ? Math.max(0, act.capacity - (act.booked_slots || 0)) : 10);
+                const isSoldOut = availableSlots <= 0 || act.is_available === false;
+                const featuresList = (act.features || []).map((f: any) => typeof f === "string" ? f : (f.feature || f.feature_en || "")).filter(Boolean);
+
+                return {
+                  id: act.id,
+                  title: act.title || "Yoga & Movement Session",
+                  subtitle: act.subtitle || (act.host ? `Host: ${act.host}` : "Guided movement in our serenity studio"),
+                  description: act.description || "Find your center with guided movement.",
+                  price: parseFloat(String(act.price || 15)),
+                  capacity: `Max ${act.capacity || 10}`,
+                  rawCapacity: act.capacity || 10,
+                  availableSlots: availableSlots,
+                  bookedSlots: act.booked_slots || 0,
+                  isSoldOut: isSoldOut,
+                  host: act.host,
+                  features: featuresList,
+                  date: act.date,
+                  openTime: act.open_time,
+                  closeTime: act.close_time,
+                  duration: act.open_time && act.close_time ? `${act.open_time.slice(0, 5)} - ${act.close_time.slice(0, 5)}` : "60 mins",
+                  requirement: act.date ? `${act.date}` : "Scheduled class",
+                  rating: 4.9,
+                  image: act.images || "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2070&auto=format&fit=crop",
+                };
+              });
             } else if (cleanCategory === "package" || cleanCategory === "packages") {
               const pkgs = Array.isArray(apiData) ? apiData : apiData.packages || [];
               mappedItems = pkgs.map((pkg: any) => ({
@@ -141,7 +156,8 @@ export default function CategoryScreen() {
 
             if (mappedItems.length > 0) {
               setServicesList(mappedItems);
-              setSelectedService(mappedItems[0]);
+              const firstAvailable = mappedItems.find((item: any) => !item.isSoldOut) || null;
+              setSelectedService(firstAvailable);
               return;
             }
           }
@@ -436,7 +452,45 @@ export default function CategoryScreen() {
       return;
     }
 
-    // 3. Other services continue flow
+    // 3. Activity Continue Flow (Matches Web Activities -> Information Flow)
+    if (cleanCategory === "activity" || cleanCategory === "activities") {
+      if (!selectedService || selectedService.isSoldOut) return;
+
+      useBookingStore.setState({
+        serviceId: selectedService.id,
+        serviceType: "activity",
+        isActivity: true,
+        serviceTitle: selectedService.title,
+        serviceSubtitle: selectedService.subtitle || "",
+        serviceImage: selectedService.image || "",
+        price: selectedService.price || 15,
+        isFree: false,
+        date: selectedService.date || new Date().toISOString().split("T")[0],
+        timeSlot: `${selectedService.openTime?.slice(0, 5) || "09:00"} - ${selectedService.closeTime?.slice(0, 5) || "10:30"}`,
+        guestsCount: 1,
+        activityDetails: {
+          id: selectedService.id,
+          name: selectedService.title,
+          category: selectedService.category || "Yoga",
+          description: selectedService.description,
+          date: selectedService.date,
+          startTime: selectedService.openTime?.slice(0, 5) || "09:00",
+          endTime: selectedService.closeTime?.slice(0, 5) || "10:30",
+          price: selectedService.price || 15,
+          maxParticipants: selectedService.rawCapacity || 10,
+          bookedParticipants: selectedService.bookedSlots || 0,
+          availableSlots: selectedService.availableSlots,
+          bookedSlots: selectedService.bookedSlots,
+          teacherHost: selectedService.host,
+          features: selectedService.features,
+        },
+      });
+
+      router.push("/(bookings)/information");
+      return;
+    }
+
+    // 4. Other services continue flow (Packages, Lunchroom)
     if (!selectedService) return;
 
     useBookingStore.setState({
@@ -1077,31 +1131,47 @@ export default function CategoryScreen() {
           <View style={styles.list}>
             {servicesList.map((service: any) => {
               const isSelected = selectedService?.id === service.id;
+              const isActivity = cleanCategory === "activity" || cleanCategory === "activities";
+              const isSoldOut = Boolean(service.isSoldOut);
 
               return (
                 <Pressable
                   key={service.id}
-                  onPress={() => setSelectedService(service)}
+                  disabled={isSoldOut}
+                  onPress={() => !isSoldOut && setSelectedService(service)}
                 >
                   <Card
                     style={[
                       styles.serviceCard,
-                      isSelected && {
+                      isSelected && !isSoldOut && {
                         borderWidth: 2.5,
                         borderColor: brownGold,
                       },
+                      isSoldOut && styles.serviceCardSoldOut,
                     ]}
                   >
                     <View style={styles.imageContainer}>
                       <Image
                         source={{ uri: service.image }}
-                        style={styles.serviceImage}
+                        style={[styles.serviceImage, isSoldOut && { opacity: 0.6 }]}
                       />
+
+                      {/* Web-identical SOLD OUT banner overlay */}
+                      {isSoldOut ? (
+                        <View style={styles.soldOutOverlay}>
+                          <View style={styles.soldOutBadge}>
+                            <Text style={styles.soldOutBadgeText}>SOLD OUT</Text>
+                          </View>
+                        </View>
+                      ) : null}
+
+                      {/* Rating Badge */}
                       <View style={styles.ratingBadge}>
                         <Star size={12} color="#EAB308" fill="#EAB308" />
                         <Text style={styles.ratingText}>{service.rating || 4.9}</Text>
                       </View>
-                      {isSelected && (
+
+                      {isSelected && !isSoldOut && (
                         <View style={styles.selectedBadge}>
                           <Check size={14} color="#fff" strokeWidth={3} />
                         </View>
@@ -1109,10 +1179,24 @@ export default function CategoryScreen() {
                     </View>
 
                     <View style={styles.serviceInfo}>
-                      <Text style={styles.serviceTitle}>{service.title}</Text>
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
+                        <Text style={[styles.serviceTitle, { flex: 1 }]}>{service.title}</Text>
+                        {/* Radio selection circle */}
+                        <View
+                          style={[
+                            styles.activityRadio,
+                            isSelected && !isSoldOut && styles.activityRadioActive,
+                            isSoldOut && { opacity: 0.4 },
+                          ]}
+                        >
+                          {isSelected && !isSoldOut && <Check size={12} color="#fff" strokeWidth={3} />}
+                        </View>
+                      </View>
+
                       {service.subtitle ? (
                         <Text style={styles.serviceSubtitle}>{service.subtitle}</Text>
                       ) : null}
+
                       <Text
                         style={[styles.serviceDescription, { color: textMuted }]}
                         numberOfLines={3}
@@ -1120,26 +1204,59 @@ export default function CategoryScreen() {
                         {service.description}
                       </Text>
 
+                      {/* Detail metadata: Date/Time, Capacity & Live Available Slots */}
                       <View style={styles.detailsGrid}>
-                        {service.capacity ? (
-                          <View style={styles.detailItem}>
-                            <Users size={16} color={brownGold} />
-                            <Text variant="caption" style={styles.detailText}>
-                              {service.capacity}
-                            </Text>
-                          </View>
-                        ) : null}
                         {service.duration ? (
                           <View style={styles.detailItem}>
-                            <Clock size={16} color={brownGold} />
+                            <Clock size={15} color={brownGold} />
                             <Text variant="caption" style={styles.detailText}>
-                              {service.duration}
+                              {service.date ? `${service.date} • ` : ""}{service.duration}
                             </Text>
                           </View>
                         ) : null}
-                        {service.requirement ? (
+
+                        {service.capacity ? (
+                          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 2 }}>
+                            <View style={styles.detailItem}>
+                              <Users size={15} color={brownGold} />
+                              <Text variant="caption" style={styles.detailText}>
+                                {service.capacity}
+                              </Text>
+                            </View>
+
+                            {/* Remaining / Available Slots Badge */}
+                            {isActivity && (
+                              <View
+                                style={[
+                                  styles.slotsBadge,
+                                  isSoldOut ? styles.slotsBadgeSoldOut : styles.slotsBadgeAvailable,
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.slotsBadgeText,
+                                    isSoldOut ? styles.slotsBadgeTextSoldOut : styles.slotsBadgeTextAvailable,
+                                  ]}
+                                >
+                                  {isSoldOut
+                                    ? "0 Slots Available"
+                                    : `${service.availableSlots} of ${service.rawCapacity} Slots Available`}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                        ) : null}
+
+                        {service.host ? (
                           <View style={styles.detailItem}>
-                            <ShieldCheck size={16} color={brownGold} />
+                            <ShieldCheck size={15} color={brownGold} />
+                            <Text variant="caption" style={styles.detailText}>
+                              Host: {service.host}
+                            </Text>
+                          </View>
+                        ) : service.requirement ? (
+                          <View style={styles.detailItem}>
+                            <ShieldCheck size={15} color={brownGold} />
                             <Text variant="caption" style={styles.detailText}>
                               {service.requirement}
                             </Text>
@@ -1147,12 +1264,29 @@ export default function CategoryScreen() {
                         ) : null}
                       </View>
 
+                      {/* Features pills if available */}
+                      {Array.isArray(service.features) && service.features.length > 0 && (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                          {service.features.map((feat: string, fIdx: number) => (
+                            <View key={fIdx} style={styles.activityFeaturePill}>
+                              <Text style={{ fontSize: 11, color: brownGold, fontWeight: "700" }}>✓</Text>
+                              <Text style={styles.activityFeaturePillText}>{feat}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
                       <View style={styles.priceRow}>
-                        <Text style={styles.price}>
-                          {service.isFree || service.price === 0
-                            ? "Free Reservation"
-                            : `€${service.price}`}
-                        </Text>
+                        <View>
+                          <Text style={styles.price}>
+                            {service.isFree || service.price === 0
+                              ? "Free Reservation"
+                              : `€${service.price.toFixed(0)}`}
+                            <Text style={{ fontSize: 12, fontWeight: "500", color: "#64748B" }}>
+                              {isActivity ? " / person" : ""}
+                            </Text>
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </Card>
@@ -1737,6 +1871,89 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     fontFamily: Fonts.serif,
     color: "#3D2E24",
+  },
+  serviceCardSoldOut: {
+    opacity: 0.75,
+    backgroundColor: "#FBF9F6",
+  },
+  soldOutOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  soldOutBadge: {
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  soldOutBadgeText: {
+    color: "#ffffff",
+    fontWeight: "900",
+    fontSize: 13,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  activityRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: "#CBD5E1",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  activityRadioActive: {
+    borderColor: "#9B7C56",
+    backgroundColor: "#9B7C56",
+  },
+  slotsBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  slotsBadgeAvailable: {
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+  },
+  slotsBadgeSoldOut: {
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  slotsBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  slotsBadgeTextAvailable: {
+    color: "#059669",
+  },
+  slotsBadgeTextSoldOut: {
+    color: "#DC2626",
+  },
+  activityFeaturePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: "#F8F5F1",
+    borderWidth: 1,
+    borderColor: "#EFE8DF",
+  },
+  activityFeaturePillText: {
+    fontSize: 11,
+    color: "#475569",
+    fontWeight: "600",
   },
   footer: {
     padding: 20,
