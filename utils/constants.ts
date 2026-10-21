@@ -217,3 +217,15 @@ export const upcomingBookings = [
     type: "launchroom",
   },
 ];
+
+export const formatImageUrl = (
+  imageSrc: string | null | undefined,
+  fallback?: string
+): string => {
+  if (!imageSrc) return fallback || "";
+  if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://") || imageSrc.startsWith("file://") || imageSrc.startsWith("blob:") || imageSrc.startsWith("data:")) {
+    return imageSrc;
+  }
+  const cleanPath = imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`;
+  return `http://localhost${cleanPath}`;
+};

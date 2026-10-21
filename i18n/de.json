@@ -168,7 +168,8 @@
       "sun": "Sonntag",
       "closed": "geschlossen",
       "phoneTitle": "Telefonnummer",
-      "phone": "+31 (0)72 303 05 48"
+      "phone": "+31 (0)72 303 05 48",
+      "emailTitle": "E-Mail"
     },
     "bookingFooter": {
       "title": "Beginnen Sie Ihre Wellness-Reise",

@@ -57,7 +57,19 @@ export default function PreviewProfileScreen() {
       <Layout>
         <Header title="Profile" subtitle="Manage your personal information" />
         <View style={styles.avatarSection}>
-          <Avatar editable={false} />
+          <Avatar
+            editable={false}
+            defaultValue={
+              profile?.image ||
+              profile?.avatar ||
+              profile?.profile_picture ||
+              (profile?.name
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    profile.name
+                  )}&background=9B7C56&color=fff&size=160`
+                : undefined)
+            }
+          />
         </View>
 
         {loading ? (

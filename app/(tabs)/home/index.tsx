@@ -27,6 +27,7 @@ import {
   Wind,
   MapPin,
   Phone,
+  Mail,
   Instagram,
   Facebook,
   Compass,
@@ -57,6 +58,8 @@ import { useTranslation } from "react-i18next";
 import { useBookingStore } from "@/utils/bookingStore";
 import { useAuthStore } from "@/utils/authStore";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
+import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
+import { formatImageUrl } from "@/utils/constants";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
   sauna: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
@@ -95,6 +98,13 @@ export default function HomeScreen() {
   const [sessionPasses, setSessionPasses] = useState<any[]>([]);
   const [activePlanTab, setActivePlanTab] = useState<"subscriptions" | "passes">("subscriptions");
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
+  const [nextVisit, setNextVisit] = useState<DashboardBookingItem | null>(null);
+  const [loadingNextVisit, setLoadingNextVisit] = useState<boolean>(true);
+  const [contactInfo, setContactInfo] = useState<{
+    address?: string;
+    phone?: string;
+    email?: string;
+  } | null>(null);
 
   // Purchase Modal State (Direct checkout for Plans and Session Passes)
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
@@ -112,15 +122,23 @@ export default function HomeScreen() {
   const [purchaseSuccessData, setPurchaseSuccessData] = useState<any | null>(null);
   const [stripeRefs, setStripeRefs] = useState<{ elements: any; stripe: any } | null>(null);
 
+  // User profile state synchronized with Auth Store and backend API
+  const [currentUser, setCurrentUser] = useState<any>(useAuthStore.getState().user);
+  const [isLoggedIn, setIsLoggedIn] = useState(useAuthStore.getState().isAuthenticated);
+
   // Sync user info from auth store
   useEffect(() => {
     const auth = useAuthStore.getState();
     if (auth.user) {
+      setCurrentUser(auth.user);
+      setIsLoggedIn(auth.isAuthenticated);
       setCheckoutName(auth.user.name || "");
       setCheckoutEmail(auth.user.email || "");
     }
     return useAuthStore.subscribe(() => {
       const state = useAuthStore.getState();
+      setCurrentUser(state.user);
+      setIsLoggedIn(state.isAuthenticated);
       if (state.user) {
         setCheckoutName(state.user.name || "");
         setCheckoutEmail(state.user.email || "");
@@ -402,6 +420,52 @@ export default function HomeScreen() {
       }
     };
 
+    const fetchDashboardData = async () => {
+      try {
+        const auth = useAuthStore.getState();
+        if (auth.accessToken) {
+          // Fetch fresh user profile from API
+          try {
+            const userRes = await fetch("http://localhost/api/auth/user/", {
+              headers: {
+                Authorization: `Bearer ${auth.accessToken}`,
+              },
+            });
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              if (isMounted) {
+                setCurrentUser(userData);
+                useAuthStore.setUser(userData);
+              }
+            }
+          } catch (err) {
+            console.warn("Could not fetch user profile:", err);
+          }
+        }
+
+        const data = await dashboardApi.getUserDashboard();
+        if (isMounted && data?.home?.next_visit) {
+          setNextVisit(data.home.next_visit);
+        }
+      } catch (e) {
+        console.warn("Could not fetch user dashboard for next visit:", e);
+      }
+    };
+
+    const fetchContactInfo = async () => {
+      try {
+        const res = await fetch("http://localhost/api/others/contact-info/");
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted && json?.data) {
+            setContactInfo(json.data);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch contact info:", e);
+      }
+    };
+
     Promise.all([
       fetchServices().finally(() => {
         if (isMounted) setLoadingServices(false);
@@ -409,6 +473,10 @@ export default function HomeScreen() {
       fetchPlansAndPasses().finally(() => {
         if (isMounted) setLoadingPlans(false);
       }),
+      fetchDashboardData().finally(() => {
+        if (isMounted) setLoadingNextVisit(false);
+      }),
+      fetchContactInfo(),
     ]);
 
     return () => {
@@ -457,18 +525,29 @@ export default function HomeScreen() {
     <Layout title={t("tabs.home")}>
       {/* User Header */}
       <View style={styles.header}>
-        <View style={styles.userInfo}>
+        <Pressable
+          style={styles.userInfo}
+          onPress={() => router.push(isLoggedIn ? "/(tabs)/profile/preview" : "/(auth)/login")}
+        >
           <Image
-            source="https://i.pravatar.cc/150?u=akash"
+            source={
+              (currentUser?.image || currentUser?.avatar || currentUser?.profile_picture)
+                ? formatImageUrl(currentUser.image || currentUser.avatar || currentUser.profile_picture)
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    currentUser?.name || (isLoggedIn ? "Member" : "Guest User")
+                  )}&background=9B7C56&color=fff&size=150`
+            }
             style={styles.avatar}
           />
           <View>
             <Text variant="caption" style={styles.welcomeText}>
               {t("home.welcomeBack")}
             </Text>
-            <Text style={styles.userName}>Akash</Text>
+            <Text style={styles.userName} numberOfLines={1}>
+              {currentUser?.name || (isLoggedIn ? "Member" : "Guest User")}
+            </Text>
           </View>
-        </View>
+        </Pressable>
         <Pressable
           style={styles.notificationButton}
           onPress={() => router.push("/notifications")}
@@ -511,48 +590,66 @@ export default function HomeScreen() {
       />
 
       {/* Next Visit Card */}
-      <View style={styles.nextVisitCard}>
-        <View style={styles.cardHeader}>
-          <View style={styles.nextVisitBadge}>
-            <Sparkles size={16} color="white" />
-            <Text style={styles.nextVisitLabel}>
-              {t("home.nextVisit.label")}
-            </Text>
+      {nextVisit ? (
+        <View style={styles.nextVisitCard}>
+          <View style={styles.cardHeader}>
+            <View style={styles.nextVisitBadge}>
+              <Sparkles size={16} color="white" />
+              <Text style={styles.nextVisitLabel}>
+                {t("home.nextVisit.label")}
+              </Text>
+            </View>
+            <Text style={styles.serviceName}>{nextVisit.service_name || "Wellness Session"}</Text>
           </View>
-          <Text style={styles.serviceName}>Private Sauna</Text>
-        </View>
 
-        <View style={styles.cardDetails}>
-          <DetailItem
-            icon={Calendar}
-            label={t("booking.details.labels.date")}
-            value="Sun 15 Feb"
-            iconBg={lightBeige}
-          />
-          <DetailItem
-            icon={Clock}
-            label={t("booking.details.labels.time")}
-            value="10:00 AM"
-            iconBg={lightBeige}
-          />
-          <DetailItem
-            icon={Users}
-            label={t("booking.details.labels.guests")}
-            value="2 people"
-            iconBg={lightBeige}
-          />
+          <View style={styles.cardDetails}>
+            <DetailItem
+              icon={Calendar}
+              label={t("booking.details.labels.date")}
+              value={nextVisit.date}
+              iconBg={lightBeige}
+            />
+            <DetailItem
+              icon={Clock}
+              label={t("booking.details.labels.time")}
+              value={nextVisit.time ? (nextVisit.time.length === 5 ? `${nextVisit.time}` : nextVisit.time) : "Flexible"}
+              iconBg={lightBeige}
+            />
+            <DetailItem
+              icon={Users}
+              label={t("booking.details.labels.guests")}
+              value={`${nextVisit.guests} ${nextVisit.guests > 1 ? "people" : "person"}`}
+              iconBg={lightBeige}
+            />
 
-          <Button
-            style={styles.viewDetailsButton}
-            onPress={() => router.push("/(tabs)/booking/1")}
-          >
-            <Text style={styles.viewDetailsText}>
-              {t("home.nextVisit.details")}
-            </Text>
-            <ChevronRight size={18} color={"#6B5D54"} />
-          </Button>
+            <Button
+              style={styles.viewDetailsButton}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/booking/[id]",
+                  params: {
+                    id: nextVisit.booking_id,
+                    type: nextVisit.service_type,
+                    title: nextVisit.service_name,
+                    date: nextVisit.date,
+                    time: nextVisit.time,
+                    guests: String(nextVisit.guests),
+                    status: nextVisit.status,
+                    paymentStatus: nextVisit.payment_status,
+                    total_price: nextVisit.total_price,
+                    access_code: nextVisit.access_code,
+                  },
+                })
+              }
+            >
+              <Text style={styles.viewDetailsText}>
+                {t("home.nextVisit.details")}
+              </Text>
+              <ChevronRight size={18} color={"#6B5D54"} />
+            </Button>
+          </View>
         </View>
-      </View>
+      ) : null}
 
       {/* Quick Actions */}
       <View style={styles.sectionHeader}>
@@ -928,7 +1025,7 @@ export default function HomeScreen() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{t("home.contact.title")}</Text>
         <Card style={styles.contactCard}>
-          {/* Address & Phone */}
+          {/* Address & Phone & Email */}
           <View style={styles.contactRow}>
             <View style={styles.contactIconBg}>
               <MapPin size={22} color={brownGold} />
@@ -938,14 +1035,17 @@ export default function HomeScreen() {
                 {t("home.contact.addressTitle")}
               </Text>
               <Text style={styles.contactValue}>
-                {t("home.contact.address")}
+                {contactInfo?.address || t("home.contact.address")}
               </Text>
             </View>
           </View>
 
           <Pressable
             style={styles.contactRow}
-            onPress={() => Linking.openURL(`tel:${t("home.contact.phone").replace(/[^0-9+]/g, "")}`)}
+            onPress={() => {
+              const phoneVal = contactInfo?.phone || t("home.contact.phone");
+              Linking.openURL(`tel:${phoneVal.replace(/[^0-9+]/g, "")}`);
+            }}
           >
             <View style={styles.contactIconBg}>
               <Phone size={22} color={brownGold} />
@@ -955,10 +1055,32 @@ export default function HomeScreen() {
                 {t("home.contact.phoneTitle")}
               </Text>
               <Text style={styles.contactValueHighlight}>
-                {t("home.contact.phone")}
+                {contactInfo?.phone || t("home.contact.phone")}
               </Text>
             </View>
           </Pressable>
+
+          {(contactInfo?.email || t("home.contact.emailTitle")) && (
+            <Pressable
+              style={styles.contactRow}
+              onPress={() => {
+                const emailVal = contactInfo?.email || "hello@havenwellness.com";
+                Linking.openURL(`mailto:${emailVal}`);
+              }}
+            >
+              <View style={styles.contactIconBg}>
+                <Mail size={22} color={brownGold} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.contactSubTitle}>
+                  {t("home.contact.emailTitle") || "Email"}
+                </Text>
+                <Text style={styles.contactValueHighlight}>
+                  {contactInfo?.email || "hello@havenwellness.com"}
+                </Text>
+              </View>
+            </Pressable>
+          )}
 
           {/* Lunchroom Hours */}
           <View style={styles.hoursBlock}>

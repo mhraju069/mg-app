@@ -168,7 +168,8 @@
       "sun": "Sunday",
       "closed": "Closed",
       "phoneTitle": "Phone number",
-      "phone": "072 – 3030548"
+      "phone": "072 – 3030548",
+      "emailTitle": "Email"
     },
     "bookingFooter": {
       "title": "Begin Your Wellness Journey",

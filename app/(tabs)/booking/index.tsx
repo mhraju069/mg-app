@@ -6,7 +6,6 @@ import { Text } from "@/components/ui/text";
 import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
-import { upcomingBookings } from "@/utils/constants";
 import { router } from "expo-router";
 import {
   Calendar,
@@ -15,19 +14,25 @@ import {
   Plus,
   Users,
 } from "lucide-react-native";
-import React, { useState } from "react";
-import { Pressable, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
+import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
+import { useAuthStore } from "@/utils/authStore";
 
 type BookingStatus = "Upcoming" | "Past";
 
 export default function MyReservationsScreen() {
   const [activeTab, setActiveTab] = useState<BookingStatus>("Upcoming");
   const translateX = useSharedValue(0);
+
+  const [upcomingList, setUpcomingList] = useState<DashboardBookingItem[]>([]);
+  const [pastList, setPastList] = useState<DashboardBookingItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const handleTabChange = (tab: BookingStatus) => {
     setActiveTab(tab);
@@ -52,30 +57,77 @@ export default function MyReservationsScreen() {
   const secondary = useColor("secondary");
   const brownGold = "#9B7C56";
   const lightBeige = "#FCF2E9";
+  const { t } = useTranslation();
 
-  const renderBookingCard = (booking: (typeof upcomingBookings)[0]) => (
+  const fetchBookings = async () => {
+    const auth = useAuthStore.getState();
+    if (!auth.accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await dashboardApi.getUserDashboard();
+      if (data && data.my_bookings) {
+        setUpcomingList(data.my_bookings.upcoming || []);
+        setPastList(data.my_bookings.past || []);
+      }
+    } catch (e) {
+      console.warn("Failed to fetch user bookings:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const formatDisplayTime = (timeStr: string) => {
+    if (!timeStr) return "10:00 AM";
+    try {
+      const parts = timeStr.split(":");
+      const hours = parseInt(parts[0], 10);
+      const minutes = parts[1] || "00";
+      const period = hours >= 12 ? "PM" : "AM";
+      const h12 = hours % 12 || 12;
+      return `${h12}:${minutes} ${period}`;
+    } catch {
+      return timeStr;
+    }
+  };
+
+  const renderBookingCard = (booking: DashboardBookingItem) => (
     <Pressable
-      key={booking.id}
+      key={booking.booking_id || booking.id}
       onPress={() =>
         router.push({
           pathname: "/(tabs)/booking/[id]",
           params: {
-            id: booking.id,
-            type: booking.type
+            id: booking.booking_id || String(booking.id),
+            type: booking.service_type,
+            title: booking.service_name,
+            date: booking.date,
+            time: booking.time,
+            guests: String(booking.guests),
+            status: booking.status,
+            paymentStatus: booking.payment_status,
+            total_price: booking.total_price,
+            access_code: booking.access_code,
           },
         })
       }
     >
       <Card style={[styles.bookingCard, { borderColor: border }]}>
         <View style={styles.cardHeader}>
-          <View style={{ width: "70%"}}>
-            <Text style={styles.bookingTitle}>{booking.title}</Text>
-            <Text variant="caption" style={{ color: textMuted }}>
-              {booking.category}
+          <View style={{ width: "70%" }}>
+            <Text style={styles.bookingTitle}>{booking.service_name}</Text>
+            <Text variant="caption" style={{ color: textMuted, textTransform: "capitalize" }}>
+              {booking.service_type}
             </Text>
           </View>
           <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{booking.status}</Text>
+            <Text style={styles.statusText}>{booking.status || "Confirmed"}</Text>
           </View>
         </View>
 
@@ -89,26 +141,28 @@ export default function MyReservationsScreen() {
           <View style={styles.infoRow}>
             <Clock size={14} color={brownGold} />
             <Text variant="caption" style={styles.infoText}>
-              {booking.time}
+              {formatDisplayTime(booking.time)}
             </Text>
           </View>
           <View style={styles.infoRow}>
             <Users size={14} color={brownGold} />
             <Text variant="caption" style={styles.infoText}>
-              {booking.guests}
+              {booking.guests} {booking.guests > 1 ? "guests" : "guest"}
             </Text>
           </View>
         </View>
 
         <View style={styles.cardFooter}>
-          <Text style={styles.paymentStatus}>{booking.paymentStatus}</Text>
+          <Text style={styles.paymentStatus}>
+            {booking.payment_status ? booking.payment_status.replace(/_/g, " ").toUpperCase() : "PAID"}
+          </Text>
           <ChevronRight size={18} color={textMuted} />
         </View>
       </Card>
     </Pressable>
   );
 
-  const { t } = useTranslation();
+  const currentList = activeTab === "Upcoming" ? upcomingList : pastList;
 
   return (
     <Layout title={t("tabs.booking")}>
@@ -122,12 +176,12 @@ export default function MyReservationsScreen() {
           </View>
           <Pressable
             style={[styles.addButton, { borderColor: border, borderWidth: 1 }]}
-            onPress={() => router.push("/(booking)")}
+            onPress={() => router.push("/bookings")}
           >
             <Plus
               size={24}
               color="black"
-              style={{ backgroundColor: secondary, borderRadius: "50%" }}
+              style={{ backgroundColor: secondary, borderRadius: 22 }}
             />
           </Pressable>
         </View>
@@ -145,7 +199,7 @@ export default function MyReservationsScreen() {
                 activeTab === "Upcoming" && styles.activeTabText,
               ]}
             >
-              {t("booking.tabs.upcoming", { count: 2 })}
+              {t("booking.tabs.upcoming", { count: upcomingList.length }) || `Upcoming (${upcomingList.length})`}
             </Text>
           </Pressable>
 
@@ -156,16 +210,23 @@ export default function MyReservationsScreen() {
                 activeTab === "Past" && styles.activeTabText,
               ]}
             >
-              {t("booking.tabs.past", { count: 0 })}
+              {t("booking.tabs.past", { count: pastList.length }) || `Past (${pastList.length})`}
             </Text>
           </Pressable>
         </View>
       </View>
 
-      <View>
-        {activeTab === "Upcoming" ? (
+      <View style={{ marginTop: 20 }}>
+        {loading ? (
+          <View style={{ padding: 40, alignItems: "center" }}>
+            <ActivityIndicator size="small" color={brownGold} />
+            <Text style={{ marginTop: 12, color: textMuted, fontSize: 13 }}>
+              Loading your reservations...
+            </Text>
+          </View>
+        ) : currentList.length > 0 ? (
           <View style={styles.list}>
-            {upcomingBookings.map(renderBookingCard)}
+            {currentList.map(renderBookingCard)}
           </View>
         ) : (
           <Card
@@ -287,6 +348,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#166534",
     fontWeight: "600",
+    textTransform: "capitalize",
   },
   cardInfo: {
     gap: 8,
@@ -309,8 +371,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   paymentStatus: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#71717A",
+    fontWeight: "600",
   },
   emptyIconCircle: {
     width: 64,

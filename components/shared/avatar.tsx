@@ -1,9 +1,10 @@
 import { Image } from "expo-image";
 import { Camera } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pressable, View, StyleSheet } from "react-native";
 import { imagePicker } from "./image-picker";
 import { useColor } from "@/hooks/useColor";
+import { formatImageUrl } from "@/utils/constants";
 
 type Props = {
   defaultValue?: string;
@@ -14,7 +15,13 @@ type Props = {
 export function Avatar({ defaultValue, onChange, editable = false }: Props) {
   const primary = useColor("primary");
   const background = useColor("card");
-  const [imgUri, setImgUri] = useState<string | null>(defaultValue || "https://i.pravatar.cc/150?u=akash");
+  const [imgUri, setImgUri] = useState<string | null>(defaultValue ? formatImageUrl(defaultValue) : null);
+
+  useEffect(() => {
+    if (defaultValue) {
+      setImgUri(formatImageUrl(defaultValue));
+    }
+  }, [defaultValue]);
 
   return (
     <Pressable

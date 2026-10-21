@@ -23,6 +23,7 @@ import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet, Switch } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/utils/authStore";
+import { formatImageUrl } from "@/utils/constants";
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -35,6 +36,30 @@ export default function ProfileScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(useAuthStore.getState().isAuthenticated);
 
   useEffect(() => {
+    let isMounted = true;
+    const fetchLatestUser = async () => {
+      const auth = useAuthStore.getState();
+      if (!auth.accessToken) return;
+      try {
+        const res = await fetch("http://localhost/api/auth/user/", {
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) {
+            setCurrentUser(data);
+            useAuthStore.setUser(data);
+          }
+        }
+      } catch (e) {
+        console.warn("ProfileScreen: failed to fetch profile", e);
+      }
+    };
+
+    fetchLatestUser();
+
     return useAuthStore.subscribe(() => {
       const state = useAuthStore.getState();
       setCurrentUser(state.user);
@@ -42,12 +67,19 @@ export default function ProfileScreen() {
     });
   }, []);
 
+  const avatarSrc =
+    (currentUser?.image || currentUser?.avatar || currentUser?.profile_picture)
+      ? formatImageUrl(currentUser.image || currentUser.avatar || currentUser.profile_picture)
+      : `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          currentUser?.name || (isLoggedIn ? "Member" : "Guest User")
+        )}&background=9B7C56&color=fff&size=160`;
+
   return (
     <Layout title={t("profile.title")}>
       {/* User Info Header */}
       <View style={styles.header}>
         <Image
-          source={`https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser?.name || "Guest User")}&background=9B7C56&color=fff`}
+          source={avatarSrc}
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>

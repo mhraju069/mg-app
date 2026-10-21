@@ -8,6 +8,9 @@ export interface UserProfile {
   bio?: string;
   language?: string;
   address?: string;
+  image?: string | null;
+  avatar?: string | null;
+  profile_picture?: string | null;
   is_verified?: boolean;
   role?: string;
   is_staff?: boolean;

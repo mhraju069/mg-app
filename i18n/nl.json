@@ -167,7 +167,8 @@
       "sun": "Zondag",
       "closed": "Gesloten",
       "phoneTitle": "Telefoonnummer",
-      "phone": "072 - 303 05 48"
+      "phone": "072 - 303 05 48",
+      "emailTitle": "E-mail"
     },
     "bookingFooter": {
       "title": "Begin je wellness-reis",

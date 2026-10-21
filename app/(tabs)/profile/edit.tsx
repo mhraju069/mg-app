@@ -22,6 +22,7 @@ export default function EditProfileScreen() {
   const [email, setEmail] = useState(authUser?.email || "");
   const [phone, setPhone] = useState(authUser?.phone || "");
   const [bio, setBio] = useState(authUser?.bio || "");
+  const [newAvatarUri, setNewAvatarUri] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -51,18 +52,45 @@ export default function EditProfileScreen() {
     setIsSaving(true);
 
     try {
-      const res = await fetch("http://localhost/api/auth/user/", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${auth.accessToken}`,
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim(),
-          bio: bio.trim(),
-        }),
-      });
+      let res: Response;
+      if (newAvatarUri && !newAvatarUri.startsWith("http")) {
+        // Multipart upload
+        const formData = new FormData();
+        formData.append("name", name.trim());
+        if (phone.trim()) formData.append("phone", phone.trim());
+        if (bio.trim()) formData.append("bio", bio.trim());
+
+        const filename = newAvatarUri.split("/").pop() || "avatar.jpg";
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+        formData.append("image", {
+          uri: newAvatarUri,
+          name: filename,
+          type,
+        } as any);
+
+        res = await fetch("http://localhost/api/auth/user/", {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+          body: formData,
+        });
+      } else {
+        res = await fetch("http://localhost/api/auth/user/", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${auth.accessToken}`,
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            phone: phone.trim(),
+            bio: bio.trim(),
+          }),
+        });
+      }
 
       const data = await res.json();
       if (res.ok) {
@@ -88,7 +116,20 @@ export default function EditProfileScreen() {
       <BackHeader />
       <Layout>
         <View style={styles.avatarSection}>
-          <Avatar editable={true} />
+          <Avatar
+            editable={true}
+            defaultValue={
+              authUser?.image ||
+              authUser?.avatar ||
+              authUser?.profile_picture ||
+              (authUser?.name
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    authUser.name
+                  )}&background=9B7C56&color=fff&size=160`
+                : undefined)
+            }
+            onChange={(uri) => setNewAvatarUri(uri)}
+          />
         </View>
 
         {errorMessage ? (
