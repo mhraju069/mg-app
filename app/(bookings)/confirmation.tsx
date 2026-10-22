@@ -11,6 +11,7 @@ import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
 import { getStripe } from "@/utils/stripe";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
+import CancellationPolicyCard from "@/components/booking/CancellationPolicyCard";
 import { router } from "expo-router";
 import {
   Calendar,
@@ -54,6 +55,7 @@ export default function ConfirmationScreen() {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string>("");
+  const [policyAccepted, setPolicyAccepted] = useState<boolean>(false);
 
   const priceVal = storeState.price || 0;
   const isFree = storeState.isFree || priceVal === 0;
@@ -71,6 +73,14 @@ export default function ConfirmationScreen() {
 
   const handlePayAndConfirm = async () => {
     setErrorMessage(null);
+
+    if (!policyAccepted) {
+      setErrorMessage(
+        "Please read and accept the Cancellation, Rescheduling & Refund Policy to proceed."
+      );
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -598,6 +608,13 @@ export default function ConfirmationScreen() {
             />
           </Card>
         )}
+
+        {/* Cancellation, Rescheduling & Refund Policy */}
+        <CancellationPolicyCard
+          accepted={policyAccepted}
+          onAcceptedChange={setPolicyAccepted}
+          serviceName={storeState.serviceTitle}
+        />
 
         {/* Access Code Notice */}
         <Card style={[styles.accessCodeCard, { backgroundColor: brownGold }]}>

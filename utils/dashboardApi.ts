@@ -1,6 +1,6 @@
 /**
  * Dashboard & Bookings API Service for Mobile App
- * Synchronized with Website User Dashboard (/api/dashboard/user/)
+ * Synchronized with Website User Dashboard (/api/dashboard/user/) & Backend Cancel API
  */
 
 import { useAuthStore } from "@/utils/authStore";
@@ -85,7 +85,26 @@ export interface UserDashboardResponse {
   profile?: any;
 }
 
-const BASE_URL = "http://localhost";
+export interface CancelBookingResponse {
+  success: boolean;
+  message: string;
+  cancellation_allowed?: boolean;
+  booking_id?: string;
+  status?: string;
+  credit_restored?: boolean;
+  remaining_sessions?: number;
+  hours_until_start?: number;
+  required_notice_hours?: number;
+  data?: any;
+}
+
+const getBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/api\/?$/, "");
+  }
+  return "http://localhost";
+};
 
 export const dashboardApi = {
   /**
@@ -98,7 +117,7 @@ export const dashboardApi = {
     }
 
     try {
-      const res = await fetch(`${BASE_URL}/api/dashboard/user/`, {
+      const res = await fetch(`${getBaseUrl()}/api/dashboard/user/`, {
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
           "Content-Type": "application/json",
@@ -117,32 +136,73 @@ export const dashboardApi = {
   },
 
   /**
-   * Cancel booking via backend endpoint
+   * Cancel booking via backend endpoint (/api/bookings/<booking_id>/cancel/)
+   * Returns complete backend response payload with detailed error messages and credit info.
    */
-  async cancelBooking(bookingId: string | number): Promise<boolean> {
+  async cancelBooking(
+    bookingId: string | number,
+    reason?: string
+  ): Promise<CancelBookingResponse> {
     const auth = useAuthStore.getState();
+    const baseUrl = getBaseUrl();
+
     try {
-      // Try cancel booking directly
-      const res = await fetch(`${BASE_URL}/api/bookings/${bookingId}/cancel/`, {
+      const payload: Record<string, any> = {
+        booking_id: String(bookingId),
+      };
+      if (reason && reason.trim()) {
+        payload.reason = reason.trim();
+      }
+
+      const res = await fetch(`${baseUrl}/api/bookings/${bookingId}/cancel/`, {
         method: "POST",
         headers: {
           Authorization: auth.accessToken ? `Bearer ${auth.accessToken}` : "",
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
+        body: JSON.stringify(payload),
       });
-      if (res.ok) return true;
 
-      // Fallback to update status via admin bookings patch
-      const patchRes = await fetch(`${BASE_URL}/api/dashboard/admin/bookings/${bookingId}/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ status: "cancelled" }),
-      });
-      return patchRes.ok;
-    } catch {
-      return false;
+      const json = await res.json().catch(() => null);
+
+      if (res.ok && json) {
+        return {
+          success: json.success !== false,
+          message: json.message || "Booking has been cancelled successfully.",
+          credit_restored: json.credit_restored,
+          remaining_sessions: json.remaining_sessions,
+          hours_until_start: json.hours_until_start,
+          cancellation_allowed: json.cancellation_allowed ?? true,
+          booking_id: json.booking_id,
+          status: json.status || "cancelled",
+          data: json.data,
+        };
+      }
+
+      // Backend returned error (e.g. 400 Bad Request - within 24 hours, or 403 Forbidden)
+      const errorMsg =
+        json?.message ||
+        json?.detail ||
+        (json && typeof json === "object"
+          ? Object.values(json).flat().join(" ")
+          : "Cancellation could not be processed.");
+
+      return {
+        success: false,
+        message: errorMsg,
+        cancellation_allowed: json?.cancellation_allowed ?? false,
+        hours_until_start: json?.hours_until_start,
+        required_notice_hours: json?.required_notice_hours || 24,
+      };
+    } catch (e: any) {
+      console.warn("dashboardApi: cancelBooking error:", e);
+      return {
+        success: false,
+        message:
+          e?.message ||
+          "Network error occurred while processing cancellation. Please try again.",
+      };
     }
   },
 };

@@ -30,6 +30,7 @@ import {
   Mail,
   Instagram,
   Facebook,
+  Twitter,
   Compass,
   Check,
   Boxes,
@@ -60,6 +61,7 @@ import { useAuthStore } from "@/utils/authStore";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
 import { formatImageUrl } from "@/utils/constants";
+import legalApi, { fallbackSocialLinks, SocialMediaLinksData } from "@/utils/legalApi";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
   sauna: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
@@ -105,6 +107,7 @@ export default function HomeScreen() {
     phone?: string;
     email?: string;
   } | null>(null);
+  const [socialLinks, setSocialLinks] = useState<SocialMediaLinksData>(fallbackSocialLinks);
 
   // Purchase Modal State (Direct checkout for Plans and Session Passes)
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
@@ -466,6 +469,17 @@ export default function HomeScreen() {
       }
     };
 
+    const fetchSocialLinks = async () => {
+      try {
+        const links = await legalApi.getSocialMediaLinks();
+        if (isMounted && links) {
+          setSocialLinks(links);
+        }
+      } catch (e) {
+        console.warn("Could not fetch social media links:", e);
+      }
+    };
+
     Promise.all([
       fetchServices().finally(() => {
         if (isMounted) setLoadingServices(false);
@@ -477,6 +491,7 @@ export default function HomeScreen() {
         if (isMounted) setLoadingNextVisit(false);
       }),
       fetchContactInfo(),
+      fetchSocialLinks(),
     ]);
 
     return () => {
@@ -1149,19 +1164,31 @@ export default function HomeScreen() {
         </Text>
       </Card>
 
-      {/* Social Media Footer (Bigger Facebook & Instagram Logos) */}
+      {/* Social Media Footer (Facebook, Instagram & Twitter Logos) */}
       <View style={styles.socialFooter}>
         <Pressable
           style={styles.socialButton}
-          onPress={() => Linking.openURL("https://facebook.com")}
+          onPress={() =>
+            Linking.openURL(socialLinks.facebook || fallbackSocialLinks.facebook || "https://facebook.com")
+          }
         >
-          <Facebook size={36} color={brownGold} />
+          <Facebook size={34} color={brownGold} />
         </Pressable>
         <Pressable
           style={styles.socialButton}
-          onPress={() => Linking.openURL("https://instagram.com")}
+          onPress={() =>
+            Linking.openURL(socialLinks.instagram || fallbackSocialLinks.instagram || "https://instagram.com")
+          }
         >
-          <Instagram size={36} color={brownGold} />
+          <Instagram size={34} color={brownGold} />
+        </Pressable>
+        <Pressable
+          style={styles.socialButton}
+          onPress={() =>
+            Linking.openURL(socialLinks.twitter || fallbackSocialLinks.twitter || "https://twitter.com")
+          }
+        >
+          <Twitter size={34} color={brownGold} />
         </Pressable>
       </View>
 

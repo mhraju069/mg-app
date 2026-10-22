@@ -15,17 +15,37 @@ import {
   Users,
   Zap,
   CreditCard,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  X,
+  ShieldAlert,
 } from "lucide-react-native";
 import React, { useState, useEffect } from "react";
-import { Modal, Pressable, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  TextInput,
+  ScrollView,
+} from "react-native";
 import { toast } from "sonner-native";
 import * as Clipboard from "expo-clipboard";
-import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
+import {
+  dashboardApi,
+  CancelBookingResponse,
+} from "@/utils/dashboardApi";
 
 export default function BookingDetailsScreen() {
   const params = useLocalSearchParams();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelSuccess, setCancelSuccess] =
+    useState<CancelBookingResponse | null>(null);
+
   const { t } = useTranslation();
 
   const textMuted = useColor("textMuted");
@@ -34,6 +54,7 @@ export default function BookingDetailsScreen() {
   const lightBeige = "#FCF2E9";
 
   const [bookingDetail, setBookingDetail] = useState<{
+    booking_id: string;
     title: string;
     date: string;
     time: string;
@@ -43,12 +64,16 @@ export default function BookingDetailsScreen() {
     amount: string;
     accessCode: string | null;
   }>({
+    booking_id: (params.id as string) || "",
     title: (params.title as string) || "Wellness Experience",
     date: (params.date as string) || "Today",
     time: (params.time as string) || "10:00 AM",
     duration: "120 minutes",
     guests: (params.guests as string) || "2",
-    status: (params.paymentStatus as string) || (params.status as string) || "Confirmed",
+    status:
+      (params.paymentStatus as string) ||
+      (params.status as string) ||
+      "Confirmed",
     amount: params.total_price ? `€${params.total_price}` : "",
     accessCode: (params.access_code as string) || (params.id as string) || null,
   });
@@ -64,17 +89,27 @@ export default function BookingDetailsScreen() {
             ...(data.my_bookings?.past || []),
           ];
           const found = all.find(
-            (b) => String(b.booking_id) === String(params.id) || String(b.id) === String(params.id)
+            (b) =>
+              String(b.booking_id) === String(params.id) ||
+              String(b.id) === String(params.id)
           );
           if (found) {
             setBookingDetail({
+              booking_id: found.booking_id,
               title: found.service_name,
               date: found.date,
               time: found.time || "10:00 AM",
-              duration: found.details?.time_slot ? found.details.time_slot.replace(/_/g, " ") : "120 minutes",
+              duration: found.details?.time_slot
+                ? found.details.time_slot.replace(/_/g, " ")
+                : "120 minutes",
               guests: String(found.guests),
-              status: found.payment_status ? found.payment_status.replace(/_/g, " ") : found.status,
-              amount: found.total_price && Number(found.total_price) > 0 ? `€${found.total_price}` : "",
+              status: found.payment_status
+                ? found.payment_status.replace(/_/g, " ")
+                : found.status,
+              amount:
+                found.total_price && Number(found.total_price) > 0
+                  ? `€${found.total_price}`
+                  : "",
               accessCode: found.access_code || found.booking_id,
             });
           }
@@ -92,25 +127,57 @@ export default function BookingDetailsScreen() {
     toast.success("Copied to clipboard");
   };
 
-  const handleCancelBooking = async () => {
-    setIsCancelling(true);
-    try {
-      const targetId = (params.id as string) || bookingDetail.accessCode || "";
-      const success = await dashboardApi.cancelBooking(targetId);
-      if (success) {
-        toast.success("Booking cancelled successfully.");
-        setBookingDetail((prev) => ({ ...prev, status: "Cancelled" }));
-      } else {
-        toast.error("Failed to cancel booking. Please contact support.");
-      }
-    } catch {
-      toast.error("Error cancelling booking.");
-    } finally {
-      setIsCancelling(false);
-      setShowCancelModal(false);
+  const handleOpenCancelModal = () => {
+    setCancelError(null);
+    setCancelSuccess(null);
+    setCancelReason("");
+    setShowCancelModal(true);
+  };
+
+  const handleCloseCancelModal = () => {
+    if (isCancelling) return;
+    setShowCancelModal(false);
+    if (cancelSuccess) {
       router.back();
     }
   };
+
+  const handleConfirmCancel = async () => {
+    setIsCancelling(true);
+    setCancelError(null);
+    setCancelSuccess(null);
+
+    const targetId =
+      bookingDetail.booking_id ||
+      (params.id as string) ||
+      bookingDetail.accessCode ||
+      "";
+
+    try {
+      const res = await dashboardApi.cancelBooking(targetId, cancelReason);
+
+      if (res.success) {
+        setCancelSuccess(res);
+        setBookingDetail((prev) => ({ ...prev, status: "Cancelled" }));
+        toast.success("Reservation cancelled successfully");
+      } else {
+        setCancelError(
+          res.message ||
+            "Cancellation could not be completed. Please check policy requirements."
+        );
+      }
+    } catch (e: any) {
+      setCancelError(
+        e?.message ||
+          "An unexpected error occurred while processing cancellation."
+      );
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const isCancelled =
+    bookingDetail.status.toLowerCase().includes("cancel");
 
   const isPaid =
     bookingDetail.status.toLowerCase().includes("paid") ||
@@ -123,7 +190,26 @@ export default function BookingDetailsScreen() {
         <Text style={styles.screenTitle}>{t("booking.details.title")}</Text>
 
         <Card style={styles.infoCard}>
-          <Text style={styles.serviceTitle}>{bookingDetail.title}</Text>
+          <View style={styles.titleStatusRow}>
+            <Text style={styles.serviceTitle}>{bookingDetail.title}</Text>
+            <View
+              style={[
+                styles.badge,
+                isCancelled ? styles.badgeCancelled : styles.badgeConfirmed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.badgeText,
+                  isCancelled
+                    ? styles.badgeTextCancelled
+                    : styles.badgeTextConfirmed,
+                ]}
+              >
+                {isCancelled ? "Cancelled" : "Confirmed"}
+              </Text>
+            </View>
+          </View>
 
           <View style={styles.detailList}>
             <View style={styles.detailRow}>
@@ -176,7 +262,7 @@ export default function BookingDetailsScreen() {
           </View>
         </Card>
 
-        {bookingDetail.accessCode && (
+        {bookingDetail.accessCode && !isCancelled && (
           <Card style={{ backgroundColor: brownGold }}>
             <View style={styles.accessCodeHeader}>
               <Zap size={20} color="white" />
@@ -204,17 +290,25 @@ export default function BookingDetailsScreen() {
           <View style={styles.paymentHeader}>
             <View style={styles.paymentIconRow}>
               <CreditCard size={18} color={textMuted} />
-              <Text style={styles.paymentLabel}>{t("booking.details.labels.payment")}</Text>
+              <Text style={styles.paymentLabel}>
+                {t("booking.details.labels.payment")}
+              </Text>
             </View>
           </View>
 
           <View style={styles.paymentInfo}>
             <View style={styles.paymentRow}>
-              <Text style={{ color: textMuted }}>{t("booking.details.labels.status")}</Text>
+              <Text style={{ color: textMuted }}>
+                {t("booking.details.labels.status")}
+              </Text>
               <Text
                 style={[
                   styles.paymentStatus,
-                  isPaid ? { color: "#166534", fontWeight: "700" } : {},
+                  isCancelled
+                    ? { color: "#DC2626", fontWeight: "700" }
+                    : isPaid
+                    ? { color: "#166534", fontWeight: "700" }
+                    : {},
                 ]}
               >
                 {bookingDetail.status}
@@ -222,65 +316,208 @@ export default function BookingDetailsScreen() {
             </View>
             {bookingDetail.amount ? (
               <View style={styles.paymentRow}>
-                <Text style={{ color: textMuted }}>{t("booking.details.labels.amount")}</Text>
+                <Text style={{ color: textMuted }}>
+                  {t("booking.details.labels.amount")}
+                </Text>
                 <Text style={styles.amountText}>{bookingDetail.amount}</Text>
               </View>
             ) : null}
           </View>
         </Card>
 
-        <Card>
+        {/* Cancellation Policy and Action */}
+        <Card style={styles.policyCard}>
           <View style={styles.policySection}>
-            <Text style={styles.policyTitle}>{t("booking.details.policy.title")}</Text>
+            <View style={styles.policyTitleRow}>
+              <ShieldAlert size={18} color={brownGold} />
+              <Text style={styles.policyTitle}>Cancellation Policy</Text>
+            </View>
             <Text style={[styles.policyText, { color: textMuted }]}>
-              {t("booking.details.policy.text")}
+              Reservations may be cancelled up to{" "}
+              <Text style={{ fontWeight: "700", color: "#1d1a17" }}>
+                24 hours
+              </Text>{" "}
+              prior to start time. Timely cancellations restore session credits
+              or process refunds according to booking terms. Cancellations
+              within 24 hours cannot be refunded.
             </Text>
           </View>
 
-          <Pressable
-            style={styles.cancelLink}
-            onPress={() => setShowCancelModal(true)}
-          >
-            <Text style={styles.cancelLinkText}>{t("booking.details.policy.button")}</Text>
-          </Pressable>
+          {!isCancelled && (
+            <Pressable
+              style={styles.cancelLink}
+              onPress={handleOpenCancelModal}
+            >
+              <Text style={styles.cancelLinkText}>
+                Cancel Reservation ›
+              </Text>
+            </Pressable>
+          )}
         </Card>
       </Layout>
 
+      {/* Cancellation Modal matching Website exactly */}
       <Modal
         visible={showCancelModal}
         transparent
         animationType="fade"
+        onRequestClose={handleCloseCancelModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{t("booking.details.modal.title")}</Text>
-            <Text style={[styles.modalSubtitle, { color: textMuted }]}>
-              {t("booking.details.modal.subtitle")}
-            </Text>
-            <Text style={[styles.modalWarning, { color: textMuted }]}>
-              {t("booking.details.modal.warning")}
-            </Text>
-
-            <View style={styles.modalActions}>
+            {/* Modal Header */}
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>
+                {cancelSuccess ? "Reservation Cancelled" : "Cancel Reservation"}
+              </Text>
               <Pressable
-                style={styles.modalKeepButton}
-                onPress={() => setShowCancelModal(false)}
+                onPress={handleCloseCancelModal}
                 disabled={isCancelling}
+                hitSlop={8}
+                style={styles.closeIconBtn}
               >
-                <Text style={styles.modalKeepText}>{t("booking.details.modal.keep")}</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalCancelButton, isCancelling && { opacity: 0.6 }]}
-                onPress={handleCancelBooking}
-                disabled={isCancelling}
-              >
-                {isCancelling ? (
-                  <ActivityIndicator size="small" color="#DC2626" />
-                ) : (
-                  <Text style={styles.modalCancelText}>{t("booking.details.modal.cancel")}</Text>
-                )}
+                <X size={20} color="#64748B" />
               </Pressable>
             </View>
+
+            {/* Success State */}
+            {cancelSuccess ? (
+              <View style={styles.successStateContainer}>
+                <View style={styles.successBox}>
+                  <View style={styles.successTitleRow}>
+                    <CheckCircle2 size={18} color="#15803D" />
+                    <Text style={styles.successTitle}>
+                      Cancelled Successfully
+                    </Text>
+                  </View>
+                  <Text style={styles.successMessage}>
+                    {cancelSuccess.message}
+                  </Text>
+                  {cancelSuccess.credit_restored && (
+                    <View style={styles.creditRestoredBox}>
+                      <Text style={styles.creditRestoredText}>
+                        ✓ 1 session credit has been refunded to your account.
+                      </Text>
+                      {cancelSuccess.remaining_sessions !== undefined && (
+                        <Text style={styles.creditRestoredSub}>
+                          Remaining credits:{" "}
+                          <Text style={{ fontWeight: "700" }}>
+                            {cancelSuccess.remaining_sessions}
+                          </Text>
+                        </Text>
+                      )}
+                    </View>
+                  )}
+                </View>
+
+                <Pressable
+                  onPress={handleCloseCancelModal}
+                  style={[styles.modalKeepButton, { backgroundColor: brownGold }]}
+                >
+                  <Text style={styles.modalKeepText}>Done</Text>
+                </Pressable>
+              </View>
+            ) : (
+              /* Confirmation & Form State */
+              <View style={styles.formStateContainer}>
+                {/* Booking Info Box */}
+                <View style={styles.bookingRefBox}>
+                  <Text style={styles.bookingRefText}>
+                    Booking Reference:{" "}
+                    <Text style={styles.boldMono}>
+                      {bookingDetail.booking_id || params.id}
+                    </Text>
+                  </Text>
+                  <Text style={styles.bookingRefText}>
+                    Experience:{" "}
+                    <Text style={styles.boldText}>{bookingDetail.title}</Text>
+                  </Text>
+                  <Text style={styles.bookingRefText}>
+                    Scheduled:{" "}
+                    <Text style={styles.boldText}>
+                      {bookingDetail.date} at {bookingDetail.time}
+                    </Text>
+                  </Text>
+                </View>
+
+                {/* 24-Hour Policy Notice Box */}
+                <View style={styles.policyNoticeBox}>
+                  <Info size={16} color={brownGold} style={{ marginTop: 2 }} />
+                  <Text style={styles.policyNoticeText}>
+                    <Text style={{ fontWeight: "700", color: "#0F172A" }}>
+                      Notice:
+                    </Text>{" "}
+                    Cancellations must be made at least{" "}
+                    <Text style={{ fontWeight: "700" }}>24 hours</Text> prior to
+                    start time to receive a session refund/credit. Cancellations
+                    within 24 hours cannot be restored.
+                  </Text>
+                </View>
+
+                {/* Optional Reason Input */}
+                <View style={styles.reasonBlock}>
+                  <Text style={styles.reasonLabel}>
+                    Reason for cancellation{" "}
+                    <Text style={{ fontWeight: "400", color: "#94A3B8" }}>
+                      (optional)
+                    </Text>
+                  </Text>
+                  <TextInput
+                    style={styles.reasonInput}
+                    multiline
+                    numberOfLines={2}
+                    value={cancelReason}
+                    onChangeText={setCancelReason}
+                    placeholder="e.g. Schedule conflict, feeling unwell..."
+                    placeholderTextColor="#94A3B8"
+                    editable={!isCancelling}
+                  />
+                </View>
+
+                {/* Backend Error Banner */}
+                {cancelError && (
+                  <View style={styles.errorBox}>
+                    <AlertCircle size={18} color="#B91C1C" />
+                    <Text style={styles.errorText}>{cancelError}</Text>
+                  </View>
+                )}
+
+                {/* Actions */}
+                <View style={styles.modalActionsRow}>
+                  <Pressable
+                    style={styles.modalKeepBtnSecondary}
+                    onPress={handleCloseCancelModal}
+                    disabled={isCancelling}
+                  >
+                    <Text style={styles.modalKeepBtnText}>
+                      Keep Reservation
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.modalConfirmCancelBtn,
+                      isCancelling && { opacity: 0.6 },
+                    ]}
+                    onPress={handleConfirmCancel}
+                    disabled={isCancelling}
+                  >
+                    {isCancelling ? (
+                      <View style={styles.cancellingRow}>
+                        <ActivityIndicator size="small" color="#fff" />
+                        <Text style={styles.modalConfirmCancelText}>
+                          Cancelling...
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.modalConfirmCancelText}>
+                        Confirm Cancellation
+                      </Text>
+                    )}
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -298,8 +535,34 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.title,
     marginTop: 36,
   },
+  titleStatusRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeConfirmed: {
+    backgroundColor: "#F0FDF4",
+  },
+  badgeCancelled: {
+    backgroundColor: "#FEF2F2",
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  badgeTextConfirmed: {
+    color: "#166534",
+  },
+  badgeTextCancelled: {
+    color: "#DC2626",
+  },
   infoCard: {
-    marginTop: 16,
     padding: 20,
     borderRadius: 20,
     gap: 16,
@@ -308,7 +571,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     fontFamily: Fonts.title,
-    marginBottom: 4,
+    flex: 1,
   },
   detailList: {
     gap: 16,
@@ -328,7 +591,6 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#1E293B",
   },
   accessCodeHeader: {
     flexDirection: "row",
@@ -343,33 +605,32 @@ const styles = StyleSheet.create({
   },
   codeRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.15)",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255,255,255,0.2)",
     padding: 12,
     borderRadius: 12,
     marginBottom: 8,
   },
   codeText: {
-    fontSize: 20,
-    fontWeight: "800",
     color: "white",
+    fontSize: 20,
+    fontWeight: "700",
     letterSpacing: 2,
-    fontFamily: Fonts.mono || undefined,
+    fontFamily: Fonts.mono,
   },
   copyButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     backgroundColor: "rgba(0,0,0,0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
   },
   copyText: {
     color: "white",
     fontSize: 12,
-    fontWeight: "600",
   },
   accessCodeDesc: {
     color: "rgba(255,255,255,0.8)",
@@ -415,9 +676,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#9B7C56",
   },
+  policyCard: {
+    padding: 20,
+    borderRadius: 20,
+    gap: 14,
+  },
   policySection: {
-    gap: 6,
-    marginBottom: 16,
+    gap: 8,
+  },
+  policyTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   policyTitle: {
     fontSize: 16,
@@ -425,71 +695,219 @@ const styles = StyleSheet.create({
   },
   policyText: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   cancelLink: {
     alignItems: "center",
-    paddingVertical: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
   cancelLinkText: {
     color: "#DC2626",
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: 20,
   },
   modalContent: {
     backgroundColor: "white",
     borderRadius: 24,
-    padding: 24,
+    padding: 20,
     width: "100%",
-    maxWidth: 340,
-    gap: 12,
+    maxWidth: 420,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 4,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
-    textAlign: "center",
+    fontFamily: Fonts.title,
+    color: "#1d1a17",
   },
-  modalSubtitle: {
+  closeIconBtn: {
+    padding: 4,
+  },
+  successStateContainer: {
+    gap: 16,
+  },
+  successBox: {
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    gap: 8,
+  },
+  successTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  successTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#14532D",
+  },
+  successMessage: {
     fontSize: 13,
-    textAlign: "center",
+    color: "#166534",
     lineHeight: 18,
   },
-  modalWarning: {
-    fontSize: 12,
-    textAlign: "center",
-    fontStyle: "italic",
-    marginBottom: 12,
+  creditRestoredBox: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(187,247,208,0.7)",
+    paddingTop: 8,
+    gap: 4,
   },
-  modalActions: {
+  creditRestoredText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#15803D",
+  },
+  creditRestoredSub: {
+    fontSize: 12,
+    color: "#166534",
+  },
+  formStateContainer: {
+    gap: 12,
+  },
+  bookingRefBox: {
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "#FAF8F5",
+    borderWidth: 1,
+    borderColor: "#E8E2DC",
+    gap: 4,
+  },
+  bookingRefText: {
+    fontSize: 12,
+    color: "#64748B",
+  },
+  boldMono: {
+    fontFamily: Fonts.mono,
+    fontWeight: "700",
+    color: "#1d1a17",
+  },
+  boldText: {
+    fontWeight: "600",
+    color: "#1d1a17",
+  },
+  policyNoticeBox: {
+    flexDirection: "row",
     gap: 10,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: "#FAF0E6",
+    borderWidth: 1,
+    borderColor: "#E8E2DC",
+  },
+  policyNoticeText: {
+    fontSize: 11,
+    color: "#8B7355",
+    lineHeight: 16,
+    flex: 1,
+  },
+  reasonBlock: {
+    gap: 6,
+  },
+  reasonLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    color: "#0F172A",
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 10,
+    fontSize: 13,
+    color: "#0F172A",
+    backgroundColor: "#fff",
+    textAlignVertical: "top",
+    minHeight: 56,
+  },
+  errorBox: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "flex-start",
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#FEF2F2",
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  errorText: {
+    fontSize: 12,
+    color: "#B91C1C",
+    fontWeight: "600",
+    flex: 1,
+    lineHeight: 16,
+  },
+  modalActionsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  modalKeepBtnSecondary: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#F1F5F9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalKeepBtnText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1d1a17",
+  },
+  modalConfirmCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalConfirmCancelText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  cancellingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
   modalKeepButton: {
-    backgroundColor: "#9B7C56",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
   },
   modalKeepText: {
     color: "white",
     fontSize: 14,
-    fontWeight: "600",
-  },
-  modalCancelButton: {
-    backgroundColor: "#FEE2E2",
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  modalCancelText: {
-    color: "#DC2626",
-    fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });
