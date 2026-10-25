@@ -13,6 +13,11 @@ import {
   Sparkles,
   Info,
   Clock,
+  X,
+  ExternalLink,
+  ShieldCheck,
+  CheckCircle2,
+  Tag,
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
@@ -21,6 +26,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
+  Modal,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 import { useNotifications, NotificationData } from "@/utils/notificationStore";
@@ -41,6 +48,7 @@ export default function NotificationsScreen() {
   } = useNotifications();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<NotificationData | null>(null);
 
   useEffect(() => {
     fetchNotifications();
@@ -57,21 +65,25 @@ export default function NotificationsScreen() {
     if (!item.is_read) {
       await markAsRead(item.id);
     }
+    // 2. Open Notification Details Modal
+    setSelectedNotification(item);
+  };
 
-    // 2. Perform redirect if link or data.link or booking_id is provided
-    const link = item.link || item.data?.link;
-    const bookingId = item.data?.booking_id;
+  const handleNavigateFromModal = async () => {
+    if (!selectedNotification) return;
+
+    const link = selectedNotification.link || selectedNotification.data?.link;
+    const bookingId = selectedNotification.data?.booking_id;
+    setSelectedNotification(null);
 
     if (link && typeof link === "string") {
       try {
-        // If web format "/bookings/SAU-XXXX" is sent, map to mobile route "/(tabs)/booking/SAU-XXXX"
         if (link.startsWith("/bookings/")) {
           const id = link.replace("/bookings/", "");
           router.push(`/(tabs)/booking/${id}` as any);
           return;
         }
 
-        // Handle internal app navigation
         if (link.startsWith("/")) {
           router.push(link as any);
           return;
@@ -85,11 +97,13 @@ export default function NotificationsScreen() {
       }
     }
 
-    // Fallback: if booking_id is present, navigate to specific booking details
     if (bookingId) {
       router.push(`/(tabs)/booking/${bookingId}` as any);
       return;
     }
+
+    // Default fallback
+    router.push("/(tabs)/booking" as any);
   };
 
   const formatTimestamp = (dateStr: string) => {
@@ -97,6 +111,23 @@ export default function NotificationsScreen() {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
       return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatFullDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString([], {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } catch {
       return dateStr;
     }
@@ -138,6 +169,12 @@ export default function NotificationsScreen() {
     acc[group].push(item);
     return acc;
   }, {} as Record<string, NotificationData[]>);
+
+  const hasActionLink = Boolean(
+    selectedNotification?.link ||
+      selectedNotification?.data?.link ||
+      selectedNotification?.data?.booking_id
+  );
 
   return (
     <View style={styles.container}>
@@ -247,7 +284,7 @@ export default function NotificationsScreen() {
                         <Text style={[styles.itemTime, { color: textMuted }]}>
                           {formatTimestamp(item.created_at)}
                         </Text>
-                        {item.link && (
+                        {hasActionLink && (
                           <Text style={{ fontSize: 12, color: brownGold, fontWeight: "600" }}>
                             • View details
                           </Text>
@@ -261,6 +298,112 @@ export default function NotificationsScreen() {
           ))
         )}
       </ScrollView>
+
+      {/* DETAILED NOTIFICATION MODAL */}
+      <Modal
+        visible={Boolean(selectedNotification)}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedNotification(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalBadgeRow}>
+                <View style={styles.modalIconBox}>
+                  <Bell size={20} color={brownGold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTypeLabel}>
+                    {selectedNotification?.notification_type?.toUpperCase() || "NOTIFICATION"}
+                  </Text>
+                  <Text style={styles.modalTimeLabel}>
+                    {selectedNotification?.created_at ? formatFullDate(selectedNotification.created_at) : ""}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedNotification(null)}
+                style={styles.closeBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalDivider} />
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 380 }}>
+              {/* Title & Body */}
+              <Text style={styles.modalTitle}>{selectedNotification?.title}</Text>
+              <Text style={styles.modalBody}>{selectedNotification?.body}</Text>
+
+              {/* Booking & Extra Data details box */}
+              {selectedNotification?.data && Object.keys(selectedNotification.data).length > 0 && (
+                <View style={styles.dataBox}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <Info size={16} color={brownGold} />
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: "#1F2937" }}>
+                      Booking & Service Details
+                    </Text>
+                  </View>
+
+                  {selectedNotification.data.booking_id && (
+                    <View style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>Booking Ref:</Text>
+                      <Text style={[styles.dataValue, { color: brownGold, fontWeight: "800" }]}>
+                        {selectedNotification.data.booking_id}
+                      </Text>
+                    </View>
+                  )}
+
+                  {selectedNotification.data.type && (
+                    <View style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>Service Type:</Text>
+                      <Text style={styles.dataValue}>{selectedNotification.data.type}</Text>
+                    </View>
+                  )}
+
+                  {selectedNotification.data.date && (
+                    <View style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>Date:</Text>
+                      <Text style={styles.dataValue}>{selectedNotification.data.date}</Text>
+                    </View>
+                  )}
+
+                  {selectedNotification.data.time && (
+                    <View style={styles.dataRow}>
+                      <Text style={styles.dataLabel}>Time:</Text>
+                      <Text style={styles.dataValue}>{selectedNotification.data.time}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Modal Actions */}
+            <View style={styles.modalFooter}>
+              {hasActionLink ? (
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={handleNavigateFromModal}
+                >
+                  <Text style={styles.actionBtnText}>View Booking Details</Text>
+                  <ExternalLink size={16} color="#FFFFFF" />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: "#9B7C56" }]}
+                  onPress={() => setSelectedNotification(null)}
+                >
+                  <Text style={styles.actionBtnText}>Dismiss</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -410,6 +553,122 @@ const styles = StyleSheet.create({
   },
   itemTime: {
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    width: "100%",
+    maxWidth: 420,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  modalIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FCF2E9",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#EADCCF",
+  },
+  modalTypeLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#9B7C56",
+    letterSpacing: 0.5,
+  },
+  modalTimeLabel: {
+    fontSize: 12,
+    color: "#6B7280",
+    marginTop: 2,
+  },
+  closeBtn: {
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
+  },
+  modalDivider: {
+    height: 1,
+    backgroundColor: "#F1EBE4",
+    marginVertical: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#1F2937",
+    marginBottom: 8,
+    fontFamily: Fonts.title,
+  },
+  modalBody: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#4B5563",
+    marginBottom: 16,
+  },
+  dataBox: {
+    backgroundColor: "#FAF7F3",
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#EFE8DE",
+    gap: 8,
+    marginBottom: 10,
+  },
+  dataRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  dataLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  dataValue: {
+    fontSize: 13,
+    color: "#1F2937",
+    fontWeight: "600",
+  },
+  modalFooter: {
+    marginTop: 18,
+  },
+  actionBtn: {
+    backgroundColor: "#9B7C56",
+    borderRadius: 16,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  actionBtnText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
 });
 
