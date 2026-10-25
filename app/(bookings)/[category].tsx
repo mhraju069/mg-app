@@ -8,7 +8,7 @@ import { Text } from "@/components/ui/text";
 import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
-import { CATEGORY_DATA } from "@/utils/constants";
+import { CATEGORY_DATA, API_BASE_URL, getBaseUrl } from "@/utils/constants";
 import { useBookingStore } from "@/utils/bookingStore";
 import { useLocalSearchParams, router } from "expo-router";
 import {
@@ -111,7 +111,7 @@ export default function CategoryScreen() {
     const fetchCategoryDetails = async () => {
       try {
         const endpointType = cleanCategory === "arrangements" ? "saltroom" : cleanCategory;
-        const res = await fetch(`http://localhost/api/services/details/${endpointType}/`);
+        const res = await fetch(`${API_BASE_URL}/services/details/${endpointType}/`);
         if (res.ok) {
           const resJson = await res.json();
           const apiData = resJson?.data;
@@ -219,7 +219,7 @@ export default function CategoryScreen() {
                   requirement: "Full Experience",
                   features: featuresList,
                   rating: 4.9,
-                  image: pkg.image || "http://localhost/media/services/WhatsApp_Image_2026-10-01_at_10.07.11_PM.jpeg",
+                  image: pkg.image || `${getBaseUrl()}/media/services/WhatsApp_Image_2026-10-01_at_10.07.11_PM.jpeg`,
                 };
               });
             } else if (cleanCategory === "lunchroom") {
@@ -235,7 +235,7 @@ export default function CategoryScreen() {
                 duration: "120 minutes",
                 requirement: "Payment at table",
                 rating: 4.8,
-                image: lRoom?.images || "http://localhost/media/services/pexels-alexy-almond-3758026.jpg",
+                image: lRoom?.images || `${getBaseUrl()}/media/services/pexels-alexy-almond-3758026.jpg`,
               });
             }
 
@@ -375,7 +375,7 @@ export default function CategoryScreen() {
 
     setLoadingSaltSlots(true);
     try {
-      const res = await fetch(`http://localhost/api/services/slots/?type=saltroom&date=${newDate}`);
+      const res = await fetch(`${API_BASE_URL}/services/slots/?type=saltroom&date=${newDate}`);
       if (res.ok) {
         const json = await res.json();
         if (json.is_blocked) {
@@ -477,7 +477,7 @@ export default function CategoryScreen() {
             : "Communal tranquility & heat wellness",
         serviceImage:
           saunaType === "private"
-            ? "http://localhost/media/services/private-sauna-v2.png"
+            ? `${getBaseUrl()}/media/services/private-sauna-v2.png`
             : "https://images.unsplash.com/photo-1544161515-436cefd54cbf?q=80&w=2070&auto=format&fit=crop",
         price: saunaTotal,
         isFree: false,
@@ -516,7 +516,7 @@ export default function CategoryScreen() {
         passType: selectedSaltOption,
         serviceTitle: chosenOpt?.title || "Salt Room",
         serviceSubtitle: chosenOpt?.subtitle || "Halotherapy Session",
-        serviceImage: "http://localhost/media/services/saltroom-v2.png",
+        serviceImage: `${getBaseUrl()}/media/services/saltroom-v2.png`,
         price: saltTotal,
         isFree: isSelectedSaltOptionCovered,
         isPassCovered: isSelectedSaltOptionCovered,
@@ -1755,7 +1755,7 @@ export default function CategoryScreen() {
                         notes: notesString,
                       };
 
-                      const res = await fetch("http://localhost/api/bookings/packages/", {
+                      const res = await fetch(`${API_BASE_URL}/bookings/packages/`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload),

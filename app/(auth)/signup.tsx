@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/toast";
 import { useGoogleSignIn } from "@/hooks/useGoogleSignin";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function SignupScreen() {
   const { t } = useTranslation();
@@ -78,7 +79,7 @@ export default function SignupScreen() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost/api/auth/register/", {
+      const res = await fetch(`${API_BASE_URL}/auth/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -92,7 +93,7 @@ export default function SignupScreen() {
       if (res.ok && data.status) {
         // Also trigger OTP request so user receives verification email
         try {
-          await fetch("http://localhost/api/auth/get-otp/", {
+          await fetch(`${API_BASE_URL}/auth/get-otp/`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: email.trim(), task: "verification" }),

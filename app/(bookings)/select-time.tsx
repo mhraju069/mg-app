@@ -9,6 +9,7 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
+import { API_BASE_URL } from "@/utils/constants";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   Clock,
@@ -127,7 +128,7 @@ export default function SelectTimeScreen() {
     const fetchSlots = async () => {
       try {
         if (isPackage) {
-          const res = await fetch(`http://localhost/api/services/slots/?type=package&date=${date}`);
+          const res = await fetch(`${API_BASE_URL}/services/slots/?type=package&date=${date}`);
           if (res.ok) {
             const json = await res.json();
             if (isMounted) {
@@ -165,7 +166,7 @@ export default function SelectTimeScreen() {
         }
 
         const queryType = isSaltRoom ? "saltroom" : serviceType;
-        const res = await fetch(`http://localhost/api/services/slots/?type=${queryType}&date=${date}`);
+        const res = await fetch(`${API_BASE_URL}/services/slots/?type=${queryType}&date=${date}`);
         if (res.ok) {
           const json = await res.json();
           if (isMounted) {

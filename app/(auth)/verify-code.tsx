@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useAuthStore } from "@/utils/authStore";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function VerifyCodeScreen() {
   const params = useLocalSearchParams();
@@ -36,7 +37,7 @@ export default function VerifyCodeScreen() {
     setIsVerifying(true);
 
     try {
-      const res = await fetch("http://localhost/api/auth/verify-otp/", {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-otp/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,7 +75,7 @@ export default function VerifyCodeScreen() {
     setErrorMessage(null);
 
     try {
-      const res = await fetch("http://localhost/api/auth/get-otp/", {
+      const res = await fetch(`${API_BASE_URL}/auth/get-otp/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: targetEmail, task: "verification" }),

@@ -23,7 +23,7 @@ import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet, Switch } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/utils/authStore";
-import { formatImageUrl } from "@/utils/constants";
+import { formatImageUrl, API_BASE_URL } from "@/utils/constants";
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
@@ -41,7 +41,7 @@ export default function ProfileScreen() {
       const auth = useAuthStore.getState();
       if (!auth.accessToken) return;
       try {
-        const res = await fetch("http://localhost/api/auth/user/", {
+        const res = await fetch(`${API_BASE_URL}/auth/user/`, {
           headers: {
             Authorization: `Bearer ${auth.accessToken}`,
           },

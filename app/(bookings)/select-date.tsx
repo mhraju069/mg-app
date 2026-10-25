@@ -15,6 +15,7 @@ import { Pressable, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 import { useBookingStore } from "@/utils/bookingStore";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function SelectDateScreen() {
   const storeState = useBookingStore.getState();
@@ -48,7 +49,7 @@ export default function SelectDateScreen() {
 
     try {
       const serviceType = storeState.serviceType === "saltroom" ? "saltroom" : storeState.serviceType || "sauna";
-      const res = await fetch(`http://localhost/api/services/slots/?type=${serviceType}&date=${dateStr}`);
+      const res = await fetch(`${API_BASE_URL}/services/slots/?type=${serviceType}&date=${dateStr}`);
       if (res.ok) {
         const json = await res.json();
         if (json.is_blocked) {

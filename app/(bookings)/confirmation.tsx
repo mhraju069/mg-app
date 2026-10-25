@@ -13,6 +13,7 @@ import { getStripe } from "@/utils/stripe";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 import CancellationPolicyCard from "@/components/booking/CancellationPolicyCard";
 import { router } from "expo-router";
+import { API_BASE_URL } from "@/utils/constants";
 import {
   Calendar,
   Clock,
@@ -95,7 +96,7 @@ export default function ConfirmationScreen() {
         }
 
         const celebration = storeState.celebration;
-        const res = await fetch("http://localhost/api/bookings/lunchroom/", {
+        const res = await fetch(`${API_BASE_URL}/bookings/lunchroom/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -165,7 +166,7 @@ export default function ConfirmationScreen() {
           total_price: priceVal,
         };
 
-        bookingRes = await fetch("http://localhost/api/bookings/sauna/", {
+        bookingRes = await fetch(`${API_BASE_URL}/bookings/sauna/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -184,7 +185,7 @@ export default function ConfirmationScreen() {
           total_price: priceVal.toFixed(2),
         };
 
-        bookingRes = await fetch("http://localhost/api/bookings/activities/", {
+        bookingRes = await fetch(`${API_BASE_URL}/bookings/activities/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -201,7 +202,7 @@ export default function ConfirmationScreen() {
           special_request: storeState.specialRequests || undefined,
         };
 
-        bookingRes = await fetch("http://localhost/api/bookings/saltroom/", {
+        bookingRes = await fetch(`${API_BASE_URL}/bookings/saltroom/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -262,13 +263,13 @@ export default function ConfirmationScreen() {
           ...(saltroom_booking ? { saltroom_booking } : {}),
         };
 
-        bookingRes = await fetch("http://localhost/api/bookings/packages/", {
+        bookingRes = await fetch(`${API_BASE_URL}/bookings/packages/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(pkgPayload),
         });
       } else {
-        bookingRes = await fetch("http://localhost/api/bookings/sauna/", {
+        bookingRes = await fetch(`${API_BASE_URL}/bookings/sauna/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -360,7 +361,7 @@ export default function ConfirmationScreen() {
         if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
           // Notify backend that payment is verified so booking & payment statuses become 'paid' and 'confirmed'
           try {
-            await fetch("http://localhost/api/payments/confirm-payment/", {
+            await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

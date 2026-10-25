@@ -218,14 +218,31 @@ export const upcomingBookings = [
   },
 ];
 
+export const getBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/api\/?$/, "");
+  }
+  return "http://localhost";
+};
+
+export const API_BASE_URL = `${getBaseUrl()}/api`;
+
 export const formatImageUrl = (
   imageSrc: string | null | undefined,
   fallback?: string
 ): string => {
   if (!imageSrc) return fallback || "";
+  
+  // If backend stored or returned a localhost URL, replace it with dynamic base URL
+  if (imageSrc.includes("localhost") || imageSrc.includes("127.0.0.1")) {
+    const path = imageSrc.replace(/^https?:\/\/[^/]+/, "");
+    return `${getBaseUrl()}${path.startsWith("/") ? "" : "/"}${path}`;
+  }
+
   if (imageSrc.startsWith("http://") || imageSrc.startsWith("https://") || imageSrc.startsWith("file://") || imageSrc.startsWith("blob:") || imageSrc.startsWith("data:")) {
     return imageSrc;
   }
   const cleanPath = imageSrc.startsWith("/") ? imageSrc : `/${imageSrc}`;
-  return `http://localhost${cleanPath}`;
+  return `${getBaseUrl()}${cleanPath}`;
 };

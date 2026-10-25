@@ -24,6 +24,7 @@ import {
   AlertCircle,
   Footprints,
 } from "lucide-react-native";
+import { API_BASE_URL } from "@/utils/constants";
 import React, { useState } from "react";
 import {
   Modal,
@@ -147,7 +148,7 @@ export default function EventSpaceScreen() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost/api/bookings/events/", {
+      const res = await fetch(`${API_BASE_URL}/bookings/events/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

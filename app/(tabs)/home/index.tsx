@@ -60,7 +60,7 @@ import { useBookingStore } from "@/utils/bookingStore";
 import { useAuthStore } from "@/utils/authStore";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
-import { formatImageUrl } from "@/utils/constants";
+import { formatImageUrl, API_BASE_URL, getBaseUrl } from "@/utils/constants";
 import legalApi, { fallbackSocialLinks, SocialMediaLinksData } from "@/utils/legalApi";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
@@ -187,7 +187,7 @@ export default function HomeScreen() {
       }
 
       // 1. Call purchase creation endpoint
-      const res = await fetch("http://localhost/api/payments/purchase/", {
+      const res = await fetch(`${API_BASE_URL}/payments/purchase/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -235,7 +235,7 @@ export default function HomeScreen() {
           if (confirmResult?.paymentIntent && (confirmResult.paymentIntent.status === "succeeded" || confirmResult.paymentIntent.status === "processing")) {
             const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
             try {
-              await fetch("http://localhost/api/payments/confirm-payment/", {
+              await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -266,7 +266,7 @@ export default function HomeScreen() {
     let isMounted = true;
     const fetchServices = async () => {
       try {
-        const response = await fetch("http://localhost/api/services/");
+        const response = await fetch(`${API_BASE_URL}/services/`);
         if (response.ok) {
           const resJson = await response.json();
           const list = resJson?.data || (Array.isArray(resJson) ? resJson : []);
@@ -336,7 +336,7 @@ export default function HomeScreen() {
 
     const fetchPlansAndPasses = async () => {
       try {
-        const res = await fetch("http://localhost/api/payments/plans-and-passes/");
+        const res = await fetch(`${API_BASE_URL}/payments/plans-and-passes/`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data) {
@@ -356,8 +356,8 @@ export default function HomeScreen() {
       // Secondary fallback attempts for individual endpoints
       try {
         const [subRes, passRes] = await Promise.all([
-          fetch("http://localhost/api/payments/subscription-plans/").catch(() => null),
-          fetch("http://localhost/api/payments/session-passes/").catch(() => null),
+          fetch(`${API_BASE_URL}/payments/subscription-plans/`).catch(() => null),
+          fetch(`${API_BASE_URL}/payments/session-passes/`).catch(() => null),
         ]);
 
         let hasData = false;
@@ -429,7 +429,7 @@ export default function HomeScreen() {
         if (auth.accessToken) {
           // Fetch fresh user profile from API
           try {
-            const userRes = await fetch("http://localhost/api/auth/user/", {
+            const userRes = await fetch(`${API_BASE_URL}/auth/user/`, {
               headers: {
                 Authorization: `Bearer ${auth.accessToken}`,
               },
@@ -457,7 +457,7 @@ export default function HomeScreen() {
 
     const fetchContactInfo = async () => {
       try {
-        const res = await fetch("http://localhost/api/others/contact-info/");
+        const res = await fetch(`${API_BASE_URL}/others/contact-info/`);
         if (res.ok) {
           const json = await res.json();
           if (isMounted && json?.data) {
@@ -530,7 +530,7 @@ export default function HomeScreen() {
       if (item.image.startsWith("http://") || item.image.startsWith("https://")) {
         return item.image;
       }
-      return `http://localhost${item.image.startsWith("/") ? "" : "/"}${item.image}`;
+      return `${getBaseUrl()}${item.image.startsWith("/") ? "" : "/"}${item.image}`;
     }
     const cleanType = (item.type || "").toLowerCase().trim();
     return DEFAULT_FALLBACK_IMAGES[cleanType] || DEFAULT_FALLBACK_IMAGES.sauna;
@@ -807,10 +807,7 @@ export default function HomeScreen() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={styles.sectionTitle}>
-              {t("memberships.title") || "Memberships, Plans & Passes"}
-            </Text>
-            <Text style={{ fontSize: 13, color: "#6B5D54", marginTop: 2 }}>
-              {t("memberships.subtitle") || "Flexible passes and recurring memberships for consistent wellness"}
+              {"Memberships, Plans & Passes"}
             </Text>
           </View>
         </View>

@@ -24,6 +24,7 @@ import {
   Wind,
 } from "lucide-react-native";
 import { useBookingStore } from "@/utils/bookingStore";
+import { API_BASE_URL, getBaseUrl } from "@/utils/constants";
 
 interface ServiceItemData {
   id: number | string;
@@ -89,7 +90,7 @@ export default function SelectServicesScreen() {
     let isMounted = true;
     const fetchServices = async () => {
       try {
-        const response = await fetch("http://localhost/api/services/");
+        const response = await fetch(`${API_BASE_URL}/services/`);
         if (response.ok) {
           const resJson = await response.json();
           const list = resJson?.data || (Array.isArray(resJson) ? resJson : []);
@@ -186,7 +187,7 @@ export default function SelectServicesScreen() {
       if (item.image.startsWith("http://") || item.image.startsWith("https://")) {
         return item.image;
       }
-      return `http://localhost${item.image.startsWith("/") ? "" : "/"}${item.image}`;
+      return `${getBaseUrl()}${item.image.startsWith("/") ? "" : "/"}${item.image}`;
     }
     const cleanType = (item.type || "").toLowerCase().trim();
     return DEFAULT_FALLBACK_IMAGES[cleanType] || DEFAULT_FALLBACK_IMAGES.sauna;

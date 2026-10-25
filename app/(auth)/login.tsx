@@ -23,6 +23,7 @@ import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/toast";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -86,7 +87,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost/api/auth/login/", {
+      const res = await fetch(`${API_BASE_URL}/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),

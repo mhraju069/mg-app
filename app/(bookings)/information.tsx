@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
+import { API_BASE_URL } from "@/utils/constants";
 import { router } from "expo-router";
 import {
   ArrowRight,
@@ -109,7 +110,7 @@ export default function InformationScreen() {
     setLunchroomBlockMsg("");
 
     try {
-      const res = await fetch(`http://localhost/api/services/slots/?type=lunchroom&date=${targetDate}`);
+      const res = await fetch(`${API_BASE_URL}/services/slots/?type=lunchroom&date=${targetDate}`);
       if (res.ok) {
         const json = await res.json();
         const data = json.data || json;

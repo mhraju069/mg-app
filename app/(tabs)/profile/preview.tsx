@@ -10,6 +10,7 @@ import { router } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { StyleSheet, TextInput, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/utils/authStore";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function PreviewProfileScreen() {
   const [profile, setProfile] = useState<any>(useAuthStore.getState().user);
@@ -25,7 +26,7 @@ export default function PreviewProfileScreen() {
       }
 
       try {
-        const res = await fetch("http://localhost/api/auth/user/", {
+        const res = await fetch(`${API_BASE_URL}/auth/user/`, {
           headers: {
             Authorization: `Bearer ${auth.accessToken}`,
           },

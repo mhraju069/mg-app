@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react";
 import { Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/utils/authStore";
 import { useToast } from "@/components/ui/toast";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function EditProfileScreen() {
   const textMuted = useColor("textMuted");
@@ -70,7 +71,7 @@ export default function EditProfileScreen() {
           type,
         } as any);
 
-        res = await fetch("http://localhost/api/auth/user/", {
+        res = await fetch(`${API_BASE_URL}/auth/user/`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${auth.accessToken}`,
@@ -78,7 +79,7 @@ export default function EditProfileScreen() {
           body: formData,
         });
       } else {
-        res = await fetch("http://localhost/api/auth/user/", {
+        res = await fetch(`${API_BASE_URL}/auth/user/`, {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
