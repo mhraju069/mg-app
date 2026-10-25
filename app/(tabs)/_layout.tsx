@@ -61,11 +61,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="booking"
         options={{
-         tabBarBadge: 2,
-         tabBarBadgeStyle: {
-            backgroundColor: "#9B7C56",
-            color: "#fff"
-         },
           title: t("tabs.booking"),
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.iconContainer}>
