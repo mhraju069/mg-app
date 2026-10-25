@@ -25,7 +25,6 @@
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/icon.png",
-        "backgroundImage": "./assets/images/splash.png",
         "monochromeImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
@@ -86,6 +85,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a68a861e-1f38-4b98-9c99-edaf80aba58b"
+      }
     }
   }
 }
