@@ -15,7 +15,6 @@ const languages = [
   { id: "en", label: "English", sub: "English" },
   { id: "nl", label: "Nederlands", sub: "Dutch" },
   { id: "de", label: "Deutsch", sub: "German" },
-  { id: "fr", label: "Français", sub: "French" },
 ];
 
 export default function LanguageScreen() {
@@ -23,7 +22,22 @@ export default function LanguageScreen() {
   const textMuted = useColor("textMuted");
   const [selected, setSelected] = useState(i18n.language || "en");
 
+  const handleSelectLanguage = async (langId: string) => {
+    setSelected(langId);
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("user-language", langId);
+      }
+    } catch {}
+    await i18n.changeLanguage(langId);
+  };
+
   const handleSave = async () => {
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.setItem("user-language", selected);
+      }
+    } catch {}
     await i18n.changeLanguage(selected);
     router.back();
   };
@@ -44,7 +58,7 @@ export default function LanguageScreen() {
               <Pressable
                 key={lang.id}
                 style={[styles.item, isSelected && styles.selectedItem]}
-                onPress={() => setSelected(lang.id)}
+                onPress={() => handleSelectLanguage(lang.id)}
               >
                 <View>
                   <Text
