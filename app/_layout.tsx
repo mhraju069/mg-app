@@ -18,6 +18,9 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Toaster } from "sonner-native";
 import "@/i18n";
 
+import { notificationStore } from "@/utils/notificationStore";
+import { useAuthStore } from "@/utils/authStore";
+
 LogBox.ignoreAllLogs();
 
 SplashScreen.setOptions({
@@ -27,7 +30,32 @@ SplashScreen.setOptions({
 
 export default function RootLayout() {
   const colorScheme = useColorScheme() || "light";
-  const primary = useColor("primary")
+  const primary = useColor("primary");
+
+  useEffect(() => {
+    // 1. Initial notification fetch and WebSocket listener
+    const initNotifications = () => {
+      const auth = useAuthStore.getState();
+      if (auth.accessToken) {
+        notificationStore.fetchUnreadCount();
+        notificationStore.connectWebSocket();
+      } else {
+        notificationStore.disconnectWebSocket();
+      }
+    };
+
+    initNotifications();
+
+    // Re-check on auth state change
+    const unsubscribeAuth = useAuthStore.subscribe(() => {
+      initNotifications();
+    });
+
+    return () => {
+      unsubscribeAuth();
+      notificationStore.disconnectWebSocket();
+    };
+  }, []);
 
   useEffect(() => {
     if (Platform.OS === "android") {

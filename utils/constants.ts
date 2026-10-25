@@ -226,6 +226,11 @@ export const getBaseUrl = (): string => {
   return "http://localhost";
 };
 
+export const getWsBaseUrl = (): string => {
+  const httpUrl = getBaseUrl();
+  return httpUrl.replace(/^http:\/\//, "ws://").replace(/^https:\/\//, "wss://");
+};
+
 export const API_BASE_URL = `${getBaseUrl()}/api`;
 
 export const formatImageUrl = (

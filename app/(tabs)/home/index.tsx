@@ -61,6 +61,7 @@ import { useAuthStore } from "@/utils/authStore";
 import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
 import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
 import { formatImageUrl, API_BASE_URL, getBaseUrl } from "@/utils/constants";
+import { useNotifications } from "@/utils/notificationStore";
 import legalApi, { fallbackSocialLinks, SocialMediaLinksData } from "@/utils/legalApi";
 
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
@@ -128,6 +129,7 @@ export default function HomeScreen() {
   // User profile state synchronized with Auth Store and backend API
   const [currentUser, setCurrentUser] = useState<any>(useAuthStore.getState().user);
   const [isLoggedIn, setIsLoggedIn] = useState(useAuthStore.getState().isAuthenticated);
+  const { unreadCount } = useNotifications();
 
   // Sync user info from auth store
   useEffect(() => {
@@ -568,6 +570,36 @@ export default function HomeScreen() {
           onPress={() => router.push("/notifications")}
         >
           <Icon name={Bell} size={24} color={primary} />
+          {unreadCount > 0 && (
+            <View
+              style={{
+                position: "absolute",
+                top: -3,
+                right: -3,
+                backgroundColor: "#EF4444",
+                borderRadius: 10,
+                minWidth: 20,
+                height: 20,
+                paddingHorizontal: 5,
+                justifyContent: "center",
+                alignItems: "center",
+                borderWidth: 1.5,
+                borderColor: "#FFFFFF",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 11,
+                  fontWeight: "800",
+                  textAlign: "center",
+                  lineHeight: 14,
+                }}
+              >
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
