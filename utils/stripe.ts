@@ -99,7 +99,7 @@ export async function confirmStripeNativePayment(params: {
         data?.error ||
         data?.message ||
         data?.detail ||
-        "Payment could not be processed. Please check your card details and try again.";
+        `Server returned ${response.status} ${response.statusText || ""}. Please ensure the payment service is updated.`;
       return { success: false, error: errMsg };
     }
 

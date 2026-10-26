@@ -87,22 +87,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/splash.png",
+          "imageContentMode": "cover",
           "resizeMode": "cover",
-          "backgroundColor": "#E5D5C4",
-          "enableFullScreenImage_legacy": true,
-          "enableFullScreenImage": true,
-          "android": {
-            "image": "./assets/images/splash.png",
-            "resizeMode": "cover",
-            "backgroundColor": "#E5D5C4",
-            "enableFullScreenImage_legacy": true,
-            "enableFullScreenImage": true
-          },
-          "ios": {
-            "image": "./assets/images/splash.png",
-            "resizeMode": "cover",
-            "backgroundColor": "#E5D5C4"
-          }
+          "backgroundColor": "#E5D5C4"
         }
       ]
     ],

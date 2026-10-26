@@ -10,12 +10,13 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      },
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://api.heaven-on-earth.nl/api",
         "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51Sct9QEe7PW0Rd5ukroDxzhTAigDjXRxIxM16xcZMyKA62XxoPnckZnh7cLHAEKFDI4nNGKMV9YpdcMmFzuBBoFr00KbAXg8kc"
-      },
-      "android": {
-        "buildType": "apk"
       }
     },
     "production": {
