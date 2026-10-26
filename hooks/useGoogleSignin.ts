@@ -29,21 +29,37 @@ export function useGoogleSignIn() {
         showPlayServicesUpdateDialog: true,
       });
 
-      // Optional: If you want to force account selection every time, you can sign out first
+      // Optional: force fresh account picker
       try {
         await GoogleSignin.signOut();
       } catch (e) {
         // Ignore if not signed in
       }
 
-      // Perform sign-in
-      await GoogleSignin.signIn();
-      const { idToken } = await GoogleSignin.getTokens();
-      console.log("Google ID Token:", idToken);
+      // Perform sign-in (In @react-native-google-signin v13+, signIn() returns SignInResponse)
+      const signInResult = await GoogleSignin.signIn();
+      console.log("Google Sign-In response:", JSON.stringify(signInResult));
+
+      let idToken: string | null = null;
+
+      // Extract idToken directly from signIn() if available
+      if (signInResult && "data" in signInResult && signInResult.data) {
+        idToken = signInResult.data.idToken;
+      } else if (signInResult && "idToken" in signInResult) {
+        idToken = (signInResult as any).idToken;
+      }
+
+      // Fallback to getTokens() if idToken is not in signIn() response
+      if (!idToken) {
+        const tokens = await GoogleSignin.getTokens();
+        idToken = tokens.idToken;
+      }
+
+      console.log("Resolved Google ID Token:", idToken ? "Exists" : "Null");
 
       if (!idToken) {
         throw new Error(
-          "No ID Token found. Make sure you have configured the webClientId correctly.",
+          "Could not obtain Google ID token. Please verify your SHA-1 fingerprint in Firebase Console.",
         );
       }
 

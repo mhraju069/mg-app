@@ -55,11 +55,12 @@ export default function LoginScreen() {
     try {
       await signInWithGoogle();
       router.replace("/(tabs)/home");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed", error);
+      const msg = error?.message || t("auth.errors.tryAgain", "Please try again later.");
       showErrorToast(
         t("auth.errors.googleSignInFailed", "Google Sign-In failed"),
-        t("auth.errors.tryAgain", "Please try again later.")
+        msg
       );
     }
   };
