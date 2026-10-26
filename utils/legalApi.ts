@@ -61,7 +61,7 @@ const getBaseUrl = (): string => {
   if (envUrl) {
     return envUrl.replace(/\/api\/?$/, "");
   }
-  return "http://localhost";
+  return "https://api.heaven-on-earth.nl";
 };
 
 export const fallbackTerms: TermsAndConditionsData = {
