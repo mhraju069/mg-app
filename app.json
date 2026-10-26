@@ -30,6 +30,11 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true,
       "usesCleartextTraffic": true,
+      "splash": {
+        "image": "./assets/images/splash.png",
+        "resizeMode": "cover",
+        "backgroundColor": "#FFFFFF"
+      },
       "permissions": [
         "android.permission.INTERNET",
         "android.permission.ACCESS_NETWORK_STATE",
@@ -81,7 +86,8 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "cover",
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#FFFFFF",
+          "enableFullScreenImage_legacy": true
         }
       ]
     ],

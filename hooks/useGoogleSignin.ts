@@ -13,8 +13,8 @@ import { Platform } from "react-native";
 if (Platform.OS !== "web") {
   GoogleSignin.configure({
     scopes: ["email", "profile"],
-    //  webClientId: "", // TODO: Replace with your actual Web Client ID
-    //  offlineAccess: true,
+    webClientId: "993636678733-bugehlucc70or3bjle66mfoeivu9buno.apps.googleusercontent.com",
+    offlineAccess: true,
   });
 }
 
@@ -50,13 +50,40 @@ export function useGoogleSignIn() {
       // Create a Google credential with the token
       const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
-      // Sign-in the user with the credential
+      // Sign-in the user with the credential in Firebase
       const userCredential =
         await auth().signInWithCredential(googleCredential);
 
-      console.log("Logged in with Google:", userCredential.user.email);
+      console.log("Logged in with Google Firebase:", userCredential.user.email);
 
-      return userCredential.user;
+      // Get Firebase ID token to authenticate with Django backend
+      const firebaseIdToken = await userCredential.user.getIdToken();
+
+      // Exchange with backend for JWT access & refresh tokens
+      const { API_BASE_URL } = await import("@/utils/constants");
+      const { useAuthStore } = await import("@/utils/authStore");
+
+      const response = await fetch(`${API_BASE_URL}/auth/firebase-login/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_token: firebaseIdToken,
+          role: "user",
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.status && data.access) {
+        useAuthStore.login({
+          user: data.user,
+          access: data.access,
+          refresh: data.refresh,
+        });
+        return data.user;
+      } else {
+        const errMsg = data.log || data.message || "Failed to authenticate with server.";
+        throw new Error(errMsg);
+      }
     } catch (error) {
       if (isErrorWithCode(error)) {
         switch (error.code) {

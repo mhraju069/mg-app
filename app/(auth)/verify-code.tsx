@@ -26,10 +26,24 @@ export default function VerifyCodeScreen() {
   const color = useColor("mutedForeground");
   const { error: showErrorToast, success: showSuccessToast } = useToast();
 
+  const isForgotPasswordMode = params.mode === "forgot-password";
+
   const handleVerifyOtp = async (codeToVerify?: string) => {
     const finalCode = (codeToVerify || code).trim();
     if (finalCode.length < 4) {
-      showErrorToast("Incomplete Code", "Please enter the full verification code.");
+      showErrorToast("Incomplete Code", "Please enter the full 4-digit verification code.");
+      return;
+    }
+
+    // If in forgot password flow, navigate directly to new-password screen with the OTP & email
+    if (isForgotPasswordMode) {
+      router.push({
+        pathname: "/new-password",
+        params: {
+          email: targetEmail,
+          otp_code: finalCode,
+        },
+      });
       return;
     }
 
@@ -124,10 +138,10 @@ export default function VerifyCodeScreen() {
         <View style={styles.otpContainer}>
           <InputOTP
             slotStyle={{
-              width: "15%",
+              width: "20%",
             }}
             keyboardType="numeric"
-            length={6}
+            length={4}
             value={code}
             onChangeText={setCode}
             onComplete={(value) => handleVerifyOtp(value)}
