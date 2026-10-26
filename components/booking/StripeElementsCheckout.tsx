@@ -147,10 +147,6 @@ function InnerStripeElementsCheckout({
     <View style={styles.container}>
       {/* Stripe Security Header */}
       <View style={styles.stripeHeader}>
-        <View style={styles.stripeBadge}>
-          <Lock size={14} color="#fff" />
-          <Text style={styles.stripeBadgeText}>STRIPE OFFICIAL ELEMENTS</Text>
-        </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <ShieldCheck size={16} color="#059669" />
           <Text style={{ fontSize: 11, fontWeight: "600", color: "#059669" }}>
