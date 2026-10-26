@@ -1,49 +1,34 @@
 {
   "project_info": {
-    "project_number": "993636678733",
-    "project_id": "heaven-wellness-510ca",
-    "storage_bucket": "heaven-wellness-510ca.firebasestorage.app"
+    "project_number": "924899435325",
+    "project_id": "haven-on-earth-e0600",
+    "storage_bucket": "haven-on-earth-e0600.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:993636678733:android:1219c39bfa488bd826b004",
+        "mobilesdk_app_id": "1:924899435325:android:a5604da79b4ca37b759b54",
         "android_client_info": {
           "package_name": "com.saruf.heavenwellness"
         }
       },
       "oauth_client": [
         {
-          "client_id": "993636678733-qs9r854g1a6u8k84923q40ajn9ni7ucc.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.saruf.heavenwellness",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
-          }
-        },
-        {
-          "client_id": "993636678733-bugehlucc70or3bjle66mfoeivu9buno.apps.googleusercontent.com",
+          "client_id": "924899435325-bl41d05ebdietd882sdta3tj1k8joo9r.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAMzNdlB8dygk3ULdJIF4WOrvsR7EXP8Mk"
+          "current_key": "AIzaSyCw1zxIqFapOUBJO1BJ1iEXDTBHxwLKAoA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "993636678733-bugehlucc70or3bjle66mfoeivu9buno.apps.googleusercontent.com",
+              "client_id": "924899435325-bl41d05ebdietd882sdta3tj1k8joo9r.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "993636678733-ff89iipe7j2mrildvn5ll743v8nbds5k.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.saruf.heaven-wellness"
-              }
             }
           ]
         }

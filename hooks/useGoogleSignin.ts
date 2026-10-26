@@ -13,7 +13,7 @@ import { Platform } from "react-native";
 if (Platform.OS !== "web") {
   GoogleSignin.configure({
     scopes: ["email", "profile"],
-    webClientId: "993636678733-bugehlucc70or3bjle66mfoeivu9buno.apps.googleusercontent.com",
+    webClientId: "924899435325-bl41d05ebdietd882sdta3tj1k8joo9r.apps.googleusercontent.com",
     offlineAccess: true,
   });
 }
