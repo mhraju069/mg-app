@@ -52,13 +52,15 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Layout } from "@/components/layout/Layout";
 import { useTranslation } from "react-i18next";
 import { useBookingStore } from "@/utils/bookingStore";
 import { useAuthStore } from "@/utils/authStore";
-import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
+import StripeElementsCheckout, { NativeCardDetails } from "@/components/booking/StripeElementsCheckout";
+import { confirmStripeNativePayment } from "@/utils/stripe";
 import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
 import { formatImageUrl, API_BASE_URL, getBaseUrl } from "@/utils/constants";
 import { useNotifications } from "@/utils/notificationStore";
@@ -125,6 +127,11 @@ export default function HomeScreen() {
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null);
   const [purchaseSuccessData, setPurchaseSuccessData] = useState<any | null>(null);
   const [stripeRefs, setStripeRefs] = useState<{ elements: any; stripe: any } | null>(null);
+  const [nativeCardDetails, setNativeCardDetails] = useState<NativeCardDetails>({
+    cardNumber: "",
+    cardExpiry: "",
+    cardCvc: "",
+  });
 
   // User profile state synchronized with Auth Store and backend API
   const [currentUser, setCurrentUser] = useState<any>(useAuthStore.getState().user);
@@ -209,32 +216,72 @@ export default function HomeScreen() {
       const clientSecret = resData.client_secret;
       const purchaseRecord = resData.purchase;
 
-      // 2. Confirm card payment with Stripe Elements
-      if (clientSecret && stripeRefs?.stripe && stripeRefs?.elements) {
-        const { CardNumberElement } = await import("@stripe/react-stripe-js");
-        const cardEl = stripeRefs.elements.getElement(CardNumberElement);
+      // 2. Confirm card payment with Stripe
+      if (clientSecret) {
+        if (Platform.OS === "web") {
+          if (stripeRefs?.stripe && stripeRefs?.elements) {
+            const { CardNumberElement } = await import("@stripe/react-stripe-js");
+            const cardEl = stripeRefs.elements.getElement(CardNumberElement);
 
-        if (cardEl) {
-          const confirmResult = await stripeRefs.stripe.confirmCardPayment(clientSecret, {
-            payment_method: {
-              card: cardEl,
-              billing_details: {
-                name: checkoutName || auth.user?.name || "Cardholder",
-                email: checkoutEmail || auth.user?.email,
-                address: {
-                  postal_code: checkoutPostalCode,
+            if (cardEl) {
+              const confirmResult = await stripeRefs.stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                  card: cardEl,
+                  billing_details: {
+                    name: checkoutName || auth.user?.name || "Cardholder",
+                    email: checkoutEmail || auth.user?.email,
+                    address: {
+                      postal_code: checkoutPostalCode,
+                    },
+                  },
                 },
-              },
-            },
+              });
+
+              if (confirmResult.error) {
+                setPurchaseErrorMessage(confirmResult.error.message || "Card verification failed.");
+                setIsProcessingPurchase(false);
+                return;
+              }
+
+              if (confirmResult?.paymentIntent && (confirmResult.paymentIntent.status === "succeeded" || confirmResult.paymentIntent.status === "processing")) {
+                const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
+                try {
+                  await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${auth.accessToken}`,
+                    },
+                    body: JSON.stringify({
+                      payment_intent_id: confirmResult.paymentIntent.id,
+                      ...(purchaseId ? { purchase_id: purchaseId } : {}),
+                    }),
+                  });
+                } catch (confirmErr) {
+                  console.warn("Backend confirm payment sync error:", confirmErr);
+                }
+              }
+            }
+          }
+        } else {
+          // Native mobile checkout (Android / iOS)
+          const nativeRes = await confirmStripeNativePayment({
+            clientSecret,
+            cardNumber: nativeCardDetails.cardNumber,
+            cardExpiry: nativeCardDetails.cardExpiry,
+            cardCvc: nativeCardDetails.cardCvc,
+            cardHolder: checkoutName || auth.user?.name || "Cardholder",
+            postalCode: checkoutPostalCode,
+            email: checkoutEmail || auth.user?.email,
           });
 
-          if (confirmResult.error) {
-            setPurchaseErrorMessage(confirmResult.error.message || "Card verification failed.");
+          if (!nativeRes.success) {
+            setPurchaseErrorMessage(nativeRes.error || "Card verification failed.");
             setIsProcessingPurchase(false);
             return;
           }
 
-          if (confirmResult?.paymentIntent && (confirmResult.paymentIntent.status === "succeeded" || confirmResult.paymentIntent.status === "processing")) {
+          if (nativeRes.paymentIntent?.id) {
             const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
             try {
               await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
@@ -244,7 +291,7 @@ export default function HomeScreen() {
                   Authorization: `Bearer ${auth.accessToken}`,
                 },
                 body: JSON.stringify({
-                  payment_intent_id: confirmResult.paymentIntent.id,
+                  payment_intent_id: nativeRes.paymentIntent.id,
                   ...(purchaseId ? { purchase_id: purchaseId } : {}),
                 }),
               });
@@ -1289,7 +1336,11 @@ export default function HomeScreen() {
               </View>
             ) : (
               /* Checkout Form View */
-              <View style={{ gap: 14 }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{ gap: 14, paddingBottom: 16 }}
+              >
                 {/* Item Summary Card */}
                 <View style={stylesModalCheckout.summaryCard}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
@@ -1344,6 +1395,7 @@ export default function HomeScreen() {
                   selectedBank={selectedBank}
                   setSelectedBank={setSelectedBank}
                   errorMessage={purchaseErrorMessage}
+                  onNativeCardChange={setNativeCardDetails}
                   onElementsReady={(elements, stripe) => {
                     setStripeRefs({ elements, stripe });
                   }}
@@ -1366,7 +1418,7 @@ export default function HomeScreen() {
                     </View>
                   )}
                 </Button>
-              </View>
+              </ScrollView>
             )}
           </View>
         </View>

@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "cover",
-      "backgroundColor": "#FFFFFF"
+      "backgroundColor": "#E5D5C4"
     },
     "ios": {
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -33,7 +33,7 @@
       "splash": {
         "image": "./assets/images/splash.png",
         "resizeMode": "cover",
-        "backgroundColor": "#FFFFFF"
+        "backgroundColor": "#E5D5C4"
       },
       "permissions": [
         "android.permission.INTERNET",
@@ -86,8 +86,15 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "cover",
-          "backgroundColor": "#FFFFFF",
-          "enableFullScreenImage_legacy": true
+          "backgroundColor": "#E5D5C4",
+          "imageWidth": 200,
+          "enableFullScreenImage_legacy": true,
+          "android": {
+            "image": "./assets/images/splash.png",
+            "resizeMode": "cover",
+            "backgroundColor": "#E5D5C4",
+            "enableFullScreenImage_legacy": true
+          }
         }
       ]
     ],

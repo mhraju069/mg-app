@@ -50,6 +50,12 @@ const CARD_ELEMENT_OPTIONS = {
   },
 };
 
+export interface NativeCardDetails {
+  cardNumber: string;
+  cardExpiry: string;
+  cardCvc: string;
+}
+
 interface StripeElementsCheckoutProps {
   cardHolder: string;
   setCardHolder: (name: string) => void;
@@ -61,6 +67,7 @@ interface StripeElementsCheckoutProps {
   setSelectedBank: (b: string) => void;
   errorMessage: string | null;
   onElementsReady?: (elements: any, stripe: any) => void;
+  onNativeCardChange?: (details: NativeCardDetails) => void;
 }
 
 function InnerStripeElementsCheckout({
@@ -74,9 +81,61 @@ function InnerStripeElementsCheckout({
   setSelectedBank,
   errorMessage,
   onElementsReady,
+  onNativeCardChange,
 }: StripeElementsCheckoutProps) {
-  const stripe = useStripe();
-  const elements = useElements();
+  let stripe: any = null;
+  let elements: any = null;
+
+  if (Platform.OS === "web") {
+    try {
+      stripe = useStripe();
+      elements = useElements();
+    } catch {
+      // Ignore if web elements hook fails
+    }
+  }
+
+  // Native input states
+  const [nativeCardNumber, setNativeCardNumber] = useState("");
+  const [nativeExpiry, setNativeExpiry] = useState("");
+  const [nativeCvc, setNativeCvc] = useState("");
+
+  const updateCardDetails = (num: string, exp: string, cvc: string) => {
+    if (onNativeCardChange) {
+      onNativeCardChange({
+        cardNumber: num,
+        cardExpiry: exp,
+        cardCvc: cvc,
+      });
+    }
+  };
+
+  const handleCardNumberChange = (text: string) => {
+    // Only numbers, grouped into 4 digits: "4242 4242 4242 4242"
+    const cleaned = text.replace(/\D/g, "").slice(0, 16);
+    const formatted = cleaned.match(/.{1,4}/g)?.join(" ") || cleaned;
+    setNativeCardNumber(formatted);
+    updateCardDetails(formatted, nativeExpiry, nativeCvc);
+  };
+
+  const handleExpiryChange = (text: string) => {
+    // Only numbers, auto insert slash: "MM/YY"
+    const cleaned = text.replace(/\D/g, "").slice(0, 4);
+    let formatted = cleaned;
+    if (cleaned.length >= 3) {
+      formatted = `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    } else if (cleaned.length === 2 && text.length > nativeExpiry.length) {
+      formatted = `${cleaned}/`;
+    }
+    setNativeExpiry(formatted);
+    updateCardDetails(nativeCardNumber, formatted, nativeCvc);
+  };
+
+  const handleCvcChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, "").slice(0, 4);
+    setNativeCvc(cleaned);
+    updateCardDetails(nativeCardNumber, nativeExpiry, cleaned);
+  };
 
   React.useEffect(() => {
     if (elements && stripe && onElementsReady) {
@@ -161,9 +220,13 @@ function InnerStripeElementsCheckout({
                 <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
               ) : (
                 <TextInput
-                  style={{ fontSize: 14, color: "#0F172A" }}
+                  style={{ fontSize: 14, color: "#0F172A", padding: 0 }}
                   placeholder="4242 4242 4242 4242"
                   placeholderTextColor="#94A3B8"
+                  keyboardType="number-pad"
+                  maxLength={19}
+                  value={nativeCardNumber}
+                  onChangeText={handleCardNumberChange}
                 />
               )}
             </View>
@@ -178,9 +241,13 @@ function InnerStripeElementsCheckout({
                   <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
                 ) : (
                   <TextInput
-                    style={{ fontSize: 14, color: "#0F172A" }}
+                    style={{ fontSize: 14, color: "#0F172A", padding: 0 }}
                     placeholder="MM/YY"
                     placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    maxLength={5}
+                    value={nativeExpiry}
+                    onChangeText={handleExpiryChange}
                   />
                 )}
               </View>
@@ -193,9 +260,13 @@ function InnerStripeElementsCheckout({
                   <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
                 ) : (
                   <TextInput
-                    style={{ fontSize: 14, color: "#0F172A" }}
+                    style={{ fontSize: 14, color: "#0F172A", padding: 0 }}
                     placeholder="123"
                     placeholderTextColor="#94A3B8"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    value={nativeCvc}
+                    onChangeText={handleCvcChange}
                   />
                 )}
               </View>
@@ -209,6 +280,7 @@ function InnerStripeElementsCheckout({
                 placeholderTextColor="#94A3B8"
                 value={postalCode}
                 onChangeText={setPostalCode}
+                autoCapitalize="characters"
               />
             </View>
           </View>
@@ -266,13 +338,17 @@ function InnerStripeElementsCheckout({
 }
 
 export default function StripeElementsCheckout(props: StripeElementsCheckoutProps) {
-  const stripePromise = getStripe();
+  if (Platform.OS === "web") {
+    const stripePromise = getStripe();
+    return (
+      <Elements stripe={stripePromise}>
+        <InnerStripeElementsCheckout {...props} />
+      </Elements>
+    );
+  }
 
-  return (
-    <Elements stripe={stripePromise}>
-      <InnerStripeElementsCheckout {...props} />
-    </Elements>
-  );
+  // On native platforms (iOS/Android), render directly without web Elements provider
+  return <InnerStripeElementsCheckout {...props} />;
 }
 
 const styles = StyleSheet.create({

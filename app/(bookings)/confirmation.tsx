@@ -9,8 +9,8 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
-import { getStripe } from "@/utils/stripe";
-import StripeElementsCheckout from "@/components/booking/StripeElementsCheckout";
+import { getStripe, confirmStripeNativePayment } from "@/utils/stripe";
+import StripeElementsCheckout, { NativeCardDetails } from "@/components/booking/StripeElementsCheckout";
 import CancellationPolicyCard from "@/components/booking/CancellationPolicyCard";
 import { router } from "expo-router";
 import { API_BASE_URL } from "@/utils/constants";
@@ -47,6 +47,11 @@ export default function ConfirmationScreen() {
   // Card details state
   const [cardHolder, setCardHolder] = useState<string>(storeState.fullName || "Akash");
   const [postalCode, setPostalCode] = useState<string>("1012AB");
+  const [nativeCardDetails, setNativeCardDetails] = useState<NativeCardDetails>({
+    cardNumber: "",
+    cardExpiry: "",
+    cardCvc: "",
+  });
 
   // Reference to Stripe instance and elements from checkout component
   const [stripeInstance, setStripeInstance] = useState<any>(null);
@@ -297,75 +302,110 @@ export default function ConfirmationScreen() {
       setConfirmedBookingId(bookingId || "PS-CONFIRMED");
 
       // 4. Authenticate & Confirm Payment via Stripe
-      const stripe = stripeInstance || (await getStripe());
-      if (!stripe) {
-        throw new Error("Stripe payment gateway could not be loaded. Please check your internet connection.");
-      }
-
-      if (paymentMethod === "ideal") {
-        const returnUrl =
-          typeof window !== "undefined"
-            ? `${window.location.origin}/(bookings)/confirmation`
-            : "http://localhost:8081/(bookings)/confirmation";
-
-        const pmResult = await stripe.createPaymentMethod({
-          type: "ideal",
-          ideal: { bank: selectedBank },
-          billing_details: {
-            name: cardHolder.trim() || storeState.fullName || "Guest",
-            email: storeState.email || "guest@example.com",
-          },
-        });
-
-        if (pmResult.error) {
-          throw new Error(pmResult.error.message || "Failed to create iDEAL payment method.");
+      if (Platform.OS === "web") {
+        const stripe = stripeInstance || (await getStripe());
+        if (!stripe) {
+          throw new Error("Stripe payment gateway could not be loaded. Please check your internet connection.");
         }
 
-        const confirmRes = await stripe.confirmPayment({
-          clientSecret,
-          confirmParams: {
-            payment_method: pmResult.paymentMethod.id,
-            return_url: returnUrl,
-          },
-        });
+        if (paymentMethod === "ideal") {
+          const returnUrl =
+            typeof window !== "undefined"
+              ? `${window.location.origin}/(bookings)/confirmation`
+              : "http://localhost:8081/(bookings)/confirmation";
 
-        if (confirmRes.error) {
-          throw new Error(confirmRes.error.message || "iDEAL confirmation error.");
-        }
-      } else {
-        // Standard Stripe Elements flow (compliant with PCI requirements)
-        let confirmRes: any;
-        const cardNumberElement = elementsInstance?.getElement?.(CardNumberElement);
-
-        if (cardNumberElement) {
-          confirmRes = await stripe.confirmCardPayment(clientSecret, {
-            payment_method: {
-              card: cardNumberElement,
-              billing_details: {
-                name: cardHolder.trim() || storeState.fullName || "Guest",
-                email: storeState.email || "guest@example.com",
-                phone: storeState.phone || "+31612345678",
-                ...(postalCode.trim() ? { address: { postal_code: postalCode.trim() } } : {}),
-              },
+          const pmResult = await stripe.createPaymentMethod({
+            type: "ideal",
+            ideal: { bank: selectedBank },
+            billing_details: {
+              name: cardHolder.trim() || storeState.fullName || "Guest",
+              email: storeState.email || "guest@example.com",
             },
           });
+
+          if (pmResult.error) {
+            throw new Error(pmResult.error.message || "Failed to create iDEAL payment method.");
+          }
+
+          const confirmRes = await stripe.confirmPayment({
+            clientSecret,
+            confirmParams: {
+              payment_method: pmResult.paymentMethod.id,
+              return_url: returnUrl,
+            },
+          });
+
+          if (confirmRes.error) {
+            throw new Error(confirmRes.error.message || "iDEAL confirmation error.");
+          }
         } else {
-          // Fallback if elements not mounted
-          confirmRes = await stripe.confirmCardPayment(clientSecret);
+          // Standard Stripe Elements flow (compliant with PCI requirements on Web)
+          let confirmRes: any;
+          const cardNumberElement = elementsInstance?.getElement?.(CardNumberElement);
+
+          if (cardNumberElement) {
+            confirmRes = await stripe.confirmCardPayment(clientSecret, {
+              payment_method: {
+                card: cardNumberElement,
+                billing_details: {
+                  name: cardHolder.trim() || storeState.fullName || "Guest",
+                  email: storeState.email || "guest@example.com",
+                  phone: storeState.phone || "+31612345678",
+                  ...(postalCode.trim() ? { address: { postal_code: postalCode.trim() } } : {}),
+                },
+              },
+            });
+          } else {
+            confirmRes = await stripe.confirmCardPayment(clientSecret);
+          }
+
+          if (confirmRes?.error) {
+            throw new Error(confirmRes.error.message || "Stripe card transaction declined. Please check your card details.");
+          }
+
+          if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
+            try {
+              await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  payment_intent_id: confirmRes.paymentIntent.id,
+                  booking_id: bookingId,
+                  purchase_id: bookingId,
+                }),
+              });
+            } catch (e) {
+              console.warn("Backend confirm sync notice:", e);
+            }
+          }
+        }
+      } else {
+        // Native mobile flow (Android / iOS)
+        if (paymentMethod === "ideal") {
+          throw new Error("iDEAL banking is available on web checkout. Please select Card payment on mobile.");
         }
 
-        if (confirmRes?.error) {
-          throw new Error(confirmRes.error.message || "Stripe card transaction declined. Please check your card details.");
+        const nativeRes = await confirmStripeNativePayment({
+          clientSecret,
+          cardNumber: nativeCardDetails.cardNumber,
+          cardExpiry: nativeCardDetails.cardExpiry,
+          cardCvc: nativeCardDetails.cardCvc,
+          cardHolder: cardHolder.trim() || storeState.fullName || "Guest",
+          postalCode: postalCode.trim(),
+          email: storeState.email || "guest@example.com",
+        });
+
+        if (!nativeRes.success) {
+          throw new Error(nativeRes.error || "Payment verification failed. Please check your card details.");
         }
 
-        if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
-          // Notify backend that payment is verified so booking & payment statuses become 'paid' and 'confirmed'
+        if (nativeRes.paymentIntent?.id) {
           try {
             await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                payment_intent_id: confirmRes.paymentIntent.id,
+                payment_intent_id: nativeRes.paymentIntent.id,
                 booking_id: bookingId,
                 purchase_id: bookingId,
               }),
@@ -602,6 +642,7 @@ export default function ConfirmationScreen() {
               selectedBank={selectedBank}
               setSelectedBank={setSelectedBank}
               errorMessage={errorMessage}
+              onNativeCardChange={setNativeCardDetails}
               onElementsReady={(elements, stripe) => {
                 setElementsInstance(elements);
                 setStripeInstance(stripe);
