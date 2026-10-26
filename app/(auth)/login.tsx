@@ -32,6 +32,7 @@ export default function LoginScreen() {
   const [checked, setChecked] = useState(false);
   const primary = useColor("primary");
   const textMuted = useColor("textMuted");
+  const border = useColor("border");
   const brownGold = "#9B7C56";
 
   const { signInWithGoogle, isLoading: isGoogleLoading } = useGoogleSignIn();
@@ -195,16 +196,25 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.socialContainer}>
-          {/* <SocialButton
-            icon="apple"
-            onPress={handleAppleSignIn}
-            loading={isAppleLoading}
-          /> */}
-          <SocialButton
-            icon="google"
+          <Pressable
             onPress={handleGoogleSignIn}
-            loading={isGoogleLoading}
-          />
+            disabled={isGoogleLoading}
+            style={[
+              styles.googleFullButton,
+              { borderColor: border, opacity: isGoogleLoading ? 0.7 : 1 },
+            ]}
+          >
+            {isGoogleLoading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <View style={styles.googleButtonContent}>
+                <Ionicons name="logo-google" size={20} color="#EA4335" />
+                <Text style={styles.googleButtonText}>
+                  {t("auth.login.continueWithGoogle", "Continue with Google")}
+                </Text>
+              </View>
+            )}
+          </Pressable>
         </View>
 
         <View style={styles.footer}>
@@ -222,25 +232,6 @@ export default function LoginScreen() {
         </View>
       </View>
     </AuthLayout>
-  );
-}
-
-function SocialButton({ icon, onPress, loading }: { icon: string; onPress?: () => void; loading?: boolean }) {
-  const border = useColor("border");
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={loading}
-      style={[styles.socialButton, { borderColor: border, opacity: loading ? 0.6 : 1 }]}
-    >
-      {loading ? (
-        <ActivityIndicator size="small" color="#000" />
-      ) : icon === "apple" ? (
-        <Ionicons name="logo-apple" size={30} color="#000" />
-      ) : (
-        <Ionicons name="logo-google" size={30} color="#000" />
-      )}
-    </Pressable>
   );
 }
 
@@ -270,9 +261,32 @@ const styles = StyleSheet.create({
     color: "#a1a1aa",
   },
   socialContainer: {
-    flexDirection: "row",
+    width: "100%",
+  },
+  googleFullButton: {
+    width: "100%",
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    backgroundColor: "#ffffff",
     justifyContent: "center",
-    gap: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  googleButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  googleButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1f2937",
   },
   socialButton: {
     width: 56,

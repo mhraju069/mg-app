@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { createMMKV } from "react-native-mmkv";
 
 export interface UserProfile {
   id: number;
@@ -26,6 +27,13 @@ export interface AuthState {
 
 const STORAGE_KEY_AUTH = "haven_wellness_auth_state_v1";
 
+let nativeStorage: any = null;
+try {
+  nativeStorage = createMMKV({ id: "auth-storage" });
+} catch (e) {
+  // MMKV fallback
+}
+
 const initialAuthState: AuthState = {
   user: null,
   accessToken: null,
@@ -37,19 +45,24 @@ const initialAuthState: AuthState = {
 let listeners: Array<() => void> = [];
 let memoryAuthState: AuthState = { ...initialAuthState };
 
-// Helper to save to browser localStorage or fallback
+// Helper to save to native MMKV or browser localStorage
 const persistAuthState = (state: AuthState) => {
   try {
+    const serialized = JSON.stringify({
+      user: state.user,
+      accessToken: state.accessToken,
+      refreshToken: state.refreshToken,
+      isAuthenticated: state.isAuthenticated,
+    });
+
+    // 1. Web localStorage
     if (typeof window !== "undefined" && window.localStorage) {
-      window.localStorage.setItem(
-        STORAGE_KEY_AUTH,
-        JSON.stringify({
-          user: state.user,
-          accessToken: state.accessToken,
-          refreshToken: state.refreshToken,
-          isAuthenticated: state.isAuthenticated,
-        })
-      );
+      window.localStorage.setItem(STORAGE_KEY_AUTH, serialized);
+    }
+
+    // 2. Mobile Native MMKV
+    if (nativeStorage) {
+      nativeStorage.set(STORAGE_KEY_AUTH, serialized);
     }
   } catch (e) {
     console.warn("Failed to persist auth state:", e);
@@ -58,6 +71,15 @@ const persistAuthState = (state: AuthState) => {
 
 const loadPersistedAuthState = (): Partial<AuthState> | null => {
   try {
+    // 1. Check Native MMKV first
+    if (nativeStorage) {
+      const stored = nativeStorage.getString(STORAGE_KEY_AUTH);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    }
+
+    // 2. Fallback to Web localStorage
     if (typeof window !== "undefined" && window.localStorage) {
       const stored = window.localStorage.getItem(STORAGE_KEY_AUTH);
       if (stored) {

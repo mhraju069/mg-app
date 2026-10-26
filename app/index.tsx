@@ -3,15 +3,19 @@ import React, { useState, useEffect } from "react";
 import { useAuthStore } from "@/utils/authStore";
 
 export default function IndexScreen() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => useAuthStore.getState().isAuthenticated);
+  const [authState, setAuthState] = useState(() => useAuthStore.getState());
 
   useEffect(() => {
     return useAuthStore.subscribe(() => {
-      setIsAuthenticated(useAuthStore.getState().isAuthenticated);
+      setAuthState({ ...useAuthStore.getState() });
     });
   }, []);
 
-  if (!isAuthenticated) {
+  if (authState.isLoading) {
+    return null;
+  }
+
+  if (!authState.isAuthenticated) {
     return <Redirect href={"/(auth)/login"} />;
   }
 
