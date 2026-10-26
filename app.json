@@ -9,9 +9,9 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#E5D5C4"
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8F5F2"
     },
     "ios": {
       "googleServicesFile": "./GoogleService-Info.plist",
@@ -23,7 +23,7 @@
       "package": "com.saruf.heavenwellness",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#F8F5F2",
         "foregroundImage": "./assets/images/icon.png",
         "monochromeImage": "./assets/images/icon.png"
       },
@@ -31,9 +31,9 @@
       "predictiveBackGestureEnabled": true,
       "usesCleartextTraffic": true,
       "splash": {
-        "image": "./assets/images/splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#E5D5C4"
+        "image": "./assets/images/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F8F5F2"
       },
       "permissions": [
         "android.permission.INTERNET",
@@ -86,10 +86,10 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash.png",
-          "imageContentMode": "cover",
-          "resizeMode": "cover",
-          "backgroundColor": "#E5D5C4"
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F8F5F2"
         }
       ]
     ],
