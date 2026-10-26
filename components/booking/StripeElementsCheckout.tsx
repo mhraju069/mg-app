@@ -284,13 +284,6 @@ function InnerStripeElementsCheckout({
               />
             </View>
           </View>
-
-          <View style={styles.testCardNotice}>
-            <ShieldCheck size={14} color="#9B7C56" />
-            <Text style={styles.testCardNoticeText}>
-              Stripe Elements active • Accepts all real cards & test cards (4242 4242...)
-            </Text>
-          </View>
         </View>
       ) : (
         /* iDEAL Dutch Bank selector */

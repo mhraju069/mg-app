@@ -96,7 +96,7 @@ export default function BookingDetailsScreen() {
           if (found) {
             setBookingDetail({
               booking_id: found.booking_id,
-              title: found.service_name,
+              title: (found.service_name || "Wellness Experience").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
               date: found.date,
               time: found.time || "10:00 AM",
               duration: found.details?.time_slot

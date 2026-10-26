@@ -17,9 +17,27 @@ export const getStripe = async (): Promise<Stripe | null> => {
   return stripePromise;
 };
 
+const getApiBaseUrl = (): string => {
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+  if (envUrl) {
+    return envUrl.replace(/\/api\/?$/, "");
+  }
+  return "https://api.heaven-on-earth.nl";
+};
+
 /**
- * Direct Stripe PaymentIntent confirmation for mobile platforms (iOS & Android).
- * Interacts directly with Stripe's REST API without requiring web DOM or external native binaries.
+ * Native mobile card payment confirmation — proxied through our backend.
+ *
+ * Stripe now blocks direct publishable-key REST tokenization from mobile clients
+ * (error: "This integration surface is unsupported for publishable key tokenization").
+ *
+ * Instead, we send the raw card details to our own backend endpoint which:
+ *  1. Creates a PaymentMethod using the Stripe Secret Key (server-side)
+ *  2. Confirms the PaymentIntent against the provided client_secret
+ *  3. Returns the result to the app
+ *
+ * Backend endpoint: POST /api/payments/confirm-native/
+ * Expected payload: { client_secret, card_number, exp_month, exp_year, cvc, card_holder, postal_code?, email? }
  */
 export async function confirmStripeNativePayment(params: {
   clientSecret: string;
@@ -33,88 +51,81 @@ export async function confirmStripeNativePayment(params: {
   try {
     const { clientSecret, cardNumber, cardExpiry, cardCvc, cardHolder, postalCode, email } = params;
 
-    // Clean up inputs
+    // Clean up card number input
     const cleanNumber = cardNumber.replace(/\D/g, "");
     const parts = cardExpiry.split("/");
     const expMonth = parts[0]?.trim();
-    const expYear = parts[1]?.trim() ? (parts[1].trim().length === 2 ? `20${parts[1].trim()}` : parts[1].trim()) : "";
+    const rawYear = parts[1]?.trim() || "";
+    const expYear = rawYear.length === 2 ? `20${rawYear}` : rawYear;
 
+    // Client-side validation before hitting backend
     if (!cleanNumber || cleanNumber.length < 15) {
       return { success: false, error: "Please enter a valid card number." };
     }
-    if (!expMonth || !expYear) {
+    if (!expMonth || !expYear || expMonth.length > 2 || expYear.length < 4) {
       return { success: false, error: "Please enter a valid expiration date (MM/YY)." };
     }
     if (!cardCvc || cardCvc.length < 3) {
       return { success: false, error: "Please enter a valid CVC / CVV code." };
     }
-
-    // 1. Create PaymentMethod directly via Stripe REST API
-    const pmBody = new URLSearchParams();
-    pmBody.append("type", "card");
-    pmBody.append("card[number]", cleanNumber);
-    pmBody.append("card[exp_month]", expMonth);
-    pmBody.append("card[exp_year]", expYear);
-    pmBody.append("card[cvc]", cardCvc);
-    if (cardHolder) {
-      pmBody.append("billing_details[name]", cardHolder);
-    }
-    if (email) {
-      pmBody.append("billing_details[email]", email);
-    }
-    if (postalCode) {
-      pmBody.append("billing_details[address][postal_code]", postalCode);
+    if (!clientSecret) {
+      return { success: false, error: "Invalid payment session. Please restart the checkout." };
     }
 
-    const pmResponse = await fetch("https://api.stripe.com/v1/payment_methods", {
+    // Send card details to our backend, which uses the Stripe Secret Key to create
+    // the PaymentMethod and confirm the PaymentIntent server-side.
+    const response = await fetch(`${getApiBaseUrl()}/api/payments/confirm-native/`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${STRIPE_PUBLISHABLE_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
-      body: pmBody.toString(),
+      body: JSON.stringify({
+        client_secret: clientSecret,
+        card_number: cleanNumber,
+        exp_month: parseInt(expMonth, 10),
+        exp_year: parseInt(expYear, 10),
+        cvc: cardCvc,
+        card_holder: cardHolder || "Guest",
+        postal_code: postalCode || undefined,
+        email: email || undefined,
+      }),
     });
 
-    const pmData = await pmResponse.json();
-    if (!pmResponse.ok || pmData.error) {
-      return { success: false, error: pmData.error?.message || "Failed to validate card details with Stripe." };
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const errMsg =
+        data?.error ||
+        data?.message ||
+        data?.detail ||
+        "Payment could not be processed. Please check your card details and try again.";
+      return { success: false, error: errMsg };
     }
 
-    const paymentMethodId = pmData.id;
-
-    // 2. Extract payment intent ID from client_secret (e.g. pi_3xxx_secret_yyy -> pi_3xxx)
-    const piId = clientSecret.split("_secret_")[0];
-    if (!piId) {
-      return { success: false, error: "Invalid payment intent client secret." };
-    }
-
-    // 3. Confirm PaymentIntent using the newly created PaymentMethod
-    const confirmBody = new URLSearchParams();
-    confirmBody.append("payment_method", paymentMethodId);
-    confirmBody.append("client_secret", clientSecret);
-
-    const confirmResponse = await fetch(`https://api.stripe.com/v1/payment_intents/${piId}/confirm`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${STRIPE_PUBLISHABLE_KEY}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: confirmBody.toString(),
-    });
-
-    const confirmData = await confirmResponse.json();
-    if (!confirmResponse.ok || confirmData.error) {
-      return { success: false, error: confirmData.error?.message || "Card transaction was declined by Stripe." };
+    if (data?.success === false || data?.error) {
+      return {
+        success: false,
+        error: data?.error || data?.message || "Card transaction was declined.",
+      };
     }
 
     return {
       success: true,
-      paymentIntent: confirmData,
+      paymentIntent: data?.payment_intent || data,
     };
   } catch (err: any) {
+    // Network / connection error
+    const msg = err?.message || "";
+    if (msg.toLowerCase().includes("network") || msg.toLowerCase().includes("fetch")) {
+      return {
+        success: false,
+        error: "Network error: Could not connect to payment server. Please check your internet connection.",
+      };
+    }
     return {
       success: false,
-      error: err.message || "Network error while connecting to Stripe payment gateway.",
+      error: msg || "An unexpected error occurred during payment processing.",
     };
   }
 }

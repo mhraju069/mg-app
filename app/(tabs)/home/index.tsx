@@ -66,6 +66,15 @@ import { formatImageUrl, API_BASE_URL, getBaseUrl } from "@/utils/constants";
 import { useNotifications } from "@/utils/notificationStore";
 import legalApi, { fallbackSocialLinks, SocialMediaLinksData } from "@/utils/legalApi";
 
+/** Converts snake_case/underscore API strings to Title Case for display */
+const formatServiceName = (raw: string | undefined | null): string => {
+  if (!raw) return "Wellness Session";
+  return raw
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+};
+
 const DEFAULT_FALLBACK_IMAGES: Record<string, string> = {
   sauna: "https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=2070&auto=format&fit=crop",
   saltroom: "https://images.unsplash.com/photo-1544161515-436cefd54cbf?q=80&w=2070&auto=format&fit=crop",
@@ -693,7 +702,7 @@ export default function HomeScreen() {
                 {t("home.nextVisit.label")}
               </Text>
             </View>
-            <Text style={styles.serviceName}>{nextVisit.service_name || "Wellness Session"}</Text>
+            <Text style={styles.serviceName} numberOfLines={2}>{formatServiceName(nextVisit.service_name)}</Text>
           </View>
 
           <View style={styles.cardDetails}>
@@ -1935,9 +1944,11 @@ const createStyles = (
     },
     serviceName: {
       color: "white",
-      fontSize: 22,
+      fontSize: 20,
       fontWeight: "700",
       fontFamily: Fonts.title,
+      flexShrink: 1,
+      flexWrap: "wrap",
     },
     cardDetails: {
       padding: 20,

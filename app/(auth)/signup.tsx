@@ -187,7 +187,7 @@ export default function SignupScreen() {
         <View style={styles.dividerContainer}>
           <View style={[styles.divider, { backgroundColor: "#e4e4e7" }]} />
           <Text variant="caption" style={styles.dividerText}>
-            {t("auth.login.orContinue", "or continue with")}
+            {t("auth.login.orContinue", "or")}
           </Text>
           <View style={[styles.divider, { backgroundColor: "#e4e4e7" }]} />
         </View>

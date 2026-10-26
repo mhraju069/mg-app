@@ -58,7 +58,9 @@
             "compileSdkVersion": 35,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
-            "googleServicesFile": "./google-services.json"
+            "googleServicesFile": "./google-services.json",
+            "enableProguardInRelease": true,
+            "enableShrinkResourcesInRelease": true
           },
           "ios": {
             "deploymentTarget": "15.1",
@@ -88,11 +90,18 @@
           "resizeMode": "cover",
           "backgroundColor": "#E5D5C4",
           "enableFullScreenImage_legacy": true,
+          "enableFullScreenImage": true,
           "android": {
             "image": "./assets/images/splash.png",
             "resizeMode": "cover",
             "backgroundColor": "#E5D5C4",
-            "enableFullScreenImage_legacy": true
+            "enableFullScreenImage_legacy": true,
+            "enableFullScreenImage": true
+          },
+          "ios": {
+            "image": "./assets/images/splash.png",
+            "resizeMode": "cover",
+            "backgroundColor": "#E5D5C4"
           }
         }
       ]
