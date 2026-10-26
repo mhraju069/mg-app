@@ -6,7 +6,7 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Link, router } from "expo-router";
 import { User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react-native";
-import { useAppleSignIn } from "@/hooks/useAppleSignIn";
+// import { useAppleSignIn } from "@/hooks/useAppleSignIn";
 import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Icon } from "@/components/ui/icon";
@@ -24,20 +24,20 @@ export default function SignupScreen() {
   const brownGold = "#9B7C56";
 
   const { signInWithGoogle, isLoading: isGoogleLoading } = useGoogleSignIn();
-  const { signInWithApple, isLoading: isAppleLoading } = useAppleSignIn();
+  // const { signInWithApple, isLoading: isAppleLoading } = useAppleSignIn();
 
-  const handleAppleSignIn = async () => {
-    try {
-      await signInWithApple();
-      router.replace("/(tabs)/home");
-    } catch (error) {
-      console.error("Apple Sign-In failed", error);
-      showErrorToast(
-        t("auth.errors.appleSignInFailed", "Apple Sign-In failed"),
-        t("auth.errors.tryAgain", "Please try again later.")
-      );
-    }
-  };
+  // const handleAppleSignIn = async () => {
+  //   try {
+  //     await signInWithApple();
+  //     router.replace("/(tabs)/home");
+  //   } catch (error) {
+  //     console.error("Apple Sign-In failed", error);
+  //     showErrorToast(
+  //       t("auth.errors.appleSignInFailed", "Apple Sign-In failed"),
+  //       t("auth.errors.tryAgain", "Please try again later.")
+  //     );
+  //   }
+  // };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -191,11 +191,11 @@ export default function SignupScreen() {
         </View>
 
         <View style={styles.socialContainer}>
-          <SocialButton
+          {/* <SocialButton
             icon="apple"
             onPress={handleAppleSignIn}
             loading={isAppleLoading}
-          />
+          /> */}
           <SocialButton
             icon="google"
             onPress={handleGoogleSignIn}
