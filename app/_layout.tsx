@@ -21,6 +21,8 @@ import "@/i18n";
 import { notificationStore } from "@/utils/notificationStore";
 import { useAuthStore } from "@/utils/authStore";
 import { StripeAppProvider } from "@/providers/StripeAppProvider";
+import * as Notifications from "expo-notifications";
+import { registerForPushNotificationsAsync, handleNotificationResponse } from "@/utils/pushNotifications";
 
 LogBox.ignoreAllLogs();
 
@@ -40,12 +42,26 @@ export default function RootLayout() {
       if (auth.accessToken) {
         notificationStore.fetchUnreadCount();
         notificationStore.connectWebSocket();
+        registerForPushNotificationsAsync();
       } else {
         notificationStore.disconnectWebSocket();
       }
     };
 
     initNotifications();
+
+    // Register device push token (requests permissions & sends token to backend)
+    registerForPushNotificationsAsync();
+
+    // Handle notifications received in foreground
+    const notifSub = Notifications.addNotificationReceivedListener((_notification) => {
+      notificationStore.fetchUnreadCount();
+    });
+
+    // Handle user interaction with notification (tapping notification)
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationResponse(response);
+    });
 
     // Re-check on auth state change
     const unsubscribeAuth = useAuthStore.subscribe(() => {
@@ -55,6 +71,8 @@ export default function RootLayout() {
     return () => {
       unsubscribeAuth();
       notificationStore.disconnectWebSocket();
+      notifSub.remove();
+      responseSub.remove();
     };
   }, []);
 
