@@ -9,7 +9,8 @@ import { View } from "@/components/ui/view";
 import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { useBookingStore } from "@/utils/bookingStore";
-import { getStripe, confirmStripeNativePayment } from "@/utils/stripe";
+import { getStripe } from "@/utils/stripe";
+import { useStripePayment } from "@/hooks/useStripePayment";
 import StripeElementsCheckout, { NativeCardDetails } from "@/components/booking/StripeElementsCheckout";
 import CancellationPolicyCard from "@/components/booking/CancellationPolicyCard";
 import { router } from "expo-router";
@@ -39,14 +40,15 @@ export default function ConfirmationScreen() {
   const brownGold = "#9B7C56";
   const lightBeige = "#F8F5F2";
   const { t } = useTranslation();
+  const { confirmMobilePayment } = useStripePayment();
 
   const storeState = useBookingStore.getState();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "ideal">("card");
   const [selectedBank, setSelectedBank] = useState<string>("ing");
 
   // Card details state
-  const [cardHolder, setCardHolder] = useState<string>(storeState.fullName || "Akash");
-  const [postalCode, setPostalCode] = useState<string>("1012AB");
+  const [cardHolder, setCardHolder] = useState<string>(storeState.fullName || "");
+  const [postalCode, setPostalCode] = useState<string>("");
   const [nativeCardDetails, setNativeCardDetails] = useState<NativeCardDetails>({
     cardNumber: "",
     cardExpiry: "",
@@ -380,19 +382,18 @@ export default function ConfirmationScreen() {
           }
         }
       } else {
-        // Native mobile flow (Android / iOS)
+        // Native mobile flow (Android / iOS) via official @stripe/stripe-react-native SDK
         if (paymentMethod === "ideal") {
           throw new Error("iDEAL banking is available on web checkout. Please select Card payment on mobile.");
         }
 
-        const nativeRes = await confirmStripeNativePayment({
-          clientSecret,
-          cardNumber: nativeCardDetails.cardNumber,
-          cardExpiry: nativeCardDetails.cardExpiry,
-          cardCvc: nativeCardDetails.cardCvc,
-          cardHolder: cardHolder.trim() || storeState.fullName || "Guest",
-          postalCode: postalCode.trim(),
+        const nativeRes = await confirmMobilePayment(clientSecret, {
+          name: cardHolder.trim() || storeState.fullName || "Guest",
           email: storeState.email || "guest@example.com",
+          phone: storeState.phone || "+31612345678",
+          address: {
+            postalCode: postalCode.trim() || undefined,
+          },
         });
 
         if (!nativeRes.success) {

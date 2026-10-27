@@ -89,9 +89,9 @@ export default function EventSpaceScreen() {
   const [additionalRequests, setAdditionalRequests] = useState<string>("");
 
   // 4. Contact Information
-  const [name, setName] = useState<string>("Akash");
-  const [phone, setPhone] = useState<string>("+31 6 12345678");
-  const [email, setEmail] = useState<string>("akash@example.com");
+  const [name, setName] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
 
   // UI Status
   const [submitting, setSubmitting] = useState<boolean>(false);

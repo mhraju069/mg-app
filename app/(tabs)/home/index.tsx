@@ -60,7 +60,7 @@ import { useTranslation } from "react-i18next";
 import { useBookingStore } from "@/utils/bookingStore";
 import { useAuthStore } from "@/utils/authStore";
 import StripeElementsCheckout, { NativeCardDetails } from "@/components/booking/StripeElementsCheckout";
-import { confirmStripeNativePayment } from "@/utils/stripe";
+import { useStripePayment } from "@/hooks/useStripePayment";
 import { dashboardApi, DashboardBookingItem } from "@/utils/dashboardApi";
 import { formatImageUrl, API_BASE_URL, getBaseUrl } from "@/utils/constants";
 import { useNotifications } from "@/utils/notificationStore";
@@ -106,6 +106,7 @@ export default function HomeScreen() {
   const darkBrown = "#3D2E24";
 
   const { t, i18n } = useTranslation();
+  const { confirmMobilePayment } = useStripePayment();
   const [services, setServices] = useState<ServiceItemData[]>([]);
   const [loadingServices, setLoadingServices] = useState<boolean>(true);
   const [plans, setPlans] = useState<any[]>([]);
@@ -273,15 +274,13 @@ export default function HomeScreen() {
             }
           }
         } else {
-          // Native mobile checkout (Android / iOS)
-          const nativeRes = await confirmStripeNativePayment({
-            clientSecret,
-            cardNumber: nativeCardDetails.cardNumber,
-            cardExpiry: nativeCardDetails.cardExpiry,
-            cardCvc: nativeCardDetails.cardCvc,
-            cardHolder: checkoutName || auth.user?.name || "Cardholder",
-            postalCode: checkoutPostalCode,
+          // Native mobile checkout (Android / iOS) via official @stripe/stripe-react-native SDK
+          const nativeRes = await confirmMobilePayment(clientSecret, {
+            name: checkoutName || auth.user?.name || "Cardholder",
             email: checkoutEmail || auth.user?.email,
+            address: {
+              postalCode: checkoutPostalCode,
+            },
           });
 
           if (!nativeRes.success) {

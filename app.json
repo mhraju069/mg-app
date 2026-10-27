@@ -91,6 +91,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#F8F5F2"
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.saruf.heavenwellness"
+        }
       ]
     ],
     "experiments": {

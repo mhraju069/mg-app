@@ -75,9 +75,9 @@ export default function CategoryScreen() {
     treatments: ["Private Sauna", "Lunchroom", "Yoga Activity"] as string[],
     otherExperienceDetails: "",
     specialRequests: "",
-    name: "Akash",
-    email: "akash@example.com",
-    phone: "+31 6 12345678",
+    name: "",
+    email: "",
+    phone: "",
   });
   const [customSubmitting, setCustomSubmitting] = useState(false);
   const [customSuccess, setCustomSuccess] = useState(false);

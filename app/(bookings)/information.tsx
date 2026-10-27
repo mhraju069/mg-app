@@ -69,9 +69,9 @@ export default function InformationScreen() {
   const act = storeState.activityDetails;
 
   // Contact State
-  const [fullName, setFullName] = useState(storeState.fullName || "Akash");
-  const [email, setEmail] = useState(storeState.email || "akash@example.com");
-  const [phone, setPhone] = useState(storeState.phone || "+31 6 12345678");
+  const [fullName, setFullName] = useState(storeState.fullName || "");
+  const [email, setEmail] = useState(storeState.email || "");
+  const [phone, setPhone] = useState(storeState.phone || "");
   const [specialRequests, setSpecialRequests] = useState(storeState.specialRequests || "");
 
   // Lunchroom Table Reservation State
