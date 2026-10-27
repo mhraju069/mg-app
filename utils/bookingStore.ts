@@ -86,7 +86,7 @@ export interface BookingState {
 const initialState = {
   serviceId: "1",
   serviceType: "sauna",
-  serviceTitle: "Private Sauna Experience",
+  serviceTitle: "VIP Sauna Experience",
   serviceSubtitle: "Your own exclusive sanctuary",
   serviceImage: "",
   price: 90,

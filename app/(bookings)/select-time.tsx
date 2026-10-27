@@ -180,7 +180,7 @@ export default function SelectTimeScreen() {
 
             const data = json?.data;
             if (data) {
-              // 1. Private Sauna slots
+              // 1. VIP Sauna slots
               if (data.private_sauna?.slots) {
                 const s3 = data.private_sauna.slots["3_hours"] || [];
                 const s4 = data.private_sauna.slots["4_hours"] || [];
@@ -194,7 +194,7 @@ export default function SelectTimeScreen() {
                 }
               }
 
-              // 2. Shared Sauna slots
+              // 2. Sauna slots
               if (data.shared_sauna?.slots) {
                 setSharedSlots(data.shared_sauna.slots);
                 if (isSharedSauna && data.shared_sauna.slots.length > 0 && !selectedTime) {
@@ -347,8 +347,8 @@ export default function SelectTimeScreen() {
                   ? "Salt Room (1h)"
                   : isSauna
                   ? isSharedSauna
-                    ? "Shared Sauna"
-                    : `Private Sauna (${durationHours}h)`
+                    ? "Sauna"
+                    : `VIP Sauna (${durationHours}h)`
                   : serviceType}
               </Text>
             </View>
@@ -379,7 +379,7 @@ export default function SelectTimeScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.bufferTitle}>
-                Private Sauna ({durationHours} Hours Session)
+                VIP Sauna ({durationHours} Hours Session)
               </Text>
               <Text style={styles.bufferDesc}>
                 Automatic 30-minute cleaning buffer reserved after your time slot for ultimate hygiene and sanitation.
@@ -395,7 +395,7 @@ export default function SelectTimeScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.bufferTitle}>
-                Shared Sauna (1.5 Hours Session)
+                Sauna (1.5 Hours Session)
               </Text>
               <Text style={styles.bufferDesc}>
                 Includes 15-minute changeover buffer. Real-time remaining seats shown per session.

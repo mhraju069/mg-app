@@ -600,7 +600,7 @@ export default function ConfirmationScreen() {
           ) : isSharedSauna ? (
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>
-                Shared Sauna ({guestsCount} × €30.00)
+                Sauna ({guestsCount} × €30.00)
               </Text>
               <Text style={styles.priceValue}>€{priceVal.toFixed(2)}</Text>
             </View>

@@ -72,7 +72,7 @@ export default function CategoryScreen() {
     guests: 2,
     date: "",
     duration: "Half Day (4 Hours)",
-    treatments: ["Private Sauna", "Lunchroom", "Yoga Activity"] as string[],
+    treatments: ["VIP Sauna", "Lunchroom", "Yoga Activity"] as string[],
     otherExperienceDetails: "",
     specialRequests: "",
     name: "",
@@ -469,8 +469,8 @@ export default function CategoryScreen() {
         serviceType: "sauna",
         serviceTitle:
           saunaType === "private"
-            ? `Private Sauna (${durationHours} Hours)`
-            : "Shared Sauna Experience",
+            ? `VIP Sauna (${durationHours} Hours)`
+            : "Sauna Experience",
         serviceSubtitle:
           saunaType === "private"
             ? "Exclusive sanctuary for ultimate privacy & relaxation"
@@ -969,7 +969,7 @@ export default function CategoryScreen() {
           /* DEDICATED SAUNA CONFIGURATOR (MATCHES WEB VERSION EXACTLY)               */
           /* ========================================================================= */
           <View style={{ gap: 20 }}>
-            {/* 1. Toggle: Private Sauna vs Shared Sauna */}
+            {/* 1. Toggle: VIP Sauna vs Sauna */}
             <View style={styles.toggleContainer}>
               <Pressable
                 style={[
@@ -988,7 +988,7 @@ export default function CategoryScreen() {
                     saunaType === "private" && styles.toggleButtonTextActive,
                   ]}
                 >
-                  Private Sauna
+                  VIP Sauna
                 </Text>
               </Pressable>
 
@@ -1009,7 +1009,7 @@ export default function CategoryScreen() {
                     saunaType === "shared" && styles.toggleButtonTextActive,
                   ]}
                 >
-                  Shared Sauna
+                  Sauna
                 </Text>
               </Pressable>
             </View>
@@ -1029,7 +1029,7 @@ export default function CategoryScreen() {
                     {saunaType === "private" ? "EXCLUSIVE RESERVATION" : "SHARED SESSION ACCESS"}
                   </Text>
                   <Text style={styles.bannerTitle}>
-                    {saunaType === "private" ? "Private Sauna Sanctuary" : "Shared Sauna Experience"}
+                    {saunaType === "private" ? "VIP Sauna Sanctuary" : "Sauna Experience"}
                   </Text>
                   <Text style={styles.bannerDesc}>
                     {saunaType === "private"
@@ -1629,10 +1629,10 @@ export default function CategoryScreen() {
                   <Text style={styles.modalFieldLabel}>Select Experiences to Include *</Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                     {[
-                      "Private Sauna",
+                      "VIP Sauna",
                       "Lunchroom",
                       "Yoga Activity",
-                      "Shared Sauna",
+                      "Sauna",
                       "Salt Room",
                       "Activities",
                       "Others",

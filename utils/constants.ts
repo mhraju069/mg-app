@@ -61,7 +61,7 @@ export const CATEGORY_DATA: Record<string, any> = {
     services: [
       {
         id: "private-sauna",
-        title: "Private Sauna",
+        title: "VIP Sauna",
         description:
           "Your own exclusive sanctuary for ultimate privacy and relaxation.",
         rating: 4.9,
@@ -163,8 +163,8 @@ export const TIME_SLOTS = [
 export const upcomingBookings = [
   {
     id: "1",
-    title: "Private Sauna",
-    category: "Private Sauna",
+    title: "VIP Sauna",
+    category: "VIP Sauna",
     date: "15 Feb 2026",
     time: "10:00 AM",
     guests: "2 guests",
