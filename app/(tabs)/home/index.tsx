@@ -1333,7 +1333,7 @@ export default function HomeScreen() {
                 </View>
 
                 <Button
-                  style={{ width: "100%", backgroundColor: brownGold, marginTop: 10 }}
+                  style={stylesModalCheckout.doneBtn}
                   onPress={() => {
                     setPurchaseModalVisible(false);
                     router.push("/(tabs)/profile");
@@ -2333,6 +2333,12 @@ const stylesModalCheckout = StyleSheet.create({
   receiptText: {
     fontSize: 13,
     color: "#64748B",
+  },
+  doneBtn: {
+    width: "100%",
+    backgroundColor: "#9B7C56",
+    borderRadius: 25,
+    marginTop: 10,
   },
 });
 
