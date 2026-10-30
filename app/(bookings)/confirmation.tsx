@@ -84,7 +84,9 @@ export default function ConfirmationScreen() {
 
     if (!policyAccepted) {
       setErrorMessage(
-        "Please read and accept the Cancellation, Rescheduling & Refund Policy to proceed."
+        t("bookingFlow.checkout.fullPolicy.mustAcceptPolicyError", {
+          defaultValue: "Please read and accept the Cancellation, Rescheduling & Refund Policy to proceed.",
+        })
       );
       return;
     }
@@ -434,9 +436,9 @@ export default function ConfirmationScreen() {
             <View style={styles.successIconCircle}>
               <CheckCircle2 size={54} color="#9B7C56" />
             </View>
-            <Text style={styles.successTitle}>Booking Confirmed!</Text>
+            <Text style={styles.successTitle}>{t("bookingFlow.general.bookingConfirmed", { defaultValue: "Booking Confirmed!" })}</Text>
             <Text style={styles.successSubtitle}>
-              Your payment has been successfully authorized and confirmed by Stripe. Your booking details and automated access code are reserved.
+              {t("bookingFlow.checkout.successSubtitle", { defaultValue: "Your payment has been successfully authorized and confirmed by Stripe. Your booking details and automated access code are reserved." })}
             </Text>
 
             <Card style={styles.successSummaryCard}>
@@ -464,7 +466,7 @@ export default function ConfirmationScreen() {
               <View style={styles.detailRow}>
                 <ShieldCheck size={16} color="#059669" />
                 <Text style={[styles.detailValue, { color: "#059669", fontWeight: "700" }]}>
-                  Payment Status: Confirmed & Paid
+                  {t("bookingFlow.checkout.paymentStatusConfirmed", { defaultValue: "Payment Status: Confirmed & Paid" })}
                 </Text>
               </View>
             </Card>
@@ -473,7 +475,7 @@ export default function ConfirmationScreen() {
               style={styles.doneBtn}
               onPress={() => router.replace("/(tabs)/home")}
             >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>Back to Home</Text>
+              <Text style={{ color: "#fff", fontWeight: "700" }}>{t("bookingFlow.checkout.backToHome", { defaultValue: "Back to Home" })}</Text>
             </Button>
           </View>
         </Layout>
@@ -535,7 +537,7 @@ export default function ConfirmationScreen() {
           {(storeState.serviceType === "package" || storeState.serviceType === "packages") && storeState.packageSelections && (
             <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#EDE7E1", gap: 6 }}>
               <Text style={{ fontSize: 11, fontWeight: "800", color: "#9B7C56", textTransform: "uppercase" }}>
-                Scheduled Package Components
+                {t("bookingFlow.checkout.scheduledComponents", { defaultValue: "Scheduled Package Components" })}
               </Text>
               {storeState.packageSelections.saunaSlot && (
                 <Text style={{ fontSize: 12, color: "#475569" }}>
@@ -544,7 +546,7 @@ export default function ConfirmationScreen() {
               )}
               {storeState.packageSelections.lunchroomTime && (
                 <Text style={{ fontSize: 12, color: "#475569" }}>
-                  • Lunchroom: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.lunchroomTime} Arrival</Text>
+                  • Lunchroom: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.lunchroomTime} {t("bookingFlow.checkout.arrival", { defaultValue: "Arrival" })}</Text>
                 </Text>
               )}
               {storeState.packageSelections.saltRoomSlot && (
@@ -574,7 +576,7 @@ export default function ConfirmationScreen() {
             <View style={{ gap: 8 }}>
               <View style={styles.priceRow}>
                 <Text style={styles.priceLabel}>
-                  {durationHours} Hours Base Session (2 Guests)
+                  {t("bookingFlow.checkout.baseSession", { hours: durationHours, guests: 2, defaultValue: `${durationHours} Hours Base Session (2 Guests)` })}
                 </Text>
                 <Text style={styles.priceValue}>€{basePrice.toFixed(2)}</Text>
               </View>
@@ -582,7 +584,7 @@ export default function ConfirmationScreen() {
               {extraGuestsCount > 0 && (
                 <View style={styles.priceRow}>
                   <Text style={styles.priceLabel}>
-                    Extra Guests ({extraGuestsCount} × €{extraPersonFee})
+                    {t("bookingFlow.checkout.extraGuestsLabel", { count: extraGuestsCount, fee: extraPersonFee, defaultValue: `Extra Guests (${extraGuestsCount} × €${extraPersonFee})` })}
                   </Text>
                   <Text style={styles.priceValue}>
                     +€{(extraGuestsCount * extraPersonFee).toFixed(2)}
@@ -592,7 +594,7 @@ export default function ConfirmationScreen() {
 
               {extrasList.map((ext) => (
                 <View key={ext.id} style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>Extra: {ext.name}</Text>
+                  <Text style={styles.priceLabel}>{t("bookingFlow.checkout.extraItem", { name: ext.name, defaultValue: `Extra: ${ext.name}` })}</Text>
                   <Text style={styles.priceValue}>+€{ext.price.toFixed(2)}</Text>
                 </View>
               ))}
@@ -615,7 +617,7 @@ export default function ConfirmationScreen() {
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>{storeState.serviceTitle}</Text>
               <Text style={styles.priceValue}>
-                {isFree ? "Free" : `€${priceVal.toFixed(2)}`}
+                {isFree ? t("bookingFlow.checkout.free", { defaultValue: "Free" }) : `€${priceVal.toFixed(2)}`}
               </Text>
             </View>
           )}
@@ -681,8 +683,8 @@ export default function ConfirmationScreen() {
           ) : (
             <Text style={{ color: "#fff", fontWeight: "700" }}>
               {isFree
-                ? "Confirm Table Reservation"
-                : `Pay via Stripe (€${priceVal.toFixed(2)})`}
+                ? t("bookingFlow.checkout.confirmTableReservation", { defaultValue: "Confirm Table Reservation" })
+                : t("bookingFlow.checkout.payViaStripe", { amount: priceVal.toFixed(2), defaultValue: `Pay via Stripe (€${priceVal.toFixed(2)})` })}
             </Text>
           )}
         </Button>

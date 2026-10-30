@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   Pressable,
@@ -30,6 +31,7 @@ export default function CancellationPolicyCard({
   onAcceptedChange,
   serviceName,
 }: CancellationPolicyCardProps) {
+  const { t } = useTranslation();
   const [modalOpen, setModalOpen] = useState(false);
   const [tempAccepted, setTempAccepted] = useState(accepted);
 
@@ -58,14 +60,10 @@ export default function CancellationPolicyCard({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.cardTitle}>
-                Cancellation, Rescheduling & Refund Policy
+                {t("bookingFlow.checkout.policyTitle", { defaultValue: "Cancellation, Rescheduling & Refund Policy" })}
               </Text>
               <Text style={[styles.cardSubtitle, { color: textMuted }]}>
-                Cancellations or changes are permitted up to{" "}
-                <Text style={{ fontWeight: "700", color: "#1d1a17" }}>
-                  24 hours
-                </Text>{" "}
-                before your scheduled time.
+                {t("bookingFlow.checkout.policySubtitle", { hours: "24 hours", defaultValue: "Cancellations or changes are permitted up to 24 hours before your scheduled time." })}
               </Text>
             </View>
           </View>
@@ -75,7 +73,7 @@ export default function CancellationPolicyCard({
             style={[styles.readButton, { borderColor: brownGold }]}
           >
             <Text style={[styles.readButtonText, { color: brownGold }]}>
-              {accepted ? "Review Policy" : "Read Policy"}
+              {accepted ? t("bookingFlow.checkout.reviewPolicy", { defaultValue: "Review Policy" }) : t("bookingFlow.checkout.readPolicy", { defaultValue: "Read Policy" })}
             </Text>
           </Pressable>
         </View>
@@ -107,13 +105,11 @@ export default function CancellationPolicyCard({
                 { color: accepted ? "#15803D" : textMuted },
               ]}
             >
-              {accepted
-                ? "Cancellation & refund terms accepted"
-                : "Tap to review & accept cancellation policy"}
+              {accepted ? t("bookingFlow.checkout.policyAccepted", { defaultValue: "Cancellation & refund terms accepted" }) : t("bookingFlow.checkout.policyPrompt", { defaultValue: "Tap to review & accept cancellation policy" })}
             </Text>
           </View>
           <Text style={[styles.statusAction, { color: brownGold }]}>
-            {accepted ? "Change" : "Review ›"}
+            {accepted ? t("bookingFlow.checkout.change", { defaultValue: "Change" }) : t("bookingFlow.checkout.review", { defaultValue: "Review ›" })}
           </Text>
         </Pressable>
       </Card>
@@ -131,10 +127,10 @@ export default function CancellationPolicyCard({
             <View style={styles.modalHeader}>
               <View style={{ flex: 1, paddingRight: 8 }}>
                 <Text style={styles.modalTitle}>
-                  Cancellation, Rescheduling & Refund Policy
+                  {t("bookingFlow.checkout.policyModalTitle", { defaultValue: "Cancellation, Rescheduling & Refund Policy" })}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: textMuted }]}>
-                  Please read through our terms carefully before accepting.
+                  {t("bookingFlow.checkout.policyModalSubtitle", { defaultValue: "Please read through our terms carefully before accepting." })}
                 </Text>
               </View>
               <Pressable
@@ -156,7 +152,7 @@ export default function CancellationPolicyCard({
               <View style={styles.noticeBox}>
                 <Info size={20} color={brownGold} style={{ marginTop: 2 }} />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.noticeTitle}>Important Notice:</Text>
+                  <Text style={styles.noticeTitle}>{t("bookingFlow.checkout.importantNotice", { defaultValue: "Important Notice:" })}</Text>
                   <Text style={styles.noticeText}>
                     Please cancel or reschedule at least{" "}
                     <Text style={{ fontWeight: "700" }}>24 hours</Text> before
@@ -171,41 +167,32 @@ export default function CancellationPolicyCard({
               {/* Section 1 */}
               <View style={styles.policySection}>
                 <Text style={styles.sectionHeader}>
-                  1. Cancellation and Rescheduling Policy
+                  {t("bookingFlow.checkout.fullPolicy.sec1Title", { defaultValue: "1. Cancellation and Rescheduling Policy" })}
                 </Text>
                 <Text style={styles.sectionLead}>
-                  Customers may cancel or reschedule a wellness reservation up
-                  to{" "}
-                  <Text style={{ fontWeight: "700" }}>
-                    24 hours before the scheduled start time
-                  </Text>
-                  .
+                  {t("bookingFlow.checkout.fullPolicy.sec1Lead", { hours: "24 hours", defaultValue: "Customers may cancel or reschedule a wellness reservation up to 24 hours before the scheduled start time." })}
                 </Text>
                 <View style={styles.bulletList}>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      More than 24 hours before the session:
+                      {t("bookingFlow.checkout.fullPolicy.sec1Point1Title", { defaultValue: "More than 24 hours before the session:" })}
                     </Text>{" "}
-                    Customers may cancel or reschedule their reservation in
-                    accordance with the applicable refund, credit, and booking
-                    policies.
+                    {t("bookingFlow.checkout.fullPolicy.sec1Point1Text", { defaultValue: "Customers may cancel or reschedule their reservation in accordance with the applicable refund, credit, and booking policies." })}
                   </Text>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      Within 24 hours of the session:
+                      {t("bookingFlow.checkout.fullPolicy.sec1Point2Title", { defaultValue: "Within 24 hours of the session:" })}
                     </Text>{" "}
-                    Cancellations and rescheduling are no longer permitted free of
-                    charge. The applicable late cancellation policy will apply.
+                    {t("bookingFlow.checkout.fullPolicy.sec1Point2Text", { defaultValue: "Cancellations and rescheduling are no longer permitted free of charge. The applicable late cancellation policy will apply." })}
                   </Text>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      At or after the scheduled start time:
+                      {t("bookingFlow.checkout.fullPolicy.sec1Point3Title", { defaultValue: "At or after the scheduled start time:" })}
                     </Text>{" "}
-                    Cancellations or changes are not permitted under the standard
-                    cancellation policy.
+                    {t("bookingFlow.checkout.fullPolicy.sec1Point3Text", { defaultValue: "Cancellations or changes are not permitted under the standard cancellation policy." })}
                   </Text>
                 </View>
               </View>
@@ -213,36 +200,32 @@ export default function CancellationPolicyCard({
               {/* Section 2 */}
               <View style={styles.policySection}>
                 <Text style={styles.sectionHeader}>
-                  2. Policy for Members and Session-Pass Holders
+                  {t("bookingFlow.checkout.fullPolicy.sec2Title", { defaultValue: "2. Policy for Members and Session-Pass Holders" })}
                 </Text>
                 <Text style={styles.sectionLead}>
-                  The same 24-hour cancellation and rescheduling policy applies to
-                  all members and session-pass holders.
+                  {t("bookingFlow.checkout.fullPolicy.sec2Lead", { defaultValue: "The same 24-hour cancellation and rescheduling policy applies to all members and session-pass holders." })}
                 </Text>
                 <View style={styles.bulletList}>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      Timely cancellation (more than 24 hours in advance):
+                      {t("bookingFlow.checkout.fullPolicy.sec2Point1Title", { defaultValue: "Timely cancellation (more than 24 hours in advance):" })}
                     </Text>{" "}
-                    The session or credit used for the booking will be returned to
-                    the customer's account and made available for future bookings.
+                    {t("bookingFlow.checkout.fullPolicy.sec2Point1Text", { defaultValue: "The session or credit used for the booking will be returned to the customer's account and made available for future bookings." })}
                   </Text>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      Late cancellation (within 24 hours):
+                      {t("bookingFlow.checkout.fullPolicy.sec2Point2Title", { defaultValue: "Late cancellation (within 24 hours):" })}
                     </Text>{" "}
-                    The booked session or credit will be considered used and will
-                    not be restored.
+                    {t("bookingFlow.checkout.fullPolicy.sec2Point2Text", { defaultValue: "The booked session or credit will be considered used and will not be restored." })}
                   </Text>
                   <Text style={styles.bulletItem}>
                     •{" "}
                     <Text style={{ fontWeight: "700", color: "#334155" }}>
-                      No-show:
+                      {t("bookingFlow.checkout.fullPolicy.sec2Point3Title", { defaultValue: "No-show:" })}
                     </Text>{" "}
-                    If a customer fails to attend without cancelling in accordance
-                    with the policy, the session or credit will not be restored.
+                    {t("bookingFlow.checkout.fullPolicy.sec2Point3Text", { defaultValue: "If a customer fails to attend without cancelling in accordance with the policy, the session or credit will not be restored." })}
                   </Text>
                 </View>
               </View>
@@ -250,29 +233,20 @@ export default function CancellationPolicyCard({
               {/* Section 3 */}
               <View style={styles.policySection}>
                 <Text style={styles.sectionHeader}>
-                  3. Refunds and Credits
+                  {t("bookingFlow.checkout.fullPolicy.sec3Title", { defaultValue: "3. Refunds and Credits" })}
                 </Text>
                 <Text style={styles.sectionParagraph}>
-                  Refunds, credits, and the restoration of sessions are subject to
-                  the applicable payment, membership, and session-pass terms. A
-                  timely cancellation does not automatically guarantee a monetary
-                  refund. Eligible refunds or credits will be processed according
-                  to the rules applicable to the original booking and payment
-                  method.
+                  {t("bookingFlow.checkout.fullPolicy.sec3Text", { defaultValue: "Refunds, credits, and the restoration of sessions are subject to the applicable payment, membership, and session-pass terms. A timely cancellation does not automatically guarantee a monetary refund. Eligible refunds or credits will be processed according to the rules applicable to the original booking and payment method." })}
                 </Text>
               </View>
 
               {/* Section 4 */}
               <View style={styles.policySection}>
                 <Text style={styles.sectionHeader}>
-                  4. Booking Confirmation and Customer Acknowledgment
+                  {t("bookingFlow.checkout.fullPolicy.sec4Title", { defaultValue: "4. Booking Confirmation and Customer Acknowledgment" })}
                 </Text>
                 <Text style={styles.sectionParagraph}>
-                  The cancellation and rescheduling policy is displayed during the
-                  booking process and included in the booking confirmation. By
-                  completing a reservation, customers acknowledge that they have
-                  read and accepted the applicable cancellation, rescheduling,
-                  refund, and credit rules.
+                  {t("bookingFlow.checkout.fullPolicy.sec4Text", { defaultValue: "The cancellation and rescheduling policy is displayed during the booking process and included in the booking confirmation. By completing a reservation, customers acknowledge that they have read and accepted the applicable cancellation, rescheduling, refund, and credit rules." })}
                 </Text>
               </View>
             </ScrollView>
@@ -294,11 +268,7 @@ export default function CancellationPolicyCard({
                   {tempAccepted && <Check size={14} color="#fff" strokeWidth={3} />}
                 </View>
                 <Text style={styles.checkboxLabel}>
-                  I have read, understood, and accept the{" "}
-                  <Text style={{ fontWeight: "700", color: brownGold }}>
-                    Cancellation, Rescheduling & Refund Policy
-                  </Text>
-                  , including the 24-hour notice requirement.
+                  {t("bookingFlow.checkout.fullPolicy.agreeCheckbox", { policyName: t("bookingFlow.checkout.policyTitle", { defaultValue: "Cancellation, Rescheduling & Refund Policy" }), defaultValue: "I have read, understood, and accept the Cancellation, Rescheduling & Refund Policy, including the 24-hour notice requirement." })}
                 </Text>
               </Pressable>
 
@@ -326,7 +296,7 @@ export default function CancellationPolicyCard({
                       { color: tempAccepted ? "#fff" : "#64748B" },
                     ]}
                   >
-                    Confirm & Accept
+                    {t("bookingFlow.checkout.fullPolicy.confirmAndAcceptBtn", { defaultValue: "Confirm & Accept" })}
                   </Text>
                 </Pressable>
               </View>

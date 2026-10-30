@@ -23,6 +23,7 @@ import {
   Send,
 } from "lucide-react-native";
 import React, { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Alert,
   Linking,
@@ -33,6 +34,7 @@ import {
 } from "react-native";
 
 export default function HelpSupportScreen() {
+  const { t } = useTranslation();
   const textMuted = useColor("textMuted");
   const cardBg = useColor("card");
   const border = useColor("border");
@@ -183,7 +185,7 @@ export default function HelpSupportScreen() {
         {/* Contact Form Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Send Us a Message</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.general.sendUsMessage", { defaultValue: "Send Us a Message" })}</Text>
             <Text style={[styles.sectionSubtitle, { color: textMuted }]}>
               Fill out the form below and we'll reply as soon as possible.
             </Text>
@@ -217,14 +219,14 @@ export default function HelpSupportScreen() {
             )}
 
             <Input
-              label="Your Name"
+              label={t("bookingFlow.general.yourName", { defaultValue: "Your Name" })}
               placeholder="Full name"
               value={name}
               onChangeText={setName}
             />
 
             <Input
-              label="Email Address"
+              label={t("bookingFlow.general.emailAddress", { defaultValue: "Email Address" })}
               placeholder="name@example.com"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -233,7 +235,7 @@ export default function HelpSupportScreen() {
             />
 
             <Input
-              label="Phone Number"
+              label={t("bookingFlow.general.phoneNumber", { defaultValue: "Phone Number" })}
               placeholder="+1 (555) 000-0000"
               keyboardType="phone-pad"
               value={phone}
@@ -241,16 +243,16 @@ export default function HelpSupportScreen() {
             />
 
             <Input
-              label="Subject"
-              placeholder="e.g. Booking inquiry, Special request"
+              label={t("bookingFlow.general.subject", { defaultValue: "Subject" })}
+              placeholder={t("bookingFlow.general.subjectPlaceholder", { defaultValue: "e.g. Booking inquiry, Special request" })}
               value={subject}
               onChangeText={setSubject}
             
             />
 
             <Input
-              label="Message *"
-              placeholder="How can we assist you today?"
+              label={t("bookingFlow.general.message", { defaultValue: "Message *" })}
+              placeholder={t("bookingFlow.general.messagePlaceholder", { defaultValue: "How can we assist you today?" })}
               type="textarea"
               rows={4}
               value={message}
@@ -274,7 +276,7 @@ export default function HelpSupportScreen() {
         {/* Contact Details Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Contact Details</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.general.contactDetails", { defaultValue: "Contact Details" })}</Text>
             <Text style={[styles.sectionSubtitle, { color: textMuted }]}>
               Reach us directly through phone, email, or visit our sanctuary.
             </Text>

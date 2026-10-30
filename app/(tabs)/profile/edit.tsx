@@ -9,12 +9,14 @@ import { useColor } from "@/hooks/useColor";
 import { Fonts } from "@/theme/colors";
 import { router } from "expo-router";
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/utils/authStore";
 import { useToast } from "@/components/ui/toast";
 import { API_BASE_URL } from "@/utils/constants";
 
 export default function EditProfileScreen() {
+  const { t } = useTranslation();
   const textMuted = useColor("textMuted");
   const authUser = useAuthStore.getState().user;
   const { error: showErrorToast, success: showSuccessToast } = useToast();
@@ -141,7 +143,7 @@ export default function EditProfileScreen() {
 
         <View style={styles.form}>
           <Input
-            label="Full Name"
+            label={t("profile.name") || "Full Name"}
             value={name}
             onChangeText={setName}
             variant="outline"
@@ -153,7 +155,7 @@ export default function EditProfileScreen() {
             variant="outline"
           />
           <Input
-            label="Phone"
+            label={t("profile.phone") || "Phone"}
             value={phone}
             onChangeText={setPhone}
             variant="outline"
@@ -161,11 +163,11 @@ export default function EditProfileScreen() {
             placeholder="+31 6 12345678"
           />
           <Input
-            label="Bio / Notes"
+            label={t("bookingFlow.general.bioNotes", { defaultValue: "Bio / Notes" })}
             value={bio}
             onChangeText={setBio}
             variant="outline"
-            placeholder="Tell us about your wellness preferences"
+            placeholder={t("bookingFlow.general.bioNotesPlaceholder", { defaultValue: "Tell us about your wellness preferences" })}
           />
 
           <View style={styles.inputGroup}>

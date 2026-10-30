@@ -35,6 +35,7 @@ import { Image, Pressable, StyleSheet, ActivityIndicator, Platform, TextInput, M
 import { Calendar } from "react-native-calendars";
 
 export default function CategoryScreen() {
+  const { t, i18n } = useTranslation();
   const { category } = useLocalSearchParams<{ category: string }>();
   const cleanCategory = (category || "sauna").toLowerCase().trim();
   const fallbackData = CATEGORY_DATA[cleanCategory] || CATEGORY_DATA.sauna;
@@ -54,6 +55,7 @@ export default function CategoryScreen() {
 
   // Dedicated Salt Room Configurator State (matching Web arrangements/saltroom flow)
   const isSaltRoomCategory = cleanCategory === "saltroom" || cleanCategory === "salt_room" || cleanCategory === "arrangements";
+  const isActivityCategory = cleanCategory === "activity" || cleanCategory === "activities";
   const [saltApiData, setSaltApiData] = useState<any | null>(null);
   const [selectedSaltDate, setSelectedSaltDate] = useState<string>("");
   const [showSaltDatePicker, setShowSaltDatePicker] = useState<boolean>(false);
@@ -100,7 +102,6 @@ export default function CategoryScreen() {
   const brownGold = "#9B7C56";
   const lightBeige = "#F8F5F2";
   const darkBrown = "#1d1a17";
-  const { t } = useTranslation();
 
   const todayStr = new Date().toISOString().split("T")[0];
 
@@ -643,24 +644,32 @@ export default function CategoryScreen() {
         <Header
           title={
             isSaunaCategory
-              ? "Sauna & Wellness"
+              ? t("bookingFlow.sauna.title", { defaultValue: "Sauna & Wellness" })
               : isSaltRoomCategory
-              ? "Salt Room Halotherapy"
-              : t(`home.categories.${cleanCategory}.title`) || `${cleanCategory.toUpperCase()} Experiences`
+              ? t("bookingFlow.saltRoom.title", { defaultValue: "Salt Room Halotherapy" })
+              : isActivityCategory
+              ? t("home.categories.activities.title", { defaultValue: "Activities" })
+              : isPackagesCategory
+              ? t("home.categories.arrangements.title", { defaultValue: "Arrangements" })
+              : (i18n.exists(`home.categories.${cleanCategory}.title`) ? t(`home.categories.${cleanCategory}.title`) : null) || `${cleanCategory.charAt(0).toUpperCase() + cleanCategory.slice(1)} Experiences`
           }
           subtitle={
             isSaunaCategory
-              ? "Exclusive private sanctuary or peaceful shared wellness experience."
+              ? t("bookingFlow.sauna.subtitle", { defaultValue: "Exclusive private sanctuary or peaceful shared wellness experience." })
               : isSaltRoomCategory
-              ? "Pure aerosol micro-climate. Select your reservation date first, then choose your session or pass."
-              : t(`home.categories.${cleanCategory}.subtitle`) || "A carefully curated moment, designed around you."
+              ? t("bookingFlow.saltRoom.subtitle", { defaultValue: "Pure aerosol micro-climate. Select your reservation date first, then choose your session or pass." })
+              : isActivityCategory
+              ? t("home.categories.activities.subtitle", { defaultValue: "Movement. Breath. Flow." })
+              : isPackagesCategory
+              ? t("home.categories.arrangements.subtitle", { defaultValue: "Curated journeys of renewal" })
+              : (i18n.exists(`home.categories.${cleanCategory}.subtitle`) ? t(`home.categories.${cleanCategory}.subtitle`) : null) || "A carefully curated moment, designed around you."
           }
         />
 
         {loading ? (
           <View style={{ padding: 40, alignItems: "center" }}>
             <ActivityIndicator size="large" color={brownGold} />
-            <Text style={{ marginTop: 12, color: textMuted }}>Loading experience details...</Text>
+            <Text style={{ marginTop: 12, color: textMuted }}>{t("bookingFlow.general.loadingDetails", { defaultValue: "Loading experience details..." })}</Text>
           </View>
         ) : isSaltRoomCategory ? (
           /* ========================================================================= */
@@ -671,15 +680,15 @@ export default function CategoryScreen() {
             <Card style={styles.bannerCard}>
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <View style={styles.overviewBadgeBox}>
-                  <Text style={styles.overviewBadgeLabel}>Max Capacity</Text>
-                  <Text style={styles.overviewBadgeValue}>Max {dynamicMaxCapacity} Guests</Text>
+                  <Text style={styles.overviewBadgeLabel}>{t("bookingFlow.saltRoom.maxCapacity", { defaultValue: "Max Capacity" })}</Text>
+                  <Text style={styles.overviewBadgeValue}>{t("bookingFlow.saltRoom.maxGuests", { count: dynamicMaxCapacity, defaultValue: `Max ${dynamicMaxCapacity} Guests` })}</Text>
                 </View>
                 <View style={styles.overviewBadgeBox}>
-                  <Text style={styles.overviewBadgeLabel}>Session Length</Text>
-                  <Text style={styles.overviewBadgeValue}>1 Hour</Text>
+                  <Text style={styles.overviewBadgeLabel}>{t("bookingFlow.saltRoom.sessionLength", { defaultValue: "Session Length" })}</Text>
+                  <Text style={styles.overviewBadgeValue}>{t("bookingFlow.saltRoom.sessionLengthVal", { defaultValue: "1 Hour" })}</Text>
                 </View>
                 <View style={styles.overviewBadgeBox}>
-                  <Text style={styles.overviewBadgeLabel}>Single Price</Text>
+                  <Text style={styles.overviewBadgeLabel}>{t("bookingFlow.saltRoom.singlePrice", { defaultValue: "Single Price" })}</Text>
                   <Text style={[styles.overviewBadgeValue, { color: brownGold }]}>€{saltPricePerPerson}/Person</Text>
                 </View>
               </View>
@@ -688,9 +697,9 @@ export default function CategoryScreen() {
             {/* STEP 1: Select Reservation Date First */}
             <Card style={styles.sectionCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={styles.sectionTitle}>1. Select Reservation Date</Text>
+                <Text style={styles.sectionTitle}>{t("bookingFlow.saltRoom.step1Date", { defaultValue: "1. Select Reservation Date" })}</Text>
                 <Text style={{ fontSize: 11, fontWeight: "600", color: brownGold }}>
-                  Operating: 09:00 – 21:00
+                  {t("bookingFlow.saltRoom.operatingHours", { defaultValue: "Operating: 09:00 – 21:00" })}
                 </Text>
               </View>
 
@@ -711,7 +720,7 @@ export default function CategoryScreen() {
                         selectedSaltDate && styles.datePickerButtonTextFilled,
                       ]}
                     >
-                      {selectedSaltDate ? `Selected: ${selectedSaltDate}` : "Select Date"}
+                      {selectedSaltDate ? t("bookingFlow.saltRoom.selectedDate", { date: selectedSaltDate, defaultValue: `Selected: ${selectedSaltDate}` }) : t("bookingFlow.saltRoom.selectDate", { defaultValue: "Select Date" })}
                     </Text>
                   </View>
                 </Pressable>
@@ -727,8 +736,8 @@ export default function CategoryScreen() {
                     <View style={styles.modalContent}>
                       <View style={styles.modalHeader}>
                         <View>
-                          <Text style={styles.modalTitle}>Select Salt Room Date</Text>
-                          <Text style={styles.modalSub}>Past dates are disabled. Operating: 09:00 - 21:00</Text>
+                          <Text style={styles.modalTitle}>{t("bookingFlow.saltRoom.selectDateModalTitle", { defaultValue: "Select Salt Room Date" })}</Text>
+                          <Text style={styles.modalSub}>{t("bookingFlow.saltRoom.pastDatesDisabled", { defaultValue: "Past dates are disabled. Operating: 09:00 - 21:00" })}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.modalCloseBtn}
@@ -785,7 +794,7 @@ export default function CategoryScreen() {
                           onPress={() => setShowSaltDatePicker(false)}
                           style={{ paddingHorizontal: 16, height: 40 }}
                         >
-                          <Text style={{ color: "#64748B", fontWeight: "600" }}>Close</Text>
+                          <Text style={{ color: "#64748B", fontWeight: "600" }}>{t("bookingFlow.saltRoom.close", { defaultValue: "Close" })}</Text>
                         </Button>
                       </View>
                     </View>
@@ -795,7 +804,7 @@ export default function CategoryScreen() {
                 {loadingSaltSlots && (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 4 }}>
                     <ActivityIndicator size="small" color={brownGold} />
-                    <Text style={{ fontSize: 11, color: brownGold }}>Checking date slots & membership...</Text>
+                    <Text style={{ fontSize: 11, color: brownGold }}>{t("bookingFlow.saltRoom.checkingSlots", { defaultValue: "Checking date slots & membership..." })}</Text>
                   </View>
                 )}
 
@@ -824,7 +833,7 @@ export default function CategoryScreen() {
             {/* STEP 2: Select Booking Option or Membership (4 Cards) */}
             <View style={{ gap: 12 }}>
               <Text style={styles.sectionTitle}>
-                2. Select Booking Option or Membership
+                {t("bookingFlow.saltRoom.chooseOptionTitle", { defaultValue: "2. Choose Pass or Membership Option" })}
               </Text>
 
               <View style={{ gap: 14 }}>
@@ -851,7 +860,7 @@ export default function CategoryScreen() {
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                           {opt.isCovered && (
                             <View style={styles.coveredBadge}>
-                              <Text style={styles.coveredBadgeText}>Active Pass (Covered)</Text>
+                              <Text style={styles.coveredBadgeText}>{t("bookingFlow.saltRoom.activePassCovered", { defaultValue: "Active Pass (Covered)" })}</Text>
                             </View>
                           )}
                           <View
@@ -903,7 +912,7 @@ export default function CategoryScreen() {
             <Card style={styles.sectionCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <Text style={styles.sectionTitle}>
-                  3. Number of Guests (Max {dynamicMaxCapacity})
+                  {t("bookingFlow.saltRoom.step3Guests", { max: dynamicMaxCapacity, defaultValue: `3. Number of Guests (Max ${dynamicMaxCapacity})` })}
                 </Text>
                 <Text style={{ fontSize: 12, fontWeight: "600", color: brownGold }}>
                   Strict micro-climate capacity
@@ -988,7 +997,7 @@ export default function CategoryScreen() {
                     saunaType === "private" && styles.toggleButtonTextActive,
                   ]}
                 >
-                  VIP Sauna
+                  {t("bookingFlow.sauna.vipTab", { defaultValue: "VIP Sauna" })}
                 </Text>
               </Pressable>
 
@@ -1009,7 +1018,7 @@ export default function CategoryScreen() {
                     saunaType === "shared" && styles.toggleButtonTextActive,
                   ]}
                 >
-                  Sauna
+                  {t("bookingFlow.sauna.sharedTab", { defaultValue: "Sauna" })}
                 </Text>
               </Pressable>
             </View>
@@ -1026,15 +1035,13 @@ export default function CategoryScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.bannerBadge}>
-                    {saunaType === "private" ? "EXCLUSIVE RESERVATION" : "SHARED SESSION ACCESS"}
+                    {saunaType === "private" ? t("bookingFlow.sauna.exclusiveBadge", { defaultValue: "EXCLUSIVE RESERVATION" }) : t("bookingFlow.sauna.sharedBadge", { defaultValue: "SHARED SESSION ACCESS" })}
                   </Text>
                   <Text style={styles.bannerTitle}>
-                    {saunaType === "private" ? "VIP Sauna Sanctuary" : "Sauna Experience"}
+                    {saunaType === "private" ? t("bookingFlow.sauna.vipTitle", { defaultValue: "VIP Sauna Sanctuary" }) : t("bookingFlow.sauna.sharedTitle", { defaultValue: "Sauna Experience" })}
                   </Text>
                   <Text style={styles.bannerDesc}>
-                    {saunaType === "private"
-                      ? "Booked exclusively by your group (2 to 6 people). Includes sauna, heated pool, relaxation lounge & +30m auto cleaning buffer."
-                      : "Different customers book the same 1.5h session. Max 6 people per session + 15m changeover buffer."}
+                    {saunaType === "private" ? t("bookingFlow.sauna.vipDesc", { defaultValue: "Booked exclusively by your group (2 to 6 people). Includes sauna, heated pool, relaxation lounge & +30m auto cleaning buffer." }) : t("bookingFlow.sauna.sharedDesc", { defaultValue: "Different customers book the same 1.5h session. Max 6 people per session + 15m changeover buffer." })}
                   </Text>
                 </View>
               </View>
@@ -1045,7 +1052,7 @@ export default function CategoryScreen() {
               <View style={{ gap: 20 }}>
                 {/* Duration Selector */}
                 <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>1. Select Session Duration</Text>
+                  <Text style={styles.sectionTitle}>{t("bookingFlow.sauna.step1Duration", { defaultValue: "1. Select Session Duration" })}</Text>
                   <View style={{ flexDirection: "row", gap: 12 }}>
                     {/* 3 Hours */}
                     <Pressable
@@ -1056,12 +1063,12 @@ export default function CategoryScreen() {
                       onPress={() => setDurationHours(3)}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.durationBadge}>POPULAR CHOICE</Text>
-                        <Text style={styles.durationTitle}>3 Hours</Text>
+                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.popularChoice", { defaultValue: "POPULAR CHOICE" })}</Text>
+                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours3", { defaultValue: "3 Hours" })}</Text>
                         <Text style={styles.durationSub}>
-                          Base (2 guests): €{price3Hrs}
+                          {t("bookingFlow.sauna.base2Guests", { defaultValue: "Base (2 guests)" })}: €{price3Hrs}
                         </Text>
-                        <Text style={styles.durationExtra}>+€{extraPersonFee}/extra person</Text>
+                        <Text style={styles.durationExtra}>{t("bookingFlow.sauna.extraPerson", { fee: extraPersonFee, defaultValue: `+€${extraPersonFee}/extra person` })}</Text>
                       </View>
                       <View
                         style={[
@@ -1082,10 +1089,10 @@ export default function CategoryScreen() {
                       onPress={() => setDurationHours(4)}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.durationBadge}>EXTENDED RELAXATION</Text>
-                        <Text style={styles.durationTitle}>4 Hours</Text>
+                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.extendedRelaxation", { defaultValue: "EXTENDED RELAXATION" })}</Text>
+                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours4", { defaultValue: "4 Hours" })}</Text>
                         <Text style={styles.durationSub}>
-                          Base (2 guests): €{price4Hrs}
+                          {t("bookingFlow.sauna.base2Guests", { defaultValue: "Base (2 guests)" })}: €{price4Hrs}
                         </Text>
                         <Text style={styles.durationExtra}>+€{extraPersonFee}/extra person</Text>
                       </View>
@@ -1104,9 +1111,9 @@ export default function CategoryScreen() {
                 {/* Number of Guests (2 to 6) */}
                 <Card style={styles.sectionCard}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <Text style={styles.sectionTitle}>2. Number of Guests (2–6)</Text>
+                    <Text style={styles.sectionTitle}>{t("bookingFlow.sauna.step2Guests", { defaultValue: "2. Number of Guests (2–6)" })}</Text>
                     <Text style={{ fontSize: 12, fontWeight: "600", color: brownGold }}>
-                      {saunaGuestsCount > 2 ? `2 Base + ${saunaGuestsCount - 2} Extra` : "2 Base Guests"}
+                      {saunaGuestsCount > 2 ? t("bookingFlow.sauna.baseAndExtra", { extra: saunaGuestsCount - 2, defaultValue: `2 Base + ${saunaGuestsCount - 2} Extra` }) : t("bookingFlow.sauna.baseGuestsOnly", { defaultValue: "2 Base Guests" })}
                     </Text>
                   </View>
 
@@ -1126,7 +1133,7 @@ export default function CategoryScreen() {
                             {num}
                           </Text>
                           <Text style={[styles.guestSub, isSel && styles.guestSubActive]}>
-                            {num === 2 ? "Base" : `+€${(num - 2) * extraPersonFee}`}
+                            {num === 2 ? t("bookingFlow.sauna.baseGuestLabel", { defaultValue: "Base" }) : `+€${(num - 2) * extraPersonFee}`}
                           </Text>
                         </Pressable>
                       );
@@ -1136,7 +1143,7 @@ export default function CategoryScreen() {
 
                 {/* Extras & Enhancements */}
                 <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>3. Enhance Your Experience (Optional Extras)</Text>
+                  <Text style={styles.sectionTitle}>{t("bookingFlow.sauna.step3Extras", { defaultValue: "3. Enhance Your Experience (Optional Extras)" })}</Text>
                   {apiFeatures.length > 0 ? (
                     <View style={{ gap: 10, marginTop: 4 }}>
                       {apiFeatures.map((extra) => {
@@ -1183,22 +1190,22 @@ export default function CategoryScreen() {
                   <View style={{ flexDirection: "row", gap: 10 }}>
                     <View style={styles.overviewBadgeBox}>
                       <Text style={styles.overviewBadgeLabel}>Session Length</Text>
-                      <Text style={styles.overviewBadgeValue}>1.5 Hours</Text>
+                      <Text style={styles.overviewBadgeValue}>{t("bookingFlow.sauna.sessionLengthValue", { defaultValue: "1.5 Hours" })}</Text>
                     </View>
                     <View style={styles.overviewBadgeBox}>
-                      <Text style={styles.overviewBadgeLabel}>Price Per Person</Text>
+                      <Text style={styles.overviewBadgeLabel}>{t("bookingFlow.sauna.pricePerPerson", { defaultValue: "Price Per Person" })}</Text>
                       <Text style={[styles.overviewBadgeValue, { color: brownGold }]}>€{sharedPricePerson}</Text>
                     </View>
                     <View style={styles.overviewBadgeBox}>
-                      <Text style={styles.overviewBadgeLabel}>Changeover</Text>
-                      <Text style={styles.overviewBadgeValue}>15 Mins</Text>
+                      <Text style={styles.overviewBadgeLabel}>{t("bookingFlow.sauna.changeover", { defaultValue: "Changeover" })}</Text>
+                      <Text style={styles.overviewBadgeValue}>{t("bookingFlow.sauna.changeoverValue", { defaultValue: "15 Mins" })}</Text>
                     </View>
                   </View>
                 </Card>
 
                 {/* Number of Places (1 to 6) */}
                 <Card style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>Number of Places / Guests (1–6)</Text>
+                  <Text style={styles.sectionTitle}>{t("bookingFlow.sauna.sharedGuestsTitle", { defaultValue: "Number of Places / Guests (1–6)" })}</Text>
                   <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
                     {[1, 2, 3, 4, 5, 6].map((num) => {
                       const isSel = saunaGuestsCount === num;
@@ -1229,11 +1236,9 @@ export default function CategoryScreen() {
             <Card style={styles.pricingSummaryCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View>
-                  <Text style={styles.totalLabel}>Total Calculated Price</Text>
+                  <Text style={styles.totalLabel}>{t("bookingFlow.sauna.totalCalculatedPrice", { defaultValue: "Total Calculated Price" })}</Text>
                   <Text style={styles.totalSub}>
-                    {saunaType === "private"
-                      ? `${durationHours}h private session for ${saunaGuestsCount} guests`
-                      : `${saunaGuestsCount} place(s) @ €${sharedPricePerson}`}
+                    {saunaType === "private" ? t("bookingFlow.sauna.privateSummary", { hours: durationHours, guests: saunaGuestsCount, defaultValue: `${durationHours}h private session for ${saunaGuestsCount} guests` }) : t("bookingFlow.sauna.sharedSummary", { guests: saunaGuestsCount, price: sharedPricePerson, defaultValue: `${saunaGuestsCount} place(s) @ €${sharedPricePerson}` })}
                   </Text>
                 </View>
                 <Text style={styles.totalAmount}>€{saunaTotal.toFixed(2)}</Text>
@@ -1250,10 +1255,10 @@ export default function CategoryScreen() {
               <View style={styles.packageActionBanner}>
                 <View style={{ flex: 1, paddingRight: 8 }}>
                   <Text style={styles.packageBannerPreTitle}>
-                    Curated Experiences & Bespoke Packages
+                    {t("bookingFlow.packages.curatedTitle", { defaultValue: "Curated Experiences & Bespoke Packages" })}
                   </Text>
                   <Text style={styles.packageBannerSub}>
-                    Select a signature package below or create your own custom wellness journey.
+                    {t("bookingFlow.packages.curatedSub", { defaultValue: "Looking for a fully customized wellness day with private dining, bespoke timing or dedicated treatments?" })}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -1302,12 +1307,6 @@ export default function CategoryScreen() {
                           </View>
                         </View>
                       ) : null}
-
-                      {/* Rating Badge */}
-                      <View style={styles.ratingBadge}>
-                        <Star size={12} color="#EAB308" fill="#EAB308" />
-                        <Text style={styles.ratingText}>{service.rating || 4.9}</Text>
-                      </View>
 
                       {isSelected && !isSoldOut && (
                         <View style={styles.selectedBadge}>
@@ -1486,7 +1485,7 @@ export default function CategoryScreen() {
                 {/* Reference ID Box */}
                 <View style={styles.customRefBox}>
                   <View>
-                    <Text style={styles.customRefLabel}>Booking Reference ID</Text>
+                    <Text style={styles.customRefLabel}>{t("bookingFlow.packages.bookingRefId", { defaultValue: "Booking Reference ID" })}</Text>
                     <Text style={styles.customRefVal}>{confirmedCustomData.bookingId}</Text>
                   </View>
                   <TouchableOpacity
@@ -1506,17 +1505,17 @@ export default function CategoryScreen() {
                 {/* Details Summary */}
                 <View style={styles.customSummaryBox}>
                   <View style={styles.customSummaryRow}>
-                    <Text style={styles.customSummaryKey}>Guest</Text>
+                    <Text style={styles.customSummaryKey}>{t("bookingFlow.packages.guestDetails", { defaultValue: "Guest" })}</Text>
                     <Text style={styles.customSummaryVal}>{confirmedCustomData.name}</Text>
                   </View>
                   <View style={styles.customSummaryRow}>
-                    <Text style={styles.customSummaryKey}>Date & Guests</Text>
+                    <Text style={styles.customSummaryKey}>{t("bookingFlow.packages.dateAndGuests", { defaultValue: "Date & Guests" })}</Text>
                     <Text style={styles.customSummaryVal}>
                       {confirmedCustomData.date} • {confirmedCustomData.guests} Guests
                     </Text>
                   </View>
                   <View style={{ gap: 6, marginTop: 4 }}>
-                    <Text style={styles.customSummaryKey}>Included Experiences</Text>
+                    <Text style={styles.customSummaryKey}>{t("bookingFlow.packages.includedExperiences", { defaultValue: "Included Experiences" })}</Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                       {confirmedCustomData.services.map((srv, sIdx) => (
                         <View key={sIdx} style={styles.customServicePill}>
@@ -1527,7 +1526,7 @@ export default function CategoryScreen() {
                   </View>
                   {confirmedCustomData.notes ? (
                     <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#EDE7E1" }}>
-                      <Text style={styles.customSummaryKey}>Notes</Text>
+                      <Text style={styles.customSummaryKey}>{t("bookingFlow.packages.notes", { defaultValue: "Notes" })}</Text>
                       <Text style={[styles.customSummaryVal, { fontStyle: "italic", marginTop: 2 }]}>
                         {confirmedCustomData.notes}
                       </Text>
@@ -1543,7 +1542,7 @@ export default function CategoryScreen() {
                   }}
                   style={styles.customDoneBtn}
                 >
-                  <Text style={styles.customDoneBtnText}>Done & Close</Text>
+                  <Text style={styles.customDoneBtnText}>{t("bookingFlow.packages.doneAndClose", { defaultValue: "Done & Close" })}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -1789,7 +1788,7 @@ export default function CategoryScreen() {
                   {customSubmitting ? (
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
-                    <Text style={styles.customSubmitBtnText}>Submit Custom Package</Text>
+                    <Text style={styles.customSubmitBtnText}>{t("bookingFlow.packages.submitButton", { defaultValue: "Submit Custom Package" })}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -1808,7 +1807,7 @@ export default function CategoryScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Preferred Date</Text>
+              <Text style={styles.modalTitle}>{t("bookingFlow.packages.selectPreferredDate", { defaultValue: "Select Preferred Date" })}</Text>
               <TouchableOpacity
                 onPress={() => setShowCustomDatePicker(false)}
                 style={styles.modalCloseBtn}

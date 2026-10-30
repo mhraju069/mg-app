@@ -333,13 +333,7 @@ export default function BookingDetailsScreen() {
               <Text style={styles.policyTitle}>Cancellation Policy</Text>
             </View>
             <Text style={[styles.policyText, { color: textMuted }]}>
-              Reservations may be cancelled up to{" "}
-              <Text style={{ fontWeight: "700", color: "#1d1a17" }}>
-                24 hours
-              </Text>{" "}
-              prior to start time. Timely cancellations restore session credits
-              or process refunds according to booking terms. Cancellations
-              within 24 hours cannot be refunded.
+              {t("bookingDetailPolicy.policyText", { defaultValue: "Reservations may be cancelled up to 24 hours prior to start time. Timely cancellations restore session credits or process refunds according to booking terms. Cancellations within 24 hours cannot be refunded." })}
             </Text>
           </View>
 
@@ -349,7 +343,7 @@ export default function BookingDetailsScreen() {
               onPress={handleOpenCancelModal}
             >
               <Text style={styles.cancelLinkText}>
-                Cancel Reservation ›
+                {t("bookingDetailPolicy.cancelLink", { defaultValue: "Cancel Reservation ›" })}
               </Text>
             </Pressable>
           )}
@@ -368,7 +362,7 @@ export default function BookingDetailsScreen() {
             {/* Modal Header */}
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle}>
-                {cancelSuccess ? "Reservation Cancelled" : "Cancel Reservation"}
+                {cancelSuccess ? t("bookingDetailPolicy.modalTitleCancelled", { defaultValue: "Reservation Cancelled" }) : t("bookingDetailPolicy.modalTitleCancel", { defaultValue: "Cancel Reservation" })}
               </Text>
               <Pressable
                 onPress={handleCloseCancelModal}
@@ -387,7 +381,7 @@ export default function BookingDetailsScreen() {
                   <View style={styles.successTitleRow}>
                     <CheckCircle2 size={18} color="#15803D" />
                     <Text style={styles.successTitle}>
-                      Cancelled Successfully
+                      {t("bookingDetailPolicy.cancelledSuccessTitle", { defaultValue: "Cancelled Successfully" })}
                     </Text>
                   </View>
                   <Text style={styles.successMessage}>
@@ -396,7 +390,7 @@ export default function BookingDetailsScreen() {
                   {cancelSuccess.credit_restored && (
                     <View style={styles.creditRestoredBox}>
                       <Text style={styles.creditRestoredText}>
-                        ✓ 1 session credit has been refunded to your account.
+                        {t("bookingDetailPolicy.creditRefundedText", { defaultValue: "✓ 1 session credit has been refunded to your account." })}
                       </Text>
                       {cancelSuccess.remaining_sessions !== undefined && (
                         <Text style={styles.creditRestoredSub}>
@@ -445,12 +439,9 @@ export default function BookingDetailsScreen() {
                   <Info size={16} color={brownGold} style={{ marginTop: 2 }} />
                   <Text style={styles.policyNoticeText}>
                     <Text style={{ fontWeight: "700", color: "#0F172A" }}>
-                      Notice:
-                    </Text>{" "}
-                    Cancellations must be made at least{" "}
-                    <Text style={{ fontWeight: "700" }}>24 hours</Text> prior to
-                    start time to receive a session refund/credit. Cancellations
-                    within 24 hours cannot be restored.
+                      {t("bookingDetailPolicy.noticeHeading", { defaultValue: "Notice:" })}{" "}
+                    </Text>
+                    {t("bookingDetailPolicy.noticeText", { defaultValue: "Cancellations must be made at least 24 hours prior to start time to receive a session refund/credit. Cancellations within 24 hours cannot be restored." })}
                   </Text>
                 </View>
 
@@ -468,7 +459,7 @@ export default function BookingDetailsScreen() {
                     numberOfLines={2}
                     value={cancelReason}
                     onChangeText={setCancelReason}
-                    placeholder="e.g. Schedule conflict, feeling unwell..."
+                    placeholder={t("bookingDetailPolicy.reasonPlaceholder", { defaultValue: "e.g. Schedule conflict, feeling unwell..." })}
                     placeholderTextColor="#94A3B8"
                     editable={!isCancelling}
                   />
@@ -506,12 +497,12 @@ export default function BookingDetailsScreen() {
                       <View style={styles.cancellingRow}>
                         <ActivityIndicator size="small" color="#fff" />
                         <Text style={styles.modalConfirmCancelText}>
-                          Cancelling...
+                          {t("bookingDetailPolicy.cancellingBtn", { defaultValue: "Cancelling..." })}
                         </Text>
                       </View>
                     ) : (
                       <Text style={styles.modalConfirmCancelText}>
-                        Confirm Cancellation
+                        {t("bookingDetailPolicy.confirmCancelBtn", { defaultValue: "Confirm Cancellation" })}
                       </Text>
                     )}
                   </Pressable>

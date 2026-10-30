@@ -221,7 +221,7 @@ export default function NotificationsScreen() {
             <View style={styles.emptyIconCircle}>
               <Bell size={32} color={brownGold} />
             </View>
-            <Text style={styles.emptyTitle}>No Notifications Yet</Text>
+            <Text style={styles.emptyTitle}>{t("bookingFlow.general.noNotifications", { defaultValue: "No Notifications Yet" })}</Text>
             <Text style={[styles.emptySubtitle, { color: textMuted }]}>
               When you receive booking updates, reminders, or access codes, they will appear here in real time.
             </Text>
@@ -351,7 +351,7 @@ export default function NotificationsScreen() {
 
                   {selectedNotification.data.booking_id && (
                     <View style={styles.dataRow}>
-                      <Text style={styles.dataLabel}>Booking Ref:</Text>
+                      <Text style={styles.dataLabel}>{t("bookingFlow.general.bookingRef", { defaultValue: "Booking Ref:" })}</Text>
                       <Text style={[styles.dataValue, { color: brownGold, fontWeight: "800" }]}>
                         {selectedNotification.data.booking_id}
                       </Text>
@@ -360,21 +360,21 @@ export default function NotificationsScreen() {
 
                   {selectedNotification.data.type && (
                     <View style={styles.dataRow}>
-                      <Text style={styles.dataLabel}>Service Type:</Text>
+                      <Text style={styles.dataLabel}>{t("bookingFlow.general.serviceType", { defaultValue: "Service Type:" })}</Text>
                       <Text style={styles.dataValue}>{selectedNotification.data.type}</Text>
                     </View>
                   )}
 
                   {selectedNotification.data.date && (
                     <View style={styles.dataRow}>
-                      <Text style={styles.dataLabel}>Date:</Text>
+                      <Text style={styles.dataLabel}>{t("bookingFlow.general.date", { defaultValue: "Date:" })}</Text>
                       <Text style={styles.dataValue}>{selectedNotification.data.date}</Text>
                     </View>
                   )}
 
                   {selectedNotification.data.time && (
                     <View style={styles.dataRow}>
-                      <Text style={styles.dataLabel}>Time:</Text>
+                      <Text style={styles.dataLabel}>{t("bookingFlow.general.time", { defaultValue: "Time:" })}</Text>
                       <Text style={styles.dataValue}>{selectedNotification.data.time}</Text>
                     </View>
                   )}

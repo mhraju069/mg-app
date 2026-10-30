@@ -26,6 +26,7 @@ import {
 } from "lucide-react-native";
 import { API_BASE_URL } from "@/utils/constants";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Modal,
   Pressable,
@@ -37,13 +38,13 @@ import {
 import { Calendar } from "react-native-calendars";
 
 const EVENT_TYPES = [
-  { id: "Birthdays", label: "Birthdays" },
-  { id: "Weddings", label: "Weddings" },
-  { id: "Baby showers", label: "Baby Showers" },
-  { id: "Corporate parties", label: "Corporate Parties" },
-  { id: "Anniversaries", label: "Anniversaries" },
-  { id: "Private parties", label: "Private Parties" },
-  { id: "Other events", label: "Other Events" },
+  { id: "Birthdays", key: "birthdays", label: "Birthdays" },
+  { id: "Weddings", key: "weddings", label: "Weddings" },
+  { id: "Baby showers", key: "babyShowers", label: "Baby Showers" },
+  { id: "Corporate parties", key: "corporateParties", label: "Corporate Parties" },
+  { id: "Anniversaries", key: "anniversaries", label: "Anniversaries" },
+  { id: "Private parties", key: "privateParties", label: "Private Parties" },
+  { id: "Other events", key: "otherEvents", label: "Other Events" },
 ];
 
 const TIME_OPTIONS = [
@@ -65,6 +66,7 @@ const TIME_OPTIONS = [
 ];
 
 export default function EventSpaceScreen() {
+  const { t } = useTranslation();
   const brownGold = "#9B7C56";
   const textMuted = useColor("textMuted");
   const todayStr = new Date().toISOString().split("T")[0];
@@ -88,7 +90,7 @@ export default function EventSpaceScreen() {
   const [entertainmentPreference, setEntertainmentPreference] = useState<string>("");
   const [additionalRequests, setAdditionalRequests] = useState<string>("");
 
-  // 4. Contact Information
+  // {t("bookingFlow.events.step4Contact", { defaultValue: "4. Contact Information" })}
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -184,7 +186,7 @@ export default function EventSpaceScreen() {
                 <PartyPopper size={36} color={brownGold} />
               </View>
 
-              <Text style={styles.successTitle}>Inquiry Submitted Successfully!</Text>
+              <Text style={styles.successTitle}>{t("bookingFlow.events.successTitle", { defaultValue: "Inquiry Submitted Successfully!" })}</Text>
               <Text style={styles.successSubtitle}>
                 Thank you, <Text style={{ fontWeight: "800", color: "#1d1a17" }}>{name}</Text>! We have received your inquiry for a{" "}
                 <Text style={{ fontWeight: "800", color: brownGold }}>{eventType}</Text> on{" "}
@@ -193,55 +195,55 @@ export default function EventSpaceScreen() {
 
               <View style={styles.summaryBox}>
                 <View style={styles.summaryRefRow}>
-                  <Text style={styles.summaryRefLabel}>Booking Reference</Text>
+                  <Text style={styles.summaryRefLabel}>{t("bookingFlow.events.bookingReference", { defaultValue: "Booking Reference" })}</Text>
                   <Text style={styles.summaryRefValue}>{bookingRef}</Text>
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Event Type:</Text>
+                  <Text style={styles.summaryKey}>{t("bookingFlow.events.eventType", { defaultValue: "Event Type:" })}</Text>
                   <Text style={styles.summaryVal}>
                     {eventType === "Other events" && otherEventDetails ? otherEventDetails : eventType}
                   </Text>
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Schedule:</Text>
+                  <Text style={styles.summaryKey}>{t("bookingFlow.events.schedule", { defaultValue: "Schedule:" })}</Text>
                   <Text style={styles.summaryVal}>{preferredDate} • {startTime} - {endTime}</Text>
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Expected Guests:</Text>
+                  <Text style={styles.summaryKey}>{t("bookingFlow.events.expectedGuests", { defaultValue: "Expected Guests:" })}</Text>
                   <Text style={styles.summaryVal}>{expectedGuests} Guests</Text>
                 </View>
 
                 {foodPreference ? (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryKey}>Food:</Text>
+                    <Text style={styles.summaryKey}>{t("bookingFlow.events.food", { defaultValue: "Food:" })}</Text>
                     <Text style={styles.summaryVal}>{foodPreference}</Text>
                   </View>
                 ) : null}
 
                 {drinkPreference ? (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryKey}>Drinks:</Text>
+                    <Text style={styles.summaryKey}>{t("bookingFlow.events.drinks", { defaultValue: "Drinks:" })}</Text>
                     <Text style={styles.summaryVal}>{drinkPreference}</Text>
                   </View>
                 ) : null}
 
                 {entertainmentPreference ? (
                   <View style={styles.summaryRow}>
-                    <Text style={styles.summaryKey}>Entertainment:</Text>
+                    <Text style={styles.summaryKey}>{t("bookingFlow.events.entertainment", { defaultValue: "Entertainment:" })}</Text>
                     <Text style={styles.summaryVal}>{entertainmentPreference}</Text>
                   </View>
                 ) : null}
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Email:</Text>
+                  <Text style={styles.summaryKey}>{t("bookingFlow.events.email", { defaultValue: "Email:" })}</Text>
                   <Text style={styles.summaryVal}>{email}</Text>
                 </View>
 
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryKey}>Phone:</Text>
+                  <Text style={styles.summaryKey}>{t("bookingFlow.events.phone", { defaultValue: "Phone:" })}</Text>
                   <Text style={styles.summaryVal}>{phone}</Text>
                 </View>
               </View>
@@ -260,11 +262,11 @@ export default function EventSpaceScreen() {
                   variant="outline"
                   style={{ borderColor: brownGold }}
                 >
-                  <Text style={{ color: brownGold, fontWeight: "700" }}>Submit Another Inquiry</Text>
+                  <Text style={{ color: brownGold, fontWeight: "700" }}>{t("bookingFlow.events.submitAnother", { defaultValue: "Submit Another Inquiry" })}</Text>
                 </Button>
 
                 <Button onPress={() => router.replace("/(tabs)/home")}>
-                  <Text style={{ color: "#fff", fontWeight: "700" }}>Back to Experiences</Text>
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>{t("bookingFlow.events.backToExperiences", { defaultValue: "Back to Experiences" })}</Text>
                 </Button>
               </View>
             </View>
@@ -280,8 +282,8 @@ export default function EventSpaceScreen() {
 
       <Layout>
         <Header
-          title="Events & Party Room Inquiry"
-          subtitle="Whether celebrating intimate moments or grand occasions, request a customized proposal tailored for you."
+          title={t("bookingFlow.events.inquiryTitle", { defaultValue: "Events & Party Room Inquiry" })}
+          subtitle={t("bookingFlow.events.inquirySubtitle", { defaultValue: "Whether celebrating intimate moments or grand occasions, request a customized proposal tailored for you." })}
         />
 
         {errorMessage && (
@@ -296,8 +298,8 @@ export default function EventSpaceScreen() {
           {/* 1. SELECT EVENT TYPE                                                      */}
           {/* ========================================================================= */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>1. Select Event Type</Text>
-            <Text style={styles.sectionSubtitle}>Choose the occasion you are planning to host</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.events.step1Type", { defaultValue: "1. Select Event Type" })}</Text>
+            <Text style={styles.sectionSubtitle}>{t("bookingFlow.events.step1Sub", { defaultValue: "Choose the occasion you are planning to host" })}</Text>
 
             <View style={styles.typesGrid}>
               {EVENT_TYPES.map((type) => {
@@ -309,7 +311,7 @@ export default function EventSpaceScreen() {
                     onPress={() => setEventType(type.id)}
                   >
                     <Text style={[styles.typeButtonText, isSel && styles.typeButtonTextActive]}>
-                      {type.label}
+                      {t(`bookingFlow.events.types.${type.key}`, { defaultValue: type.label })}
                     </Text>
                   </Pressable>
                 );
@@ -319,8 +321,8 @@ export default function EventSpaceScreen() {
             {eventType === "Other events" && (
               <View style={{ marginTop: 12 }}>
                 <Input
-                  label="Describe Your Event / Occasion *"
-                  placeholder="e.g. Wellness retreat, product launch, photography shoot..."
+                  label={t("bookingFlow.events.describeOccasion", { defaultValue: "Describe Your Event / Occasion *" })}
+                  placeholder={t("bookingFlow.events.describeOccasionPlaceholder", { defaultValue: "e.g. Wellness retreat, product launch, photography shoot..." })}
                   variant="outline"
                   value={otherEventDetails}
                   onChangeText={setOtherEventDetails}
@@ -333,12 +335,12 @@ export default function EventSpaceScreen() {
           {/* 2. DATE, TIME & CAPACITY                                                  */}
           {/* ========================================================================= */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>2. Date, Time & Capacity</Text>
-            <Text style={styles.sectionSubtitle}>Specify your preferred schedule and expected guest count</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.events.step2DateTime", { defaultValue: "2. Date, Time & Capacity" })}</Text>
+            <Text style={styles.sectionSubtitle}>{t("bookingFlow.events.step2Sub", { defaultValue: "Specify your preferred schedule and expected guest count" })}</Text>
 
             {/* Date Selector */}
             <View style={{ marginTop: 12 }}>
-              <Text style={styles.inputLabel}>Preferred Date *</Text>
+              <Text style={styles.inputLabel}>{t("bookingFlow.events.preferredDate", { defaultValue: "Preferred Date *" })}</Text>
               <Pressable style={styles.pickerButton} onPress={() => setShowDatePicker(true)}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <CalendarIcon size={18} color={brownGold} />
@@ -360,7 +362,7 @@ export default function EventSpaceScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select Preferred Event Date</Text>
+                    <Text style={styles.modalTitle}>{t("bookingFlow.events.selectEventDateModal", { defaultValue: "Select Preferred Event Date" })}</Text>
                     <TouchableOpacity
                       style={styles.modalCloseBtn}
                       onPress={() => setShowDatePicker(false)}
@@ -411,7 +413,7 @@ export default function EventSpaceScreen() {
             {/* Start and End Time Input Fields with Quick Selection */}
             <View style={{ flexDirection: "row", gap: 12, marginTop: 14 }}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>Start Time *</Text>
+                <Text style={styles.inputLabel}>{t("bookingFlow.events.startTime", { defaultValue: "Start Time *" })}</Text>
                 <Pressable
                   style={styles.timeInputField}
                   onPress={() => setShowStartTimePicker(true)}
@@ -422,7 +424,7 @@ export default function EventSpaceScreen() {
               </View>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.inputLabel}>End Time *</Text>
+                <Text style={styles.inputLabel}>{t("bookingFlow.events.endTime", { defaultValue: "End Time *" })}</Text>
                 <Pressable
                   style={styles.timeInputField}
                   onPress={() => setShowEndTimePicker(true)}
@@ -443,7 +445,7 @@ export default function EventSpaceScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.timeModalContent}>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select Start Time</Text>
+                    <Text style={styles.modalTitle}>{t("bookingFlow.events.selectStartTime", { defaultValue: "Select Start Time" })}</Text>
                     <TouchableOpacity
                       style={styles.modalCloseBtn}
                       onPress={() => setShowStartTimePicker(false)}
@@ -486,7 +488,7 @@ export default function EventSpaceScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.timeModalContent}>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>Select End Time</Text>
+                    <Text style={styles.modalTitle}>{t("bookingFlow.events.selectEndTime", { defaultValue: "Select End Time" })}</Text>
                     <TouchableOpacity
                       style={styles.modalCloseBtn}
                       onPress={() => setShowEndTimePicker(false)}
@@ -522,8 +524,8 @@ export default function EventSpaceScreen() {
             {/* Expected Guests Direct Number Input Field */}
             <View style={{ marginTop: 14 }}>
               <Input
-                label="Expected Guests *"
-                placeholder="e.g. 25, 50, 100..."
+                label={t("bookingFlow.events.expectedGuestsLabel", { defaultValue: "Expected Guests *" })}
+                placeholder={t("bookingFlow.events.expectedGuestsPlaceholder", { defaultValue: "e.g. 25, 50, 100..." })}
                 variant="outline"
                 keyboardType="numeric"
                 value={String(expectedGuests)}
@@ -539,34 +541,34 @@ export default function EventSpaceScreen() {
           {/* 3. FOOD, DRINKS & ENTERTAINMENT                                           */}
           {/* ========================================================================= */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>3. Food, Drinks & Entertainment</Text>
-            <Text style={styles.sectionSubtitle}>Specify your event catering and entertainment preferences</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.events.step3FoodDrinks", { defaultValue: "3. Food, Drinks & Entertainment" })}</Text>
+            <Text style={styles.sectionSubtitle}>{t("bookingFlow.events.step3Sub", { defaultValue: "Specify your event catering and entertainment preferences" })}</Text>
 
             <View style={{ gap: 14, marginTop: 12 }}>
               <Input
-                label="Food Preferences"
-                placeholder="e.g. Organic Buffet, Vegan menu, Finger food..."
+                label={t("bookingFlow.events.foodPreferences", { defaultValue: "Food Preferences" })}
+                placeholder={t("bookingFlow.events.foodPreferencesPlaceholder", { defaultValue: "e.g. Organic Buffet, Vegan menu, Finger food..." })}
                 variant="outline"
                 value={foodPreference}
                 onChangeText={setFoodPreference}
               />
               <Input
-                label="Drink Preferences"
-                placeholder="e.g. Wine & Champagne, Fresh smoothies, Signature cocktails..."
+                label={t("bookingFlow.events.drinkPreferences", { defaultValue: "Drink Preferences" })}
+                placeholder={t("bookingFlow.events.drinkPreferencesPlaceholder", { defaultValue: "e.g. Wine & Champagne, Fresh smoothies, Signature cocktails..." })}
                 variant="outline"
                 value={drinkPreference}
                 onChangeText={setDrinkPreference}
               />
               <Input
-                label="DJ / Music / Entertainment"
-                placeholder="e.g. Live DJ, Acoustic duo, Serene background playlist..."
+                label={t("bookingFlow.events.djEntertainment", { defaultValue: "DJ / Music / Entertainment" })}
+                placeholder={t("bookingFlow.events.djEntertainmentPlaceholder", { defaultValue: "e.g. Live DJ, Acoustic duo, Serene background playlist..." })}
                 variant="outline"
                 value={entertainmentPreference}
                 onChangeText={setEntertainmentPreference}
               />
               <Input
-                label="Additional Requests / Setup Notes"
-                placeholder="e.g. Floral decorations, surprise birthday setup, projector & microphone..."
+                label={t("bookingFlow.events.additionalRequests", { defaultValue: "Additional Requests / Setup Notes" })}
+                placeholder={t("bookingFlow.events.additionalRequestsPlaceholder", { defaultValue: "e.g. Floral decorations, surprise birthday setup, projector & microphone..." })}
                 variant="outline"
                 multiline
                 inputStyle={{ height: 80, textAlignVertical: "top" }}
@@ -580,19 +582,19 @@ export default function EventSpaceScreen() {
           {/* 4. CONTACT INFORMATION                                                    */}
           {/* ========================================================================= */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>4. Contact Information</Text>
-            <Text style={styles.sectionSubtitle}>Where should we send your customized quotation?</Text>
+            <Text style={styles.sectionTitle}>{t("bookingFlow.events.step4Contact", { defaultValue: "4. Contact Information" })}</Text>
+            <Text style={styles.sectionSubtitle}>{t("bookingFlow.events.step4Sub", { defaultValue: "Where should we send your customized quotation?" })}</Text>
 
             <View style={{ gap: 14, marginTop: 12 }}>
               <Input
-                label="Full Name *"
+                label={t("bookingFlow.events.fullName", { defaultValue: "Full Name *" })}
                 placeholder="John Doe"
                 variant="outline"
                 value={name}
                 onChangeText={setName}
               />
               <Input
-                label="Phone Number *"
+                label={t("bookingFlow.events.phoneNumber", { defaultValue: "Phone Number *" })}
                 placeholder="+31 6 12345678"
                 variant="outline"
                 keyboardType="phone-pad"
@@ -600,7 +602,7 @@ export default function EventSpaceScreen() {
                 onChangeText={setPhone}
               />
               <Input
-                label="Email Address *"
+                label={t("bookingFlow.events.emailAddress", { defaultValue: "Email Address *" })}
                 placeholder="john@example.com"
                 variant="outline"
                 keyboardType="email-address"
@@ -621,7 +623,7 @@ export default function EventSpaceScreen() {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
-              <Text>Submit Event Inquiry</Text>
+              <Text>{t("bookingFlow.events.submitButton", { defaultValue: "Submit Event Inquiry" })}</Text>
               <Send size={16} />
             </>
           )}

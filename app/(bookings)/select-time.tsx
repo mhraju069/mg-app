@@ -409,7 +409,7 @@ export default function SelectTimeScreen() {
           <View style={styles.alertCardBlocked}>
             <AlertTriangle size={22} color="#DC2626" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.alertTitleBlocked}>Date Blocked</Text>
+              <Text style={styles.alertTitleBlocked}>{t("bookingFlow.time.dateBlockedTitle", { defaultValue: "Date Blocked" })}</Text>
               <Text style={styles.alertDescBlocked}>
                 This date has been marked as unavailable by administration. Please select another date.
               </Text>
@@ -421,7 +421,7 @@ export default function SelectTimeScreen() {
           <View style={styles.alertCardClosed}>
             <Info size={22} color="#D97706" />
             <View style={{ flex: 1 }}>
-              <Text style={styles.alertTitleClosed}>Service Closed on This Date</Text>
+              <Text style={styles.alertTitleClosed}>{t("bookingFlow.time.serviceClosedTitle", { defaultValue: "Service Closed on This Date" })}</Text>
               <Text style={styles.alertDescClosed}>{closedInfo}</Text>
             </View>
           </View>
@@ -430,7 +430,7 @@ export default function SelectTimeScreen() {
         {loading ? (
           <View style={{ padding: 40, alignItems: "center" }}>
             <ActivityIndicator size="large" color={brownGold} />
-            <Text style={{ marginTop: 12, color: textMuted }}>Checking live available slots...</Text>
+            <Text style={{ marginTop: 12, color: textMuted }}>{t("bookingFlow.time.checkingSlots", { defaultValue: "Checking live available slots..." })}</Text>
           </View>
         ) : !isBlocked && !isClosed ? (
           <View style={{ gap: 14 }}>
@@ -594,7 +594,7 @@ export default function SelectTimeScreen() {
                           <View style={{ alignItems: "flex-end", gap: 4 }}>
                             {isFullyBooked ? (
                               <View style={styles.badgeSoldOut}>
-                                <Text style={styles.badgeSoldOutText}>Fully Booked</Text>
+                                <Text style={styles.badgeSoldOutText}>{t("bookingFlow.time.fullyBooked", { defaultValue: "Fully Booked" })}</Text>
                               </View>
                             ) : notEnoughCapacity ? (
                               <View style={styles.badgeWarn}>
@@ -645,7 +645,7 @@ export default function SelectTimeScreen() {
                     {packageSlotsData.sauna.is_closed ? (
                       <View style={styles.subServiceClosedBox}>
                         <Info size={16} color="#D97706" />
-                        <Text style={styles.subServiceClosedText}>Sauna is closed on this date.</Text>
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.time.saunaClosed", { defaultValue: "Sauna is closed on this date." })}</Text>
                       </View>
                     ) : (
                       <View style={{ gap: 8, marginTop: 10 }}>
@@ -715,7 +715,7 @@ export default function SelectTimeScreen() {
                     {packageSlotsData?.lunchroom?.is_closed ? (
                       <View style={styles.subServiceClosedBox}>
                         <Info size={16} color="#D97706" />
-                        <Text style={styles.subServiceClosedText}>Lunchroom is closed on this date.</Text>
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.time.lunchroomClosed", { defaultValue: "Lunchroom is closed on this date." })}</Text>
                       </View>
                     ) : (
                       <View style={{ marginTop: 12, gap: 10 }}>
@@ -730,7 +730,7 @@ export default function SelectTimeScreen() {
                               <UtensilsCrossed size={16} color="#9B7C56" />
                             </View>
                             <View>
-                              <Text style={styles.lunchDropdownLabel}>Selected Arrival Time</Text>
+                              <Text style={styles.lunchDropdownLabel}>{t("bookingFlow.time.selectedArrivalTime", { defaultValue: "Selected Arrival Time" })}</Text>
                               <Text style={styles.lunchDropdownValue}>
                                 {pkgLunchTime ? `${pkgLunchTime} Arrival` : "Select Arrival Time"}
                               </Text>
@@ -966,7 +966,7 @@ export default function SelectTimeScreen() {
               <View style={styles.modalHeader}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <UtensilsCrossed size={18} color="#9B7C56" />
-                  <Text style={styles.modalTitle}>Select Lunchroom Arrival</Text>
+                  <Text style={styles.modalTitle}>{t("bookingFlow.time.selectLunchroomArrival", { defaultValue: "Select Lunchroom Arrival" })}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={() => setShowLunchDropdown(false)}

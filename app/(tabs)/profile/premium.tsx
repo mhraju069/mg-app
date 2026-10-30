@@ -256,7 +256,7 @@ export default function PlansAndPassesScreen() {
                           {isPopular && (
                             <View style={styles.popularBadge}>
                               <Sparkles size={12} color="#fff" />
-                              <Text style={styles.popularBadgeText}>MOST POPULAR</Text>
+                              <Text style={styles.popularBadgeText}>{t("bookingFlow.general.mostPopular", { defaultValue: "MOST POPULAR" })}</Text>
                             </View>
                           )}
 
@@ -319,7 +319,7 @@ export default function PlansAndPassesScreen() {
                           <View style={styles.passHeader}>
                             <View style={styles.passBadge}>
                               <Boxes size={14} color="#9B7C56" />
-                              <Text style={styles.passBadgeText}>SESSION PASS</Text>
+                              <Text style={styles.passBadgeText}>{t("bookingFlow.general.sessionPass", { defaultValue: "SESSION PASS" })}</Text>
                             </View>
                             <View style={{ flexDirection: "row", alignItems: "baseline", gap: 3 }}>
                               <Text style={{ fontSize: 16, fontWeight: "700", color: "#9B7C56" }}>€</Text>

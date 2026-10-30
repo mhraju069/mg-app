@@ -5,8 +5,10 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { useColor } from "@/hooks/useColor";
+import { useTranslation } from "react-i18next";
 
 export function BackHeader({ showBorder = true }: { showBorder?: boolean }) {
+  const { t } = useTranslation();
   const text = useColor("text");
   const background = useColor("background");
   const primary = useColor("primary");
@@ -26,7 +28,7 @@ export function BackHeader({ showBorder = true }: { showBorder?: boolean }) {
     >
       <Pressable onPress={() => router.back()} style={styles.backButton}>
         <ChevronLeft size={24} color={text} />
-        <Text style={styles.backText}>Back</Text>
+        <Text style={styles.backText}>{t("buttons.back", { defaultValue: "Back" })}</Text>
       </Pressable>
     </View>
   );

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import {
   Elements,
   CardNumberElement,
@@ -70,17 +71,22 @@ export interface StripeElementsCheckoutProps {
 }
 
 function InnerStripeElementsCheckoutWeb({
-  cardHolder,
-  setCardHolder,
-  postalCode,
-  setPostalCode,
-  paymentMethod,
-  setPaymentMethod,
-  selectedBank,
-  setSelectedBank,
-  errorMessage,
-  onElementsReady,
+  ...props
 }: StripeElementsCheckoutProps) {
+  const { t } = useTranslation();
+  const {
+    cardHolder,
+    setCardHolder,
+    postalCode,
+    setPostalCode,
+    paymentMethod,
+    setPaymentMethod,
+    selectedBank,
+    setSelectedBank,
+    errorMessage,
+    onElementsReady,
+  } = props;
+
   let stripe: any = null;
   let elements: any = null;
 
@@ -104,7 +110,7 @@ function InnerStripeElementsCheckoutWeb({
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <ShieldCheck size={16} color="#059669" />
           <Text style={{ fontSize: 11, fontWeight: "600", color: "#059669" }}>
-            PCI-DSS 256-Bit SSL
+            {t("bookingFlow.checkout.pciDss", { defaultValue: "PCI-DSS 256-Bit SSL" })}
           </Text>
         </View>
       </View>
@@ -125,7 +131,7 @@ function InnerStripeElementsCheckoutWeb({
               paymentMethod === "card" && styles.methodBtnTextActive,
             ]}
           >
-            Credit / Debit Card
+            {t("bookingFlow.checkout.cardMethod", { defaultValue: "Credit / Debit Card" })}
           </Text>
         </Pressable>
 
@@ -143,7 +149,7 @@ function InnerStripeElementsCheckoutWeb({
               paymentMethod === "ideal" && styles.methodBtnTextActive,
             ]}
           >
-            iDEAL Banking
+            {t("bookingFlow.checkout.idealMethod", { defaultValue: "iDEAL Banking" })}
           </Text>
         </Pressable>
       </View>
@@ -152,10 +158,10 @@ function InnerStripeElementsCheckoutWeb({
         <View style={{ gap: 14 }}>
           {/* Cardholder Name */}
           <View>
-            <Text style={styles.inputLabel}>Name on Card</Text>
+            <Text style={styles.inputLabel}>{t("bookingFlow.checkout.nameOnCard", { defaultValue: "Name on Card" })}</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="e.g. John Doe"
+              placeholder={t("bookingFlow.checkout.nameOnCardPlaceholder", { defaultValue: "e.g. John Doe" })}
               placeholderTextColor="#94A3B8"
               value={cardHolder}
               onChangeText={setCardHolder}
@@ -164,7 +170,7 @@ function InnerStripeElementsCheckoutWeb({
 
           {/* Stripe Card Number Element */}
           <View>
-            <Text style={styles.inputLabel}>Card Number</Text>
+            <Text style={styles.inputLabel}>{t("bookingFlow.checkout.cardNumber", { defaultValue: "Card Number" })}</Text>
             <View style={styles.stripeElementWrapper}>
               <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
             </View>
@@ -173,24 +179,24 @@ function InnerStripeElementsCheckoutWeb({
           {/* Expiry, CVC & Zip */}
           <View style={{ flexDirection: "row", gap: 10 }}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.inputLabel}>Expires (MM/YY)</Text>
+              <Text style={styles.inputLabel}>{t("bookingFlow.checkout.expires", { defaultValue: "Expires (MM/YY)" })}</Text>
               <View style={styles.stripeElementWrapper}>
                 <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
               </View>
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.inputLabel}>CVC / CVV</Text>
+              <Text style={styles.inputLabel}>{t("bookingFlow.checkout.cvc", { defaultValue: "CVC / CVV" })}</Text>
               <View style={styles.stripeElementWrapper}>
                 <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
               </View>
             </View>
 
             <View style={{ flex: 1 }}>
-              <Text style={styles.inputLabel}>Postal Code</Text>
+              <Text style={styles.inputLabel}>{t("bookingFlow.checkout.postalCode", { defaultValue: "Postal Code" })}</Text>
               <TextInput
                 style={styles.textInput}
-                placeholder="1012 AB"
+                placeholder={t("bookingFlow.checkout.postalCodePlaceholder", { defaultValue: "1012 AB" })}
                 placeholderTextColor="#94A3B8"
                 value={postalCode}
                 onChangeText={setPostalCode}
@@ -202,7 +208,7 @@ function InnerStripeElementsCheckoutWeb({
       ) : (
         /* iDEAL Dutch Bank selector */
         <View style={{ gap: 10 }}>
-          <Text style={styles.inputLabel}>Select Your Dutch Bank</Text>
+          <Text style={styles.inputLabel}>{t("bookingFlow.checkout.selectDutchBank", { defaultValue: "Select Your Dutch Bank" })}</Text>
           <View style={styles.bankGrid}>
             {IDEAL_BANKS.map((bank) => {
               const isSelected = selectedBank === bank.id;
@@ -229,7 +235,7 @@ function InnerStripeElementsCheckoutWeb({
             })}
           </View>
           <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 4 }}>
-            You will be redirected securely to your bank to authorize the iDEAL transaction.
+            {t("bookingFlow.checkout.idealRedirectNotice", { defaultValue: "You will be redirected securely to your bank to authorize the iDEAL transaction." })}
           </Text>
         </View>
       )}

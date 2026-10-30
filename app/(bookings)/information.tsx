@@ -65,8 +65,8 @@ export default function InformationScreen() {
   const todayStr = new Date().toISOString().split("T")[0];
 
   const isLunchroom = storeState.serviceType === "lunchroom" || storeState.serviceTitle.toLowerCase().includes("lunchroom");
-  const isActivity = storeState.serviceType === "activity" || Boolean(storeState.activityDetails);
-  const act = storeState.activityDetails;
+  const isActivity = !isLunchroom && (storeState.serviceType === "activity" || Boolean(storeState.activityDetails));
+  const act = isActivity ? storeState.activityDetails : null;
 
   // Contact State
   const [fullName, setFullName] = useState(storeState.fullName || "");
@@ -176,16 +176,16 @@ export default function InformationScreen() {
         <Header
           title={
             isLunchroom
-              ? "Lunchroom Table Reservation"
+              ? t("bookingFlow.info.lunchroomTitle", { defaultValue: "Lunchroom Table Reservation" })
               : isActivity
-              ? "Activity & Guest Details"
+              ? t("bookingFlow.info.activityGuestDetails", { defaultValue: "Activity & Guest Details" })
               : t("createBooking.information.title") || "Contact Details"
           }
           subtitle={
             isLunchroom
-              ? "Reserve your table with no deposit. Pay directly at the table."
+              ? t("bookingFlow.info.lunchroomSubtitle", { defaultValue: "Reserve your table with no deposit. Pay directly at the table." })
               : isActivity
-              ? "Select your participant tickets and verify reservation details"
+              ? t("bookingFlow.info.activityGuestSubtitle", { defaultValue: "Select your participant tickets and verify reservation details" })
               : t("createBooking.information.subtitle") || "Please confirm who the booking reservation is for"
           }
         />
@@ -197,9 +197,9 @@ export default function InformationScreen() {
           <View style={{ gap: 18, marginBottom: 18 }}>
             <Card style={styles.tableReservationCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                <Text style={styles.tableCardHeading}>Table Reservation Details</Text>
+                <Text style={styles.tableCardHeading}>{t("bookingFlow.info.tableDetailsTitle", { defaultValue: "Table Reservation Details" })}</Text>
                 <View style={styles.freeBadge}>
-                  <Text style={styles.freeBadgeText}>Free Reservation</Text>
+                  <Text style={styles.freeBadgeText}>{t("bookingFlow.info.freeReservation", { defaultValue: "Free Reservation" })}</Text>
                 </View>
               </View>
 
@@ -229,14 +229,14 @@ export default function InformationScreen() {
                 {!lunchroomIsBlocked && !lunchroomIsClosed && (
                   <View style={styles.walkinBadge}>
                     <Footprints size={12} color="#9B7C56" />
-                    <Text style={styles.walkinBadgeText}>Walk-ins welcome</Text>
+                    <Text style={styles.walkinBadgeText}>{t("bookingFlow.info.walkInsWelcome", { defaultValue: "Walk-ins welcome" })}</Text>
                   </View>
                 )}
               </View>
 
               {/* Reservation Date Picker */}
               <View style={{ marginTop: 14 }}>
-                <Text style={styles.fieldLabel}>Reservation Date *</Text>
+                <Text style={styles.fieldLabel}>{t("bookingFlow.info.reservationDate", { defaultValue: "Reservation Date *" })}</Text>
                 <Pressable
                   style={styles.pickerButton}
                   onPress={() => setShowDatePicker(true)}
@@ -261,7 +261,7 @@ export default function InformationScreen() {
                 <View style={styles.modalOverlay}>
                   <View style={styles.modalContent}>
                     <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>Select Table Reservation Date</Text>
+                      <Text style={styles.modalTitle}>{t("bookingFlow.info.selectTableDate", { defaultValue: "Select Table Reservation Date" })}</Text>
                       <TouchableOpacity
                         style={styles.modalCloseBtn}
                         onPress={() => setShowDatePicker(false)}
@@ -309,9 +309,9 @@ export default function InformationScreen() {
                 </View>
               </Modal>
 
-              {/* Preferred Arrival Time Slots */}
+              {/* Preferred Arrival {t("bookingFlow.info.timeSlot", { defaultValue: "Time Slot" })}s */}
               <View style={{ marginTop: 16 }}>
-                <Text style={styles.fieldLabel}>Preferred Arrival Time *</Text>
+                <Text style={styles.fieldLabel}>{t("bookingFlow.info.preferredArrival", { defaultValue: "Preferred Arrival Time *" })}</Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
                   {generateTimeSlots(lunchroomOpenTime, lunchroomCloseTime, 60).map((tSlot) => {
                     const isSel = timeSlot === tSlot;
@@ -336,36 +336,48 @@ export default function InformationScreen() {
                 </View>
               </View>
 
-              {/* Number of Table Guests (1 to 10) */}
+              {/* Number of Table Guests Input Field */}
               <View style={{ marginTop: 16 }}>
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <Text style={styles.fieldLabel}>Number of Guests *</Text>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <Text style={styles.fieldLabel}>{t("bookingFlow.info.numberOfGuests", { defaultValue: "Number of Guests *" })}</Text>
                   <Text style={{ fontSize: 11, fontWeight: "700", color: brownGold }}>
-                    {lunchGuests} {lunchGuests === 1 ? "Person" : "People"}
+                    {lunchGuests} {lunchGuests === 1 ? (t("bookingFlow.info.guestSingular") || "Person") : (t("bookingFlow.info.guestPlural") || "People")}
                   </Text>
                 </View>
 
-                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
-                  {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => {
-                    const isSel = lunchGuests === num;
-                    return (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <Input
+                    keyboardType="number-pad"
+                    variant="outline"
+                    placeholder={t("bookingFlow.info.guestCountPlaceholder", { defaultValue: "e.g. 2, 4, 8" })}
+                    value={String(lunchGuests || "")}
+                    onChangeText={(val) => {
+                      const num = parseInt(val.replace(/[^0-9]/g, ""), 10);
+                      if (isNaN(num) || num < 1) {
+                        setLunchGuests(1);
+                      } else {
+                        setLunchGuests(Math.min(99, num));
+                      }
+                    }}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  <View style={{ flexDirection: "row", gap: 6 }}>
+                    {[2, 4, 6, 8].map((preset) => (
                       <Pressable
-                        key={num}
+                        key={preset}
+                        onPress={() => setLunchGuests(preset)}
                         style={[
                           styles.ticketOption,
-                          isSel && styles.ticketOptionActive,
+                          lunchGuests === preset && styles.ticketOptionActive,
+                          { minWidth: 44, paddingVertical: 8, paddingHorizontal: 12 },
                         ]}
-                        onPress={() => setLunchGuests(num)}
                       >
-                        <Text style={[styles.ticketNumber, isSel && styles.ticketNumberActive]}>
-                          {num}
-                        </Text>
-                        <Text style={[styles.ticketSub, isSel && styles.ticketSubActive]}>
-                          {num === 1 ? "Guest" : "Guests"}
+                        <Text style={[styles.ticketNumber, lunchGuests === preset && styles.ticketNumberActive, { fontSize: 13 }]}>
+                          {preset}
                         </Text>
                       </Pressable>
-                    );
-                  })}
+                    ))}
+                  </View>
                 </View>
               </View>
             </Card>
@@ -378,7 +390,7 @@ export default function InformationScreen() {
                     <Cake size={22} color={brownGold} />
                   </View>
                   <View>
-                    <Text style={styles.celebrationTitle}>Are you celebrating something?</Text>
+                    <Text style={styles.celebrationTitle}>{t("bookingFlow.info.celebratingQuestion", { defaultValue: "Are you celebrating something?" })}</Text>
                     <Text style={styles.celebrationSub}>
                       Birthdays, anniversaries, or special milestones
                     </Text>
@@ -417,7 +429,7 @@ export default function InformationScreen() {
                   </View>
 
                   <View>
-                    <Text style={styles.fieldLabel}>What is being celebrated? *</Text>
+                    <Text style={styles.fieldLabel}>{t("bookingFlow.info.whatCelebrated", { defaultValue: "What is being celebrated? *" })}</Text>
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
                       {OCCASIONS.map((occ) => {
                         const isSel = occasion === occ;
@@ -437,32 +449,32 @@ export default function InformationScreen() {
                   </View>
 
                   <Input
-                    label="Who is it for? (Name of Celebrant) *"
-                    placeholder="e.g. John / Mom / Alex"
+                    label={t("bookingFlow.info.whoIsItFor", { defaultValue: "Who is it for? (Name of Celebrant) *" })}
+                    placeholder={t("bookingFlow.info.whoIsItForPlaceholder", { defaultValue: "e.g. John / Mom / Alex" })}
                     variant="outline"
                     value={celebrantName}
                     onChangeText={setCelebrantName}
                   />
 
                   <Input
-                    label="Age / Milestone (Optional)"
-                    placeholder="e.g. 30th Birthday, 10th Anniversary"
+                    label={t("bookingFlow.info.ageMilestone", { defaultValue: "Age / Milestone (Optional)" })}
+                    placeholder={t("bookingFlow.info.ageMilestonePlaceholder", { defaultValue: "e.g. 30th Birthday, 10th Anniversary" })}
                     variant="outline"
                     value={celebrantAge}
                     onChangeText={setCelebrantAge}
                   />
 
                   <Input
-                    label="Hobbies / Personal Interests (Optional)"
-                    placeholder="e.g. Nature lover, classical music, yoga..."
+                    label={t("bookingFlow.info.hobbies", { defaultValue: "Hobbies / Personal Interests (Optional)" })}
+                    placeholder={t("bookingFlow.info.hobbiesPlaceholder", { defaultValue: "e.g. Nature lover, classical music, yoga..." })}
                     variant="outline"
                     value={hobbies}
                     onChangeText={setHobbies}
                   />
 
                   <Input
-                    label="Other Celebration Details (Optional)"
-                    placeholder="Any special surprise timing or dessert preferences"
+                    label={t("bookingFlow.info.otherCelebration", { defaultValue: "Other Celebration Details (Optional)" })}
+                    placeholder={t("bookingFlow.info.otherCelebrationPlaceholder", { defaultValue: "Any special surprise timing or dessert preferences" })}
                     variant="outline"
                     multiline
                     value={otherCelebrationNotes}
@@ -484,21 +496,38 @@ export default function InformationScreen() {
                 <Text style={styles.categoryBadgeText}>{act.category || "Class"}</Text>
               </View>
               <Text style={{ fontSize: 12, fontWeight: "700", color: "#059669" }}>
-                ✓ Instant Confirmation
+                ✓ {t("bookingFlow.info.instantConfirmation", { defaultValue: "Instant Confirmation" })}
               </Text>
             </View>
 
             <Text style={styles.activityName}>{act.name}</Text>
             {act.description ? (
-              <Text style={styles.activityDesc} numberOfLines={2}>
+              <Text style={styles.activityDesc}>
                 {act.description}
               </Text>
+            ) : null}
+
+            {/* Included features / Notes if provided */}
+            {Array.isArray(act.features) && act.features.length > 0 ? (
+              <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#EDE7E1", gap: 6 }}>
+                <Text style={{ fontSize: 11, fontWeight: "800", color: brownGold, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  {t("bookingFlow.info.notesTitle", { defaultValue: "Notes & Included Features" })}
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {act.features.map((feat: string, fIdx: number) => (
+                    <View key={fIdx} style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#FAF0E6", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                      <Text style={{ color: brownGold, fontWeight: "800", fontSize: 11 }}>✓</Text>
+                      <Text style={{ fontSize: 12, color: "#1d1a17", fontWeight: "600" }}>{feat}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
             ) : null}
 
             {/* Schedule & Host Grid */}
             <View style={styles.activityMetaGrid}>
               <View style={styles.metaCol}>
-                <Text style={styles.metaLabel}>Date & Schedule</Text>
+                <Text style={styles.metaLabel}>{t("bookingFlow.info.dateAndSchedule", { defaultValue: "Date & Schedule" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <CalendarIcon size={14} color={brownGold} />
                   <Text style={styles.metaValue}>
@@ -508,7 +537,7 @@ export default function InformationScreen() {
               </View>
 
               <View style={styles.metaCol}>
-                <Text style={styles.metaLabel}>Time Slot</Text>
+                <Text style={styles.metaLabel}>{t("bookingFlow.info.timeSlot", { defaultValue: "Time Slot" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <Clock size={14} color={brownGold} />
                   <Text style={styles.metaValue}>
@@ -518,7 +547,7 @@ export default function InformationScreen() {
               </View>
 
               <View style={styles.metaCol}>
-                <Text style={styles.metaLabel}>Host / Guide</Text>
+                <Text style={styles.metaLabel}>{t("bookingFlow.info.hostGuide", { defaultValue: "Host / Guide" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <ShieldCheck size={14} color={brownGold} />
                   <Text style={styles.metaValue}>
@@ -532,7 +561,7 @@ export default function InformationScreen() {
             <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#EBE3DA" }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                 <Text style={styles.ticketsSectionTitle}>
-                  Number of Tickets / Participants
+                  {t("bookingFlow.info.numberOfTickets", { defaultValue: "Number of Tickets / Participants" })}
                 </Text>
                 <Text style={{ fontSize: 11, fontWeight: "700", color: brownGold }}>
                   €{singlePrice.toFixed(0)} / person
@@ -555,7 +584,7 @@ export default function InformationScreen() {
                         {num}
                       </Text>
                       <Text style={[styles.ticketSub, isSel && styles.ticketSubActive]}>
-                        {num === 1 ? "Ticket" : "Tickets"}
+                        {num === 1 ? t("bookingFlow.info.ticketSingular", { defaultValue: "Ticket" }) : t("bookingFlow.info.ticketPlural", { defaultValue: "Tickets" })}
                       </Text>
                     </Pressable>
                   );
@@ -564,7 +593,7 @@ export default function InformationScreen() {
 
               {/* Total Investment preview */}
               <View style={styles.investmentRow}>
-                <Text style={styles.investmentLabel}>Total Activity Investment</Text>
+                <Text style={styles.investmentLabel}>{t("bookingFlow.info.totalInvestment", { defaultValue: "Total Activity Investment" })}</Text>
                 <Text style={styles.investmentAmount}>€{totalCalculated.toFixed(2)}</Text>
               </View>
             </View>
@@ -578,7 +607,7 @@ export default function InformationScreen() {
           <Card style={styles.activitySessionCard}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
               <View style={styles.categoryBadge}>
-                <Text style={styles.categoryBadgeText}>Package Reservation</Text>
+                <Text style={styles.categoryBadgeText}>{t("bookingFlow.info.packageReservation", { defaultValue: "Package Reservation" })}</Text>
               </View>
               <Text style={{ fontSize: 12, fontWeight: "700", color: "#059669" }}>
                 ✓ Multi-Service Journey
@@ -593,7 +622,7 @@ export default function InformationScreen() {
             <View style={{ gap: 8, marginTop: 10 }}>
               {storeState.packageSelections.saunaSlot && (
                 <View style={styles.packageDetailRow}>
-                  <Text style={styles.packageDetailKey}>Sauna Session:</Text>
+                  <Text style={styles.packageDetailKey}>{t("bookingFlow.info.saunaSession", { defaultValue: "Sauna Session:" })}</Text>
                   <Text style={styles.packageDetailVal}>
                     {storeState.packageSelections.saunaSlot.startTime} – {storeState.packageSelections.saunaSlot.endTime} ({storeState.packageSelections.saunaSlot.type || "Private"})
                   </Text>
@@ -601,7 +630,7 @@ export default function InformationScreen() {
               )}
               {storeState.packageSelections.lunchroomTime && (
                 <View style={styles.packageDetailRow}>
-                  <Text style={styles.packageDetailKey}>Lunchroom Arrival:</Text>
+                  <Text style={styles.packageDetailKey}>{t("bookingFlow.info.lunchroomArrival", { defaultValue: "Lunchroom Arrival:" })}</Text>
                   <Text style={styles.packageDetailVal}>
                     {storeState.packageSelections.lunchroomTime}
                   </Text>
@@ -609,7 +638,7 @@ export default function InformationScreen() {
               )}
               {storeState.packageSelections.saltRoomSlot && (
                 <View style={styles.packageDetailRow}>
-                  <Text style={styles.packageDetailKey}>Salt Room Session:</Text>
+                  <Text style={styles.packageDetailKey}>{t("bookingFlow.info.saltRoomSession", { defaultValue: "Salt Room Session:" })}</Text>
                   <Text style={styles.packageDetailVal}>
                     {storeState.packageSelections.saltRoomSlot.startTime} – {storeState.packageSelections.saltRoomSlot.endTime || ""}
                   </Text>
@@ -617,7 +646,7 @@ export default function InformationScreen() {
               )}
               {storeState.packageSelections.activitySession && (
                 <View style={styles.packageDetailRow}>
-                  <Text style={styles.packageDetailKey}>Activity:</Text>
+                  <Text style={styles.packageDetailKey}>{t("bookingFlow.info.activity", { defaultValue: "Activity:" })}</Text>
                   <Text style={styles.packageDetailVal}>
                     {storeState.packageSelections.activitySession.title} ({storeState.packageSelections.activitySession.startTime} – {storeState.packageSelections.activitySession.endTime})
                   </Text>
@@ -629,7 +658,7 @@ export default function InformationScreen() {
 
         {/* Contact Details Card */}
         <View style={styles.formCard}>
-          <Text style={styles.tableCardHeading}>Contact & Guest Details</Text>
+          <Text style={styles.tableCardHeading}>{t("bookingFlow.info.contactAndGuestDetails", { defaultValue: "Contact & Guest Details" })}</Text>
           <Input
             label={t("createBooking.information.labels.fullName") || "Full Name *"}
             placeholder={t("createBooking.information.placeholders.fullName") || "e.g. John Doe"}
@@ -656,7 +685,7 @@ export default function InformationScreen() {
           />
           <Input
             label={t("createBooking.information.labels.specialRequests") || "Special Requests / Dietary Notes"}
-            placeholder="Dietary requirements, seating preference, etc."
+            placeholder={t("bookingFlow.info.specialRequestsPlaceholder", { defaultValue: "Dietary requirements, seating preference, etc." })}
             variant="outline"
             multiline
             inputStyle={{ height: 80, textAlignVertical: "top" }}
@@ -672,7 +701,7 @@ export default function InformationScreen() {
         <Button onPress={handleContinue} disabled={isContinueDisabled}>
           <Text>
             {isLunchroom
-              ? "Confirm Free Table Reservation"
+              ? t("bookingFlow.info.confirmFreeTable", { defaultValue: "Confirm Free Table Reservation" })
               : t("createBooking.information.continue") || "Continue"}
           </Text>
           <ArrowRight size={18} />
