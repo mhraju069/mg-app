@@ -277,7 +277,9 @@ export default function CancellationPolicyCard({
                   onPress={() => setModalOpen(false)}
                   style={styles.cancelBtn}
                 >
-                  <Text style={styles.cancelBtnText}>Close</Text>
+                  <Text style={styles.cancelBtnText}>
+                    {t("bookingFlow.checkout.close", { defaultValue: "Close" })}
+                  </Text>
                 </Pressable>
 
                 <Pressable

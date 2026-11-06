@@ -12,7 +12,8 @@
     "changeLanguage": "Sprache ändern",
     "continue": "Weiter",
     "bookNow": "Jetzt buchen",
-    "back": "Zurück"
+    "back": "Zurück",
+    "saveChanges": "Änderungen speichern"
   },
   "errors": {
     "required": "Dieses Feld ist erforderlich",
@@ -43,6 +44,52 @@
       "privacy": "Datenschutz-Bestimmungen",
       "help": "Hilfe & Support",
       "terms": "Allgemeine Geschäftsbedingungen"
+    },
+    "privacyScreen": {
+      "title": "Datenschutzerklärung",
+      "loading": "Datenschutzerklärung wird geladen..."
+    },
+    "termsScreen": {
+      "title": "Allgemeine Geschäftsbedingungen",
+      "loading": "Allgemeine Geschäftsbedingungen werden geladen..."
+    },
+    "previewScreen": {
+      "title": "Profil",
+      "subtitle": "Verwalten Sie Ihre persönlichen Daten",
+      "fullName": "Vollständiger Name",
+      "emailAddress": "E-Mail-Adresse",
+      "phoneNumber": "Telefonnummer",
+      "bioNotes": "Biografie / Notizen",
+      "preferredLanguage": "Bevorzugte Sprache",
+      "notProvided": "Nicht angegeben"
+    },
+    "editScreen": {
+      "title": "Profil bearbeiten",
+      "preferredLanguage": "Bevorzugte Sprache",
+      "notAuthenticatedTitle": "Nicht authentifiziert",
+      "notAuthenticatedMsg": "Bitte melden Sie sich an, um Ihr Profil zu aktualisieren.",
+      "validationErrorTitle": "Validierungsfehler",
+      "fullNameRequiredMsg": "Vollständiger Name ist erforderlich.",
+      "profileUpdatedTitle": "Profil aktualisiert",
+      "profileUpdatedMsg": "Ihre Profildaten wurden gespeichert.",
+      "updateFailedTitle": "Aktualisierung fehlgeschlagen"
+    },
+    "helpScreen": {
+      "title": "Hilfe & Support",
+      "subtitle": "Kontaktieren Sie unser Concierge-Team",
+      "heroTitle": "Wie können wir helfen?",
+      "heroDesc": "Haben Sie Fragen zu Ihren Reservierungen, Ihrer Mitgliedschaft oder Wellnessbehandlungen? Senden Sie uns unten eine Nachricht.",
+      "sendUsMessageSub": "Füllen Sie das untenstehende Formular aus und wir antworten schnellstmöglich.",
+      "fullNamePlaceholder": "Vollständiger Name",
+      "emailPlaceholder": "name@beispiel.de",
+      "phonePlaceholder": "+49 151 12345678",
+      "missingMessageTitle": "Fehlende Nachricht",
+      "missingMessageText": "Bitte geben Sie Ihre Nachricht oder Frage ein.",
+      "invalidEmailTitle": "Ungültige E-Mail",
+      "invalidEmailText": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "messageSentTitle": "Nachricht gesendet",
+      "submissionNoticeTitle": "Übermittlungshinweis",
+      "errorTitle": "Fehler"
     }
   },
   "auth": {
@@ -72,10 +119,59 @@
       "login": "Anmelden"
     },
     "forgotPassword": {
-      "title": "Passwort vergessen",
-      "subtitle": "Geben Sie Ihre E-Mail ein, um das Passwort zurückzusetzen",
-      "submit": "Link zum Zurücksetzen senden",
-      "backToLogin": "Zurück zur Anmeldung"
+      "title": "Passwort vergessen?",
+      "subtitle": "Keine Sorge! Das passiert. Bitte geben Sie die mit Ihrem Konto verknüpfte E-Mail-Adresse ein.",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "ihre@email.com",
+      "submit": "OTP senden",
+      "rememberPassword": "Erinnern Sie sich an Ihr Passwort? ",
+      "login": "Anmelden",
+      "invalidEmailTitle": "Ungültige E-Mail",
+      "invalidEmailMsg": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "otpSentTitle": "OTP gesendet",
+      "otpSentDefaultMsg": "Passwort-Reset-OTP an Ihre E-Mail gesendet.",
+      "errorTitle": "Fehler",
+      "connErrorTitle": "Verbindungsfehler",
+      "networkErrorMsg": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+      "failedToSend": "Senden des Reset-Codes fehlgeschlagen."
+    },
+    "verifyCode": {
+      "title": "Prüfen Sie Ihre E-Mails",
+      "subtitlePrefix": "Wir haben einen 4-stelligen Bestätigungscode gesendet an",
+      "codeLabel": "Bestätigungscode eingeben",
+      "submit": "Code bestätigen",
+      "didntReceive": "Keine E-Mail erhalten? ",
+      "resend": "Code erneut senden",
+      "incompleteCodeTitle": "Unvollständiger Code",
+      "incompleteCodeMsg": "Bitte geben Sie den vollständigen 4-stelligen Bestätigungscode ein.",
+      "codeVerifiedTitle": "Code bestätigt",
+      "codeVerifiedMsg": "E-Mail erfolgreich bestätigt!",
+      "resendSuccessTitle": "Code erneut gesendet",
+      "resendSuccessMsg": "Ein neuer 4-stelliger Code wurde an Ihre E-Mail-Adresse gesendet.",
+      "verificationFailedTitle": "Bestätigung fehlgeschlagen",
+      "resendFailedTitle": "Erneutes Senden fehlgeschlagen"
+    },
+    "newPassword": {
+      "title": "Neues Passwort festlegen",
+      "subtitle": "Ihr neues Passwort muss sich von zuvor verwendeten Passwörtern unterscheiden.",
+      "passwordLabel": "Passwort",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Passwort bestätigen",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submit": "Neues Passwort festlegen",
+      "rememberPassword": "Erinnern Sie sich an Ihr Passwort? ",
+      "login": "Anmelden",
+      "passwordsDontMatch": "Passwörter stimmen nicht überein",
+      "requiredFieldsTitle": "Pflichtfelder",
+      "requiredFieldsMsg": "Bitte geben Sie Ihr neues Passwort ein und bestätigen Sie es.",
+      "validationErrorTitle": "Validierungsfehler",
+      "validationErrorMsg": "Passwörter stimmen nicht überein.",
+      "passwordTooShortTitle": "Passwort zu kurz",
+      "passwordTooShortMsg": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+      "successTitle": "Passwort erfolgreich zurückgesetzt",
+      "successMsg": "Sie können sich jetzt mit Ihrem neuen Passwort anmelden.",
+      "resetFailedTitle": "Zurücksetzen fehlgeschlagen",
+      "failedToReset": "Passwort konnte nicht zurückgesetzt werden."
     }
   },
   "home": {
@@ -330,7 +426,9 @@
     "label": "Ihr Zugangscode",
     "copy": "Kopieren",
     "instruction": "Ihr Zugangscode wird während Ihrer reservierten Zeit aktiv. Bitte bewahren Sie ihn sicher auf und zeigen Sie ihn bei der Ankunft vor.",
-    "copied": "{{code}} kopiert"
+    "copied": "{{code}} kopiert",
+    "noActive": "Keine aktiven Zugangscodes",
+    "noActiveDesc": "Wenn Sie eine Saunasitzung buchen, wird Ihr persönlicher intelligenter Türzugangscode hier angezeigt."
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -701,7 +799,23 @@
       "total": "Gesamt",
       "cardholderName": "Name des Karteninhabers",
       "bioNotes": "Bio / Notizen",
-      "bioNotesPlaceholder": "Erzählen Sie uns von Ihren Wellness-Präferenzen"
+      "bioNotesPlaceholder": "Erzählen Sie uns von Ihren Wellness-Präferenzen",
+      "applyNow": "Jetzt beantragen",
+      "customize": "Anpassen",
+      "soldOut": "AUSVERKAUFT",
+      "themeOrConcept": "Thema oder Konzept (optional)",
+      "guestsRequired": "Gäste *",
+      "preferredDateRequired": "Bevorzugtes Datum *",
+      "desiredDurationRequired": "Gewünschte Dauer *",
+      "selectExperiences": "Erlebnisse auswählen *",
+      "specifyOtherExperiences": "Weitere Erlebnisse angeben *",
+      "contactDetailsRequired": "Kontaktdaten *",
+      "change": "Ändern",
+      "calculatedPrice": "Berechneter Preis",
+      "noActivePlan": "Kein aktiver Plan oder Pass",
+      "noActivePlanDesc": "Sie haben derzeit keine aktiven Abonnements oder Pässe. Entdecken Sie die unten stehenden Optionen für exklusive Wellness-Sitzungen.",
+      "subscription": "ABONNEMENT",
+      "perWeek": "pro Woche"
     },
     "checkout": {
       "pciDss": "PCI-DSS 256-Bit SSL",
@@ -801,5 +915,20 @@
     "keepReservation": "Reservierung Behalten",
     "confirmCancelBtn": "Stornierung Bestätigen",
     "cancellingBtn": "Wird storniert..."
+  },
+  "notFound": {
+    "title": "Diese Seite existiert nicht.",
+    "goHome": "Zur Startseite gehen!"
+  },
+  "imagePicker": {
+    "changeTitle": "Profilbild ändern",
+    "takePhoto": "Foto aufnehmen",
+    "chooseGallery": "Aus Galerie wählen",
+    "removePhoto": "Foto entfernen",
+    "cancel": "Abbrechen",
+    "errorTitle": "Fehler",
+    "processError": "Bildverarbeitung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "takePhotoError": "Fotoaufnahme fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "selectImageError": "Bildauswahl fehlgeschlagen. Bitte versuchen Sie es erneut."
   }
 }

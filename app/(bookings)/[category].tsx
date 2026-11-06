@@ -955,7 +955,9 @@ export default function CategoryScreen() {
             <Card style={styles.pricingSummaryCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View>
-                  <Text style={styles.totalLabel}>Calculated Price</Text>
+                  <Text style={styles.totalLabel}>
+                    {t("bookingFlow.general.calculatedPrice", { defaultValue: "Calculated Price" })}
+                  </Text>
                   <Text style={styles.totalSub}>
                     {selectedSaltOption === "single"
                       ? `${saltroomInfo?.title || "Salt Room"} • ${saltGuestsCount} Guest(s)`
@@ -1189,7 +1191,9 @@ export default function CategoryScreen() {
                 <Card style={styles.sectionCard}>
                   <View style={{ flexDirection: "row", gap: 10 }}>
                     <View style={styles.overviewBadgeBox}>
-                      <Text style={styles.overviewBadgeLabel}>Session Length</Text>
+                      <Text style={styles.overviewBadgeLabel}>
+                        {t("bookingFlow.saltRoom.sessionLength", { defaultValue: "Session Length" })}
+                      </Text>
                       <Text style={styles.overviewBadgeValue}>{t("bookingFlow.sauna.sessionLengthValue", { defaultValue: "1.5 Hours" })}</Text>
                     </View>
                     <View style={styles.overviewBadgeBox}>
@@ -1267,7 +1271,9 @@ export default function CategoryScreen() {
                   style={styles.customizePkgBtn}
                 >
                   <Sliders size={13} color="#9B7C56" />
-                  <Text style={styles.customizePkgBtnText}>Customize</Text>
+                  <Text style={styles.customizePkgBtnText}>
+                    {t("bookingFlow.general.customize", { defaultValue: "Customize" })}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1303,7 +1309,9 @@ export default function CategoryScreen() {
                       {isSoldOut ? (
                         <View style={styles.soldOutOverlay}>
                           <View style={styles.soldOutBadge}>
-                            <Text style={styles.soldOutBadgeText}>SOLD OUT</Text>
+                            <Text style={styles.soldOutBadgeText}>
+                              {t("bookingFlow.general.soldOut", { defaultValue: "SOLD OUT" })}
+                            </Text>
                           </View>
                         </View>
                       ) : null}
@@ -1556,7 +1564,9 @@ export default function CategoryScreen() {
 
                 {/* Focus Theme or Title */}
                 <View>
-                  <Text style={styles.modalFieldLabel}>Theme or Concept (Optional)</Text>
+                  <Text style={styles.modalFieldLabel}>
+                    {t("bookingFlow.general.themeOrConcept", { defaultValue: "Theme or Concept (Optional)" })}
+                  </Text>
                   <TextInput
                     value={customForm.title}
                     onChangeText={(val) => setCustomForm({ ...customForm, title: val })}
@@ -1569,7 +1579,9 @@ export default function CategoryScreen() {
                 {/* Guests & Date */}
                 <View style={{ flexDirection: "row", gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.modalFieldLabel}>Guests *</Text>
+                    <Text style={styles.modalFieldLabel}>
+                      {t("bookingFlow.general.guestsRequired", { defaultValue: "Guests *" })}
+                    </Text>
                     <TextInput
                       value={String(customForm.guests)}
                       keyboardType="numeric"
@@ -1582,13 +1594,15 @@ export default function CategoryScreen() {
                   </View>
 
                   <View style={{ flex: 1.4 }}>
-                    <Text style={styles.modalFieldLabel}>Preferred Date *</Text>
+                    <Text style={styles.modalFieldLabel}>
+                      {t("bookingFlow.general.preferredDateRequired", { defaultValue: "Preferred Date *" })}
+                    </Text>
                     <TouchableOpacity
                       onPress={() => setShowCustomDatePicker(true)}
                       style={[styles.modalInput, { justifyContent: "center" }]}
                     >
                       <Text style={{ fontSize: 13, color: customForm.date ? "#1d1a17" : "#94A3B8", fontWeight: "600" }}>
-                        {customForm.date || "Select Date"}
+                        {customForm.date || t("bookingFlow.packages.selectDate", { defaultValue: "Select Date" })}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1596,7 +1610,9 @@ export default function CategoryScreen() {
 
                 {/* Duration Options */}
                 <View>
-                  <Text style={styles.modalFieldLabel}>Desired Duration *</Text>
+                  <Text style={styles.modalFieldLabel}>
+                    {t("bookingFlow.general.desiredDurationRequired", { defaultValue: "Desired Duration *" })}
+                  </Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
                     {["2.5 Hours", "Half Day (4 Hours)", "Full Day (6-8 Hours)", "Weekend"].map((dur) => {
                       const isSel = customForm.duration === dur;
@@ -1625,7 +1641,9 @@ export default function CategoryScreen() {
 
                 {/* Experiences Checkboxes */}
                 <View>
-                  <Text style={styles.modalFieldLabel}>Select Experiences to Include *</Text>
+                  <Text style={styles.modalFieldLabel}>
+                    {t("bookingFlow.general.selectExperiences", { defaultValue: "Select Experiences to Include *" })}
+                  </Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                     {[
                       "VIP Sauna",
@@ -1668,7 +1686,9 @@ export default function CategoryScreen() {
                 {/* Conditional Others Specification */}
                 {customForm.treatments.includes("Others") && (
                   <View>
-                    <Text style={styles.modalFieldLabel}>Specify Other Experiences *</Text>
+                    <Text style={styles.modalFieldLabel}>
+                      {t("bookingFlow.general.specifyOtherExperiences", { defaultValue: "Specify Other Experiences *" })}
+                    </Text>
                     <TextInput
                       value={customForm.otherExperienceDetails}
                       onChangeText={(val) => setCustomForm({ ...customForm, otherExperienceDetails: val })}
@@ -1681,11 +1701,13 @@ export default function CategoryScreen() {
 
                 {/* Contact: Full Name, Email, Phone */}
                 <View style={{ gap: 8 }}>
-                  <Text style={styles.modalFieldLabel}>Contact Details *</Text>
+                  <Text style={styles.modalFieldLabel}>
+                    {t("bookingFlow.general.contactDetailsRequired", { defaultValue: "Contact Details *" })}
+                  </Text>
                   <TextInput
                     value={customForm.name}
                     onChangeText={(val) => setCustomForm({ ...customForm, name: val })}
-                    placeholder="Full Name"
+                    placeholder={t("auth.signup.namePlaceholder", { defaultValue: "Full Name" })}
                     placeholderTextColor="#94A3B8"
                     style={styles.modalInput}
                   />
@@ -1695,7 +1717,7 @@ export default function CategoryScreen() {
                       keyboardType="email-address"
                       autoCapitalize="none"
                       onChangeText={(val) => setCustomForm({ ...customForm, email: val })}
-                      placeholder="Email"
+                      placeholder={t("bookingFlow.general.emailPlaceholder", { defaultValue: "Email" })}
                       placeholderTextColor="#94A3B8"
                       style={[styles.modalInput, { flex: 1.2 }]}
                     />
@@ -1703,7 +1725,7 @@ export default function CategoryScreen() {
                       value={customForm.phone}
                       keyboardType="phone-pad"
                       onChangeText={(val) => setCustomForm({ ...customForm, phone: val })}
-                      placeholder="Phone"
+                      placeholder={t("bookingFlow.general.phonePlaceholder", { defaultValue: "Phone" })}
                       placeholderTextColor="#94A3B8"
                       style={[styles.modalInput, { flex: 1 }]}
                     />

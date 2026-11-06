@@ -11,7 +11,8 @@
     "cancel": "Cancel",
     "changeLanguage": "Change Language",
     "continue": "Continue",
-    "back": "Back"
+    "back": "Back",
+    "saveChanges": "Save Changes"
   },
   "errors": {
     "required": "This field is required",
@@ -42,6 +43,52 @@
       "privacy": "Privacy Policy",
       "help": "Help & Support",
       "terms": "Terms & Conditions"
+    },
+    "privacyScreen": {
+      "title": "Privacy Policy",
+      "loading": "Loading privacy policy..."
+    },
+    "termsScreen": {
+      "title": "Terms & Conditions",
+      "loading": "Loading terms & conditions..."
+    },
+    "previewScreen": {
+      "title": "Profile",
+      "subtitle": "Manage your personal information",
+      "fullName": "Full Name",
+      "emailAddress": "Email Address",
+      "phoneNumber": "Phone Number",
+      "bioNotes": "Bio / Notes",
+      "preferredLanguage": "Preferred Language",
+      "notProvided": "Not provided"
+    },
+    "editScreen": {
+      "title": "Edit Profile",
+      "preferredLanguage": "Preferred Language",
+      "notAuthenticatedTitle": "Not authenticated",
+      "notAuthenticatedMsg": "Please login to update your profile.",
+      "validationErrorTitle": "Validation Error",
+      "fullNameRequiredMsg": "Full Name is required.",
+      "profileUpdatedTitle": "Profile Updated",
+      "profileUpdatedMsg": "Your profile details have been saved.",
+      "updateFailedTitle": "Update Failed"
+    },
+    "helpScreen": {
+      "title": "Help & Support",
+      "subtitle": "Get in touch with our concierge team",
+      "heroTitle": "How can we help?",
+      "heroDesc": "Have a question about your reservations, membership, or wellness treatments? Send us a direct message below.",
+      "sendUsMessageSub": "Fill out the form below and we'll reply as soon as possible.",
+      "fullNamePlaceholder": "Full name",
+      "emailPlaceholder": "name@example.com",
+      "phonePlaceholder": "+1 (555) 000-0000",
+      "missingMessageTitle": "Missing Message",
+      "missingMessageText": "Please enter your message or question.",
+      "invalidEmailTitle": "Invalid Email",
+      "invalidEmailText": "Please enter a valid email address.",
+      "messageSentTitle": "Message Sent",
+      "submissionNoticeTitle": "Submission Notice",
+      "errorTitle": "Error"
     }
   },
   "auth": {
@@ -72,10 +119,59 @@
       "login": "Login"
     },
     "forgotPassword": {
-      "title": "Forgot Password",
-      "subtitle": "Enter your email to reset password",
-      "submit": "Send Reset Link",
-      "backToLogin": "Back to Login"
+      "title": "Forgot Password?",
+      "subtitle": "Don't worry! It happens. Please enter the email address associated with your account.",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your@email.com",
+      "submit": "Send OTP",
+      "rememberPassword": "Remember your password? ",
+      "login": "Login",
+      "invalidEmailTitle": "Invalid Email",
+      "invalidEmailMsg": "Please enter a valid email address.",
+      "otpSentTitle": "OTP Sent",
+      "otpSentDefaultMsg": "Password reset OTP sent to your email.",
+      "errorTitle": "Error",
+      "connErrorTitle": "Connection Error",
+      "networkErrorMsg": "Network error. Please try again.",
+      "failedToSend": "Failed to send reset code."
+    },
+    "verifyCode": {
+      "title": "Check your email",
+      "subtitlePrefix": "We've sent a 4-digit verification code to",
+      "codeLabel": "Enter Verification Code",
+      "submit": "Verify Code",
+      "didntReceive": "Didn't receive the email? ",
+      "resend": "Resend Code",
+      "incompleteCodeTitle": "Incomplete Code",
+      "incompleteCodeMsg": "Please enter the full 4-digit verification code.",
+      "codeVerifiedTitle": "Code Verified",
+      "codeVerifiedMsg": "Email verified successfully!",
+      "resendSuccessTitle": "Code Resent",
+      "resendSuccessMsg": "A new 4-digit code has been sent to your email.",
+      "verificationFailedTitle": "Verification Failed",
+      "resendFailedTitle": "Resend Failed"
+    },
+    "newPassword": {
+      "title": "Set new password",
+      "subtitle": "Your new password must be different from previously used passwords.",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submit": "Set New Password",
+      "rememberPassword": "Remember your password? ",
+      "login": "Login",
+      "passwordsDontMatch": "Passwords don't match",
+      "requiredFieldsTitle": "Required Fields",
+      "requiredFieldsMsg": "Please enter and confirm your new password.",
+      "validationErrorTitle": "Validation Error",
+      "validationErrorMsg": "Passwords do not match.",
+      "passwordTooShortTitle": "Password Too Short",
+      "passwordTooShortMsg": "Password must be at least 6 characters.",
+      "successTitle": "Password Reset Successful",
+      "successMsg": "You can now log in with your new password.",
+      "resetFailedTitle": "Reset Failed",
+      "failedToReset": "Failed to reset password."
     }
   },
   "home": {
@@ -330,7 +426,9 @@
     "label": "Your Access Code",
     "copy": "Copy",
     "instruction": "Your access code becomes active during your reserved time. Please keep it safe and present it upon arrival.",
-    "copied": "Copied {{code}}"
+    "copied": "Copied {{code}}",
+    "noActive": "No Active Access Codes",
+    "noActiveDesc": "When you book a sauna session, your personalized smart door access code will appear here."
   },
   "notifications": {
     "title": "Notifications",
@@ -701,7 +799,23 @@
       "total": "Total",
       "cardholderName": "Cardholder Name",
       "bioNotes": "Bio / Notes",
-      "bioNotesPlaceholder": "Tell us about your wellness preferences"
+      "bioNotesPlaceholder": "Tell us about your wellness preferences",
+      "applyNow": "Apply Now",
+      "customize": "Customize",
+      "soldOut": "SOLD OUT",
+      "themeOrConcept": "Theme or Concept (Optional)",
+      "guestsRequired": "Guests *",
+      "preferredDateRequired": "Preferred Date *",
+      "desiredDurationRequired": "Desired Duration *",
+      "selectExperiences": "Select Experiences to Include *",
+      "specifyOtherExperiences": "Specify Other Experiences *",
+      "contactDetailsRequired": "Contact Details *",
+      "change": "Change",
+      "calculatedPrice": "Calculated Price",
+      "noActivePlan": "No Active Plan or Pass",
+      "noActivePlanDesc": "You do not currently have any active recurring subscriptions or passes. Browse available options below to unlock exclusive wellness sessions.",
+      "subscription": "SUBSCRIPTION",
+      "perWeek": "per week"
     },
     "checkout": {
       "pciDss": "PCI-DSS 256-Bit SSL",
@@ -801,5 +915,20 @@
     "keepReservation": "Keep Reservation",
     "confirmCancelBtn": "Confirm Cancellation",
     "cancellingBtn": "Cancelling..."
+  },
+  "notFound": {
+    "title": "This screen does not exist.",
+    "goHome": "Go to home screen!"
+  },
+  "imagePicker": {
+    "changeTitle": "Change Profile Picture",
+    "takePhoto": "Take Photo",
+    "chooseGallery": "Choose from Gallery",
+    "removePhoto": "Remove Photo",
+    "cancel": "Cancel",
+    "errorTitle": "Error",
+    "processError": "Failed to process image. Please try again.",
+    "takePhotoError": "Failed to take photo. Please try again.",
+    "selectImageError": "Failed to select image. Please try again."
   }
 }

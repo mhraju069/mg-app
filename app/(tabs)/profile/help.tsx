@@ -109,12 +109,18 @@ export default function HelpSupportScreen() {
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      Alert.alert("Missing Message", "Please enter your message or question.");
+      Alert.alert(
+        t("profile.helpScreen.missingMessageTitle", { defaultValue: "Missing Message" }),
+        t("profile.helpScreen.missingMessageText", { defaultValue: "Please enter your message or question." })
+      );
       return;
     }
 
     if (email.trim() && !/^\S+@\S+\.\S+$/.test(email.trim())) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      Alert.alert(
+        t("profile.helpScreen.invalidEmailTitle", { defaultValue: "Invalid Email" }),
+        t("profile.helpScreen.invalidEmailText", { defaultValue: "Please enter a valid email address." })
+      );
       return;
     }
 
@@ -137,18 +143,27 @@ export default function HelpSupportScreen() {
         });
         setMessage("");
         setSubject("");
-        Alert.alert("Message Sent", result.message);
+        Alert.alert(
+          t("profile.helpScreen.messageSentTitle", { defaultValue: "Message Sent" }),
+          result.message
+        );
       } else {
         setStatusNotice({
           type: "error",
           text: result.message,
         });
-        Alert.alert("Submission Notice", result.message);
+        Alert.alert(
+          t("profile.helpScreen.submissionNoticeTitle", { defaultValue: "Submission Notice" }),
+          result.message
+        );
       }
     } catch (e: any) {
       const errText = "Could not send message. Please try again.";
       setStatusNotice({ type: "error", text: errText });
-      Alert.alert("Error", errText);
+      Alert.alert(
+        t("profile.helpScreen.errorTitle", { defaultValue: "Error" }),
+        errText
+      );
     } finally {
       setSubmitting(false);
     }
@@ -168,17 +183,21 @@ export default function HelpSupportScreen() {
         }
       >
         <Header
-          title="Help & Support"
-          subtitle="Get in touch with our concierge team"
+          title={t("profile.helpScreen.title", { defaultValue: "Help & Support" })}
+          subtitle={t("profile.helpScreen.subtitle", { defaultValue: "Get in touch with our concierge team" })}
         />
 
         {/* Hero Banner */}
         <Card style={[styles.heroCard, { backgroundColor: brownGold }]}>
           <HelpCircle size={30} color="white" opacity={0.9} />
-          <Text style={styles.heroTitle}>How can we help?</Text>
+          <Text style={styles.heroTitle}>
+            {t("profile.helpScreen.heroTitle", { defaultValue: "How can we help?" })}
+          </Text>
           <Text style={styles.heroDesc}>
-            Have a question about your reservations, membership, or wellness
-            treatments? Send us a direct message below.
+            {t("profile.helpScreen.heroDesc", {
+              defaultValue:
+                "Have a question about your reservations, membership, or wellness treatments? Send us a direct message below.",
+            })}
           </Text>
         </Card>
 
@@ -187,7 +206,7 @@ export default function HelpSupportScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("bookingFlow.general.sendUsMessage", { defaultValue: "Send Us a Message" })}</Text>
             <Text style={[styles.sectionSubtitle, { color: textMuted }]}>
-              Fill out the form below and we'll reply as soon as possible.
+              {t("profile.helpScreen.sendUsMessageSub", { defaultValue: "Fill out the form below and we'll reply as soon as possible." })}
             </Text>
           </View>
 
@@ -220,18 +239,26 @@ export default function HelpSupportScreen() {
 
             <Input
               label={t("bookingFlow.general.yourName", { defaultValue: "Your Name" })}
-              placeholder="Full name"
+              placeholder={t("profile.helpScreen.fullNamePlaceholder", { defaultValue: "Full name" })}
               value={name}
               onChangeText={setName}
             />
 
             <Input
               label={t("bookingFlow.general.emailAddress", { defaultValue: "Email Address" })}
-              placeholder="name@example.com"
+              placeholder={t("profile.helpScreen.emailPlaceholder", { defaultValue: "name@example.com" })}
               keyboardType="email-address"
               autoCapitalize="none"
               value={email}
               onChangeText={setEmail}
+            />
+
+            <Input
+              label={t("bookingFlow.general.phoneNumber", { defaultValue: "Phone Number" })}
+              placeholder={t("profile.helpScreen.phonePlaceholder", { defaultValue: "+1 (555) 000-0000" })}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
             />
 
             <Input

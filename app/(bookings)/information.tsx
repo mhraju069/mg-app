@@ -246,7 +246,9 @@ export default function InformationScreen() {
                     <Text style={styles.pickerButtonText}>{reservationDate}</Text>
                   </View>
                   <View style={styles.changeBadge}>
-                    <Text style={styles.changeBadgeText}>Change</Text>
+                    <Text style={styles.changeBadgeText}>
+                      {t("bookingFlow.general.change", { defaultValue: "Change" })}
+                    </Text>
                   </View>
                 </Pressable>
               </View>

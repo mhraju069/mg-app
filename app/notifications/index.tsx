@@ -207,7 +207,9 @@ export default function NotificationsScreen() {
               onPress={() => markAllAsRead()}
             >
               <CheckCheck size={16} color={brownGold} />
-              <Text style={styles.markAllText}>Mark all as read</Text>
+              <Text style={styles.markAllText}>
+                {t("bookingFlow.general.markAllRead", { defaultValue: "Mark all as read" })}
+              </Text>
             </Pressable>
           )}
         </View>
@@ -389,7 +391,9 @@ export default function NotificationsScreen() {
                   style={styles.actionBtn}
                   onPress={handleNavigateFromModal}
                 >
-                  <Text style={styles.actionBtnText}>View Booking Details</Text>
+                  <Text style={styles.actionBtnText}>
+                    {t("bookingFlow.general.viewBookingDetails", { defaultValue: "View Booking Details" })}
+                  </Text>
                   <ExternalLink size={16} color="#FFFFFF" />
                 </TouchableOpacity>
               ) : (
@@ -397,7 +401,9 @@ export default function NotificationsScreen() {
                   style={[styles.actionBtn, { backgroundColor: "#9B7C56" }]}
                   onPress={() => setSelectedNotification(null)}
                 >
-                  <Text style={styles.actionBtnText}>Dismiss</Text>
+                  <Text style={styles.actionBtnText}>
+                    {t("bookingFlow.general.dismiss", { defaultValue: "Dismiss" })}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>

@@ -10,8 +10,10 @@ import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Icon } from "@/components/ui/icon";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "react-i18next";
 
 export default function NewPasswordScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const email = (params.email as string) || "";
   const otpCode = (params.otp_code as string) || "";
@@ -28,19 +30,30 @@ export default function NewPasswordScreen() {
   const { error: showErrorToast, success: showSuccessToast } = useToast();
 
   const passwordError =
-    newPassword && password !== newPassword ? "Passwords don't match" : "";
+    newPassword && password !== newPassword
+      ? t("auth.newPassword.passwordsDontMatch", { defaultValue: "Passwords don't match" })
+      : "";
 
   const handleResetPassword = async () => {
     if (!password || !newPassword) {
-      showErrorToast("Required Fields", "Please enter and confirm your new password.");
+      showErrorToast(
+        t("auth.newPassword.requiredFieldsTitle", { defaultValue: "Required Fields" }),
+        t("auth.newPassword.requiredFieldsMsg", { defaultValue: "Please enter and confirm your new password." })
+      );
       return;
     }
     if (password !== newPassword) {
-      showErrorToast("Validation Error", "Passwords do not match.");
+      showErrorToast(
+        t("auth.newPassword.validationErrorTitle", { defaultValue: "Validation Error" }),
+        t("auth.newPassword.validationErrorMsg", { defaultValue: "Passwords do not match." })
+      );
       return;
     }
     if (password.length < 6) {
-      showErrorToast("Password Too Short", "Password must be at least 6 characters.");
+      showErrorToast(
+        t("auth.newPassword.passwordTooShortTitle", { defaultValue: "Password Too Short" }),
+        t("auth.newPassword.passwordTooShortMsg", { defaultValue: "Password must be at least 6 characters." })
+      );
       return;
     }
 
@@ -61,17 +74,20 @@ export default function NewPasswordScreen() {
 
       const data = await res.json();
       if (res.ok && data.status) {
-        showSuccessToast("Password Reset Successful", data.log || "You can now log in with your new password.");
+        showSuccessToast(
+          t("auth.newPassword.successTitle", { defaultValue: "Password Reset Successful" }),
+          data.log || t("auth.newPassword.successMsg", { defaultValue: "You can now log in with your new password." })
+        );
         router.replace("/login");
       } else {
-        const msg = data.log || data.message || "Failed to reset password.";
+        const msg = data.log || data.message || t("auth.newPassword.failedToReset", { defaultValue: "Failed to reset password." });
         setErrorMessage(msg);
-        showErrorToast("Reset Failed", msg);
+        showErrorToast(t("auth.newPassword.resetFailedTitle", { defaultValue: "Reset Failed" }), msg);
       }
     } catch (e: any) {
       const msg = e.message || "Network error. Please try again.";
       setErrorMessage(msg);
-      showErrorToast("Reset Failed", msg);
+      showErrorToast(t("auth.newPassword.resetFailedTitle", { defaultValue: "Reset Failed" }), msg);
     } finally {
       setIsLoading(false);
     }
@@ -79,8 +95,8 @@ export default function NewPasswordScreen() {
 
   return (
     <AuthLayout
-      title="Set new password"
-      subtitle="Your new password must be different from previously used passwords."
+      title={t("auth.newPassword.title", { defaultValue: "Set new password" })}
+      subtitle={t("auth.newPassword.subtitle", { defaultValue: "Your new password must be different from previously used passwords." })}
     >
       <View style={styles.form}>
         {errorMessage ? (
@@ -90,8 +106,8 @@ export default function NewPasswordScreen() {
         ) : null}
 
         <Input
-          label="Password"
-          placeholder="••••••••"
+          label={t("auth.newPassword.passwordLabel", { defaultValue: "Password" })}
+          placeholder={t("auth.newPassword.passwordPlaceholder", { defaultValue: "••••••••" })}
           icon={Lock}
           secureTextEntry={!showPassword}
           variant="outline"
@@ -109,8 +125,8 @@ export default function NewPasswordScreen() {
         />
 
         <Input
-          label="Confirm Password"
-          placeholder="••••••••"
+          label={t("auth.newPassword.confirmPasswordLabel", { defaultValue: "Confirm Password" })}
+          placeholder={t("auth.newPassword.confirmPasswordPlaceholder", { defaultValue: "••••••••" })}
           icon={Lock}
           value={newPassword}
           onChangeText={setNewPassword}
@@ -133,21 +149,21 @@ export default function NewPasswordScreen() {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
-              <Text>Set New Password</Text>
+              <Text>{t("auth.newPassword.submit", { defaultValue: "Set New Password" })}</Text>
               <ArrowRight size={18} />
             </>
           )}
         </Button>
 
         <View style={styles.footer}>
-          <Text variant="caption">Remember your password? </Text>
+          <Text variant="caption">{t("auth.newPassword.rememberPassword", { defaultValue: "Remember your password? " })}</Text>
           <Link href="/login" asChild>
             <Pressable>
               <Text
                 variant="caption"
                 style={{ color: brownGold, fontWeight: "700" }}
               >
-                Log in
+                {t("auth.newPassword.login", { defaultValue: "Log in" })}
               </Text>
             </Pressable>
           </Link>

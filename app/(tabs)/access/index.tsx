@@ -132,9 +132,13 @@ export default function AccessScreen() {
       ) : (
         <Card style={[styles.mainCard, { borderColor: border, padding: 32, alignItems: "center", gap: 12 }]}>
           <Key size={36} color={brownGold} />
-          <Text style={{ fontSize: 16, fontWeight: "700" }}>No Active Access Codes</Text>
+          <Text style={{ fontSize: 16, fontWeight: "700" }}>
+            {t("access.noActive", { defaultValue: "No Active Access Codes" })}
+          </Text>
           <Text style={{ fontSize: 13, color: textMuted, textAlign: "center" }}>
-            When you book a sauna session, your personalized smart door access code will appear here.
+            {t("access.noActiveDesc", {
+              defaultValue: "When you book a sauna session, your personalized smart door access code will appear here.",
+            })}
           </Text>
         </Card>
       )}

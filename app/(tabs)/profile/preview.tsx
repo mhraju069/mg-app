@@ -11,8 +11,10 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, TextInput, ActivityIndicator } from "react-native";
 import { useAuthStore } from "@/utils/authStore";
 import { API_BASE_URL } from "@/utils/constants";
+import { useTranslation } from "react-i18next";
 
 export default function PreviewProfileScreen() {
+  const { t } = useTranslation();
   const [profile, setProfile] = useState<any>(useAuthStore.getState().user);
   const [loading, setLoading] = useState(true);
 
@@ -52,11 +54,16 @@ export default function PreviewProfileScreen() {
     };
   }, []);
 
+  const notProvided = t("profile.previewScreen.notProvided", { defaultValue: "Not provided" });
+
   return (
     <>
       <BackHeader />
       <Layout>
-        <Header title="Profile" subtitle="Manage your personal information" />
+        <Header
+          title={t("profile.previewScreen.title", { defaultValue: "Profile" })}
+          subtitle={t("profile.previewScreen.subtitle", { defaultValue: "Manage your personal information" })}
+        />
         <View style={styles.avatarSection}>
           <Avatar
             editable={false}
@@ -79,16 +86,31 @@ export default function PreviewProfileScreen() {
           </View>
         ) : (
           <View style={styles.infoSection}>
-            <InfoItem label="Full Name" value={profile?.name || "Not provided"} />
-            <InfoItem label="Email Address" value={profile?.email || "Not provided"} />
-            <InfoItem label="Phone Number" value={profile?.phone || "Not provided"} />
-            <InfoItem label="Bio / Notes" value={profile?.bio || "Not provided"} />
-            <InfoItem label="Preferred Language" value={profile?.language?.toUpperCase() || "EN"} />
+            <InfoItem
+              label={t("profile.previewScreen.fullName", { defaultValue: "Full Name" })}
+              value={profile?.name || notProvided}
+            />
+            <InfoItem
+              label={t("profile.previewScreen.emailAddress", { defaultValue: "Email Address" })}
+              value={profile?.email || notProvided}
+            />
+            <InfoItem
+              label={t("profile.previewScreen.phoneNumber", { defaultValue: "Phone Number" })}
+              value={profile?.phone || notProvided}
+            />
+            <InfoItem
+              label={t("profile.previewScreen.bioNotes", { defaultValue: "Bio / Notes" })}
+              value={profile?.bio || notProvided}
+            />
+            <InfoItem
+              label={t("profile.previewScreen.preferredLanguage", { defaultValue: "Preferred Language" })}
+              value={profile?.language?.toUpperCase() || "EN"}
+            />
           </View>
         )}
 
         <Button onPress={() => router.push("/(tabs)/profile/edit")}>
-          Edit Profile
+          {t("profile.menu.editProfile", { defaultValue: "Edit Profile" })}
         </Button>
       </Layout>
     </>
@@ -118,7 +140,6 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   avatarSection: {
     alignItems: "center",
-   //  marginBottom: 40,
   },
   avatar: {
     width: 120,

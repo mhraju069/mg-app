@@ -130,7 +130,9 @@ export default function PlansAndPassesScreen() {
               <View>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
                   <ShieldCheck size={20} color={brownGold} />
-                  <Text style={styles.sectionHeading}>Active Plans & Passes</Text>
+                  <Text style={styles.sectionHeading}>
+                    {t("bookingFlow.general.activePlansAndPasses", { defaultValue: "Active Plans & Passes" })}
+                  </Text>
                   {activePurchases.length > 0 && (
                     <View style={styles.countBadge}>
                       <Text style={styles.countBadgeText}>{activePurchases.length}</Text>
@@ -142,10 +144,13 @@ export default function PlansAndPassesScreen() {
                   <Card style={styles.emptyCard}>
                     <Crown size={32} color={brownGold} style={{ opacity: 0.6, marginBottom: 8 }} />
                     <Text style={{ fontWeight: "700", fontSize: 16, color: "#1F2937" }}>
-                      No Active Plan or Pass
+                      {t("bookingFlow.general.noActivePlan", { defaultValue: "No Active Plan or Pass" })}
                     </Text>
                     <Text style={{ fontSize: 13, color: textMuted, textAlign: "center", marginTop: 4 }}>
-                      You do not currently have any active recurring subscriptions or passes. Browse available options below to unlock exclusive wellness sessions.
+                      {t("bookingFlow.general.noActivePlanDesc", {
+                        defaultValue:
+                          "You do not currently have any active recurring subscriptions or passes. Browse available options below to unlock exclusive wellness sessions.",
+                      })}
                     </Text>
                   </Card>
                 ) : (
@@ -162,10 +167,14 @@ export default function PlansAndPassesScreen() {
                               <View style={styles.activeBadgeRow}>
                                 <View style={styles.activePill}>
                                   <CheckCircle2 size={12} color="#15803D" />
-                                  <Text style={styles.activePillText}>ACTIVE</Text>
+                                  <Text style={styles.activePillText}>
+                                    {t("bookingFlow.general.activeBadge", { defaultValue: "ACTIVE" })}
+                                  </Text>
                                 </View>
                                 <Text style={styles.purchaseTypePill}>
-                                  {isSubscription ? "SUBSCRIPTION" : "SESSION PASS"}
+                                  {isSubscription
+                                    ? t("bookingFlow.general.subscription", { defaultValue: "SUBSCRIPTION" })
+                                    : t("bookingFlow.general.sessionPass", { defaultValue: "SESSION PASS" })}
                                 </Text>
                               </View>
                               <Text style={styles.activeTitle}>{item.name}</Text>
@@ -183,7 +192,9 @@ export default function PlansAndPassesScreen() {
                           <View style={styles.activeMetaRow}>
                             {remaining !== null && (
                               <View style={styles.metaItem}>
-                                <Text style={styles.metaLabel}>Sessions Remaining</Text>
+                                <Text style={styles.metaLabel}>
+                                  {t("bookingFlow.general.sessionsRemaining", { defaultValue: "Sessions Remaining" })}
+                                </Text>
                                 <Text style={styles.metaValue}>
                                   {remaining} {total ? `/ ${total}` : ""}
                                 </Text>
@@ -192,7 +203,9 @@ export default function PlansAndPassesScreen() {
 
                             {item.end_date && (
                               <View style={styles.metaItem}>
-                                <Text style={styles.metaLabel}>Valid Until</Text>
+                                <Text style={styles.metaLabel}>
+                                  {t("bookingFlow.general.validUntil", { defaultValue: "Valid Until" })}
+                                </Text>
                                 <Text style={styles.metaValue}>
                                   {new Date(item.end_date).toLocaleDateString()}
                                 </Text>
@@ -201,7 +214,9 @@ export default function PlansAndPassesScreen() {
 
                             {item.sessions_per_week && (
                               <View style={styles.metaItem}>
-                                <Text style={styles.metaLabel}>Weekly Limit</Text>
+                                <Text style={styles.metaLabel}>
+                                  {t("bookingFlow.general.weeklyLimit", { defaultValue: "Weekly Limit" })}
+                                </Text>
                                 <Text style={styles.metaValue}>{item.sessions_per_week} / week</Text>
                               </View>
                             )}
@@ -217,7 +232,9 @@ export default function PlansAndPassesScreen() {
               <View style={{ marginTop: 8 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
                   <Crown size={20} color={brownGold} />
-                  <Text style={styles.sectionHeading}>All Available Plans & Passes</Text>
+                  <Text style={styles.sectionHeading}>
+                    {t("bookingFlow.general.availablePlansAndPasses", { defaultValue: "All Available Plans & Passes" })}
+                  </Text>
                 </View>
 
                 {/* Sub-tab Switcher: Subscriptions vs Passes */}
@@ -357,7 +374,9 @@ export default function PlansAndPassesScreen() {
                             style={[styles.buyBtn, styles.standardBuyBtn]}
                             onPress={() => router.push("/(tabs)/home")}
                           >
-                            <Text style={styles.buyBtnText}>Purchase Pass</Text>
+                            <Text style={styles.buyBtnText}>
+                              {t("bookingFlow.general.purchasePass", { defaultValue: "Purchase Pass" })}
+                            </Text>
                             <ArrowRight size={16} color="#fff" />
                           </Pressable>
                         </Card>

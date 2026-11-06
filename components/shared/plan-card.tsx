@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Text } from "../ui/text";
 import { ArrowRight, Check } from "lucide-react-native";
 import { Fonts } from "@/theme/colors";
+import { useTranslation } from "react-i18next";
 
 export default function PlanCard({
   name,
@@ -15,6 +16,7 @@ export default function PlanCard({
   price: string;
   features: string[];
 }) {
+  const { t } = useTranslation();
   const brownGold = "#9B7C56";
   const textMuted = useColor("textMuted");
 
@@ -34,20 +36,22 @@ export default function PlanCard({
       <View style={styles.cardFooter}>
         <View>
           <Text variant="caption" style={{ color: textMuted }}>
-            From
+            {t("bookingFlow.general.from", { defaultValue: "From" })}
           </Text>
           <Text style={styles.price}>
             {price}
             <Text variant="caption" style={{ color: textMuted }}>
               {" "}
-              / month
+              / {t("bookingFlow.general.month", { defaultValue: "month" })}
             </Text>
           </Text>
         </View>
       </View>
 
       <Button variant="outline">
-        <Text style={styles.applyText}>Apply Now</Text>
+        <Text style={styles.applyText}>
+          {t("bookingFlow.general.applyNow", { defaultValue: "Apply Now" })}
+        </Text>
         <ArrowRight size={16} color={brownGold} />
       </Button>
     </Card>
@@ -55,7 +59,7 @@ export default function PlanCard({
 }
 
 const styles = StyleSheet.create({
-   planCard: {
+  planCard: {
     padding: 32,
     gap: 24,
   },
@@ -69,40 +73,28 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     flexDirection: "row",
-    alignItems: "center",
     gap: 12,
+    alignItems: "center",
   },
   featureText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: "#6B5D54",
+    fontSize: 16,
+    color: "#6B7280",
+    flex: 1,
   },
   cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginTop: 12,
-    paddingBottom: 18,
-    borderBottomColor: "#E4E4E7",
-    borderBottomWidth: 1
+    borderTopWidth: 1,
+    borderColor: "#E5E7EB",
+    paddingTop: 24,
   },
   price: {
-    fontSize: 24,
-    fontWeight: "800",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#111827",
     fontFamily: Fonts.title,
   },
-  applyButton: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: "#E4E4E7",
-    borderRadius: 30,
-    flexDirection: "row",
-    gap: 8,
-    height: 48,
-    paddingHorizontal: 20,
-  },
   applyText: {
-    fontSize: 14,
+    color: "#9B7C56",
     fontWeight: "700",
+    fontSize: 16,
   },
-})
+});

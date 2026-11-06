@@ -16,8 +16,10 @@ import {
   RefreshControl,
   StyleSheet,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 export default function PrivacyPolicyScreen() {
+  const { t } = useTranslation();
   const textMuted = useColor("textMuted");
   const brownGold = "#9B7C56";
 
@@ -87,18 +89,20 @@ export default function PrivacyPolicyScreen() {
           />
         }
       >
-        <Header title="Privacy Policy" subtitle={effectiveSubtitle} />
+        <Header
+          title={t("profile.privacyScreen.title", { defaultValue: "Privacy Policy" })}
+          subtitle={effectiveSubtitle}
+        />
 
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={brownGold} />
             <Text style={[styles.loadingText, { color: textMuted }]}>
-              Loading privacy policy...
+              {t("profile.privacyScreen.loading", { defaultValue: "Loading privacy policy..." })}
             </Text>
           </View>
         ) : (
           <View style={styles.section}>
-
             {sections.map((sec, index) => (
               <Card key={index} style={styles.contentCard}>
                 <Text style={styles.subHeading}>{sec.title}</Text>

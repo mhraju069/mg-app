@@ -737,7 +737,9 @@ export default function SelectTimeScreen() {
                             </View>
                           </View>
                           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={styles.lunchDropdownChangeText}>Change</Text>
+                            <Text style={styles.lunchDropdownChangeText}>
+                              {t("bookingFlow.general.change", { defaultValue: "Change" })}
+                            </Text>
                             <ChevronDown size={16} color="#9B7C56" />
                           </View>
                         </TouchableOpacity>

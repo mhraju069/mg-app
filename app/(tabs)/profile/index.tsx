@@ -83,9 +83,15 @@ export default function ProfileScreen() {
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>
-          <Text style={styles.userName}>{currentUser?.name || (isLoggedIn ? "Member" : "Guest User")}</Text>
+          <Text style={styles.userName}>
+            {currentUser?.name ||
+              (isLoggedIn
+                ? t("bookingFlow.general.member", { defaultValue: "Member" })
+                : t("bookingFlow.general.guestUser", { defaultValue: "Guest User" }))}
+          </Text>
           <Text variant="caption" style={{ color: textMuted }}>
-            {currentUser?.email || (isLoggedIn ? "" : "Sign in to access memberships and bookings")}
+            {currentUser?.email ||
+              (isLoggedIn ? "" : t("profile.signInHint", { defaultValue: "Sign in to access memberships and bookings" }))}
           </Text>
         </View>
         {!isLoggedIn ? (
@@ -93,7 +99,9 @@ export default function ProfileScreen() {
             onPress={() => router.push("/(auth)/login")}
             style={{ backgroundColor: brownGold, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}
           >
-            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>Login</Text>
+            <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>
+              {t("bookingFlow.general.login", { defaultValue: "Login" })}
+            </Text>
           </Pressable>
         ) : null}
       </View>

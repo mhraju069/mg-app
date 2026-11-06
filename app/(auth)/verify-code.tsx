@@ -12,8 +12,10 @@ import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useAuthStore } from "@/utils/authStore";
 import { API_BASE_URL } from "@/utils/constants";
+import { useTranslation } from "react-i18next";
 
 export default function VerifyCodeScreen() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const targetEmail = (params.email as string) || "user@example.com";
   const [code, setCode] = useState("");
@@ -31,7 +33,10 @@ export default function VerifyCodeScreen() {
   const handleVerifyOtp = async (codeToVerify?: string) => {
     const finalCode = (codeToVerify || code).trim();
     if (finalCode.length < 4) {
-      showErrorToast("Incomplete Code", "Please enter the full 4-digit verification code.");
+      showErrorToast(
+        t("auth.verifyCode.incompleteCodeTitle", { defaultValue: "Incomplete Code" }),
+        t("auth.verifyCode.incompleteCodeMsg", { defaultValue: "Please enter the full 4-digit verification code." })
+      );
       return;
     }
 
@@ -67,17 +72,20 @@ export default function VerifyCodeScreen() {
           access: data.access,
           refresh: data.refresh,
         });
-        showSuccessToast("Account Verified", "Welcome to Haven Wellness!");
+        showSuccessToast(
+          t("auth.verifyCode.codeVerifiedTitle", { defaultValue: "Account Verified" }),
+          t("auth.verifyCode.codeVerifiedMsg", { defaultValue: "Email verified successfully!" })
+        );
         router.replace("/(tabs)/home");
       } else {
         const msg = data.log || data.message || "Invalid or expired verification code.";
         setErrorMessage(msg);
-        showErrorToast("Verification Failed", msg);
+        showErrorToast(t("auth.verifyCode.verificationFailedTitle", { defaultValue: "Verification Failed" }), msg);
       }
     } catch (e: any) {
       const msg = e.message || "Network error. Please try again.";
       setErrorMessage(msg);
-      showErrorToast("Verification Failed", msg);
+      showErrorToast(t("auth.verifyCode.verificationFailedTitle", { defaultValue: "Verification Failed" }), msg);
     } finally {
       setIsVerifying(false);
     }
@@ -96,8 +104,11 @@ export default function VerifyCodeScreen() {
       });
       const data = await res.json();
       if (res.ok && data.status) {
-        setResendNotice("A fresh verification code has been sent to your email.");
-        showSuccessToast("Code Sent", "Please check your inbox.");
+        setResendNotice(t("auth.verifyCode.resendSuccessMsg", { defaultValue: "A fresh verification code has been sent to your email." }));
+        showSuccessToast(
+          t("auth.verifyCode.resendSuccessTitle", { defaultValue: "Code Sent" }),
+          t("auth.verifyCode.resendSuccessMsg", { defaultValue: "Please check your inbox." })
+        );
       } else {
         const msg = data.log || "Could not resend code. Please try again shortly.";
         setErrorMessage(msg);
@@ -111,14 +122,13 @@ export default function VerifyCodeScreen() {
 
   return (
     <AuthLayout
-      title="Check your email"
+      title={t("auth.verifyCode.title", { defaultValue: "Check your email" })}
       subtitle={
         <Text style={styles.cardSubtitle}>
-          We sent a verification code to{" "}
+          {t("auth.verifyCode.subtitlePrefix", { defaultValue: "We sent a verification code to" })}{" "}
           <Text style={{ color: color, fontWeight: "600" }}>
             {targetEmail}
           </Text>
-          . Enter the code below.
         </Text>
       }
     >
@@ -153,20 +163,20 @@ export default function VerifyCodeScreen() {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
-              <Text>Verify Code</Text>
+              <Text>{t("auth.verifyCode.submit", { defaultValue: "Verify Code" })}</Text>
               <ArrowRight size={18} />
             </>
           )}
         </Button>
 
         <View style={styles.footer}>
-          <Text variant="caption">Didn't receive the email? </Text>
+          <Text variant="caption">{t("auth.verifyCode.didntReceive", { defaultValue: "Didn't receive the email? " })}</Text>
           <Pressable onPress={handleResendOtp} disabled={isResending}>
             <Text
               variant="caption"
               style={{ color: brownGold, fontWeight: "700" }}
             >
-              {isResending ? "Sending..." : "Click to resend"}
+              {isResending ? "..." : t("auth.verifyCode.resend", { defaultValue: "Click to resend" })}
             </Text>
           </Pressable>
         </View>
@@ -179,10 +189,10 @@ const styles = StyleSheet.create({
   form: {
     gap: 24,
   },
-    cardSubtitle: {
+  cardSubtitle: {
     fontSize: 14,
     color: "#71717a",
-    fontFamily: Fonts.subtitle
+    fontFamily: Fonts.subtitle,
   },
   otpContainer: {
     flexDirection: "row",

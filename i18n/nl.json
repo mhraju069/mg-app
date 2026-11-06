@@ -11,7 +11,8 @@
     "cancel": "Annuleren",
     "changeLanguage": "Taal wijzigen",
     "continue": "Doorgaan",
-    "back": "Terug"
+    "back": "Terug",
+    "saveChanges": "Wijzigingen opslaan"
   },
   "errors": {
     "required": "Dit veld is verplicht",
@@ -42,6 +43,52 @@
       "privacy": "Privacybeleid",
       "help": "Hulp & Ondersteuning",
       "terms": "Algemene Voorwaarden"
+    },
+    "privacyScreen": {
+      "title": "Privacybeleid",
+      "loading": "Privacybeleid laden..."
+    },
+    "termsScreen": {
+      "title": "Algemene voorwaarden",
+      "loading": "Algemene voorwaarden laden..."
+    },
+    "previewScreen": {
+      "title": "Profiel",
+      "subtitle": "Beheer uw persoonlijke gegevens",
+      "fullName": "Volledige naam",
+      "emailAddress": "E-mailadres",
+      "phoneNumber": "Telefoonnummer",
+      "bioNotes": "Biografie / Opmerkingen",
+      "preferredLanguage": "Voorkeurstaal",
+      "notProvided": "Niet opgegeven"
+    },
+    "editScreen": {
+      "title": "Profiel bewerken",
+      "preferredLanguage": "Voorkeurstaal",
+      "notAuthenticatedTitle": "Niet ingelogd",
+      "notAuthenticatedMsg": "Log in om uw profiel bij te werken.",
+      "validationErrorTitle": "Validatiefout",
+      "fullNameRequiredMsg": "Volledige naam is verplicht.",
+      "profileUpdatedTitle": "Profiel bijgewerkt",
+      "profileUpdatedMsg": "Uw profielgegevens zijn opgeslagen.",
+      "updateFailedTitle": "Bijwerken mislukt"
+    },
+    "helpScreen": {
+      "title": "Hulp & Ondersteuning",
+      "subtitle": "Neem contact op met ons conciërgeteam",
+      "heroTitle": "Hoe kunnen we helpen?",
+      "heroDesc": "Heeft u een vraag over uw reserveringen, lidmaatschap of wellnessbehandelingen? Stuur ons hieronder een bericht.",
+      "sendUsMessageSub": "Vul het onderstaande formulier in en we reageren zo snel mogelijk.",
+      "fullNamePlaceholder": "Volledige naam",
+      "emailPlaceholder": "naam@voorbeeld.nl",
+      "phonePlaceholder": "+31 6 12345678",
+      "missingMessageTitle": "Bericht ontbreekt",
+      "missingMessageText": "Voer uw bericht of vraag in.",
+      "invalidEmailTitle": "Ongeldig e-mailadres",
+      "invalidEmailText": "Vul een geldig e-mailadres in.",
+      "messageSentTitle": "Bericht verzonden",
+      "submissionNoticeTitle": "Indieningsbericht",
+      "errorTitle": "Fout"
     }
   },
   "auth": {
@@ -71,10 +118,59 @@
       "login": "Inloggen"
     },
     "forgotPassword": {
-      "title": "Wachtwoord vergeten",
-      "subtitle": "Voer je e-mailadres in om je wachtwoord te resetten",
-      "submit": "Resetlink verzenden",
-      "backToLogin": "Terug naar inloggen"
+      "title": "Wachtwoord vergeten?",
+      "subtitle": "Geen zorgen! Het overkomt de besten. Vul het e-mailadres in dat gekoppeld is aan uw account.",
+      "emailLabel": "E-mailadres",
+      "emailPlaceholder": "uw@email.com",
+      "submit": "Stuur OTP",
+      "rememberPassword": "Kent u uw wachtwoord nog? ",
+      "login": "Inloggen",
+      "invalidEmailTitle": "Ongeldig e-mailadres",
+      "invalidEmailMsg": "Vul een geldig e-mailadres in.",
+      "otpSentTitle": "OTP verzonden",
+      "otpSentDefaultMsg": "Wachtwoord reset OTP verzonden naar uw e-mail.",
+      "errorTitle": "Fout",
+      "connErrorTitle": "Verbindingsfout",
+      "networkErrorMsg": "Netwerkfout. Probeer het opnieuw.",
+      "failedToSend": "Kan resetcode niet verzenden."
+    },
+    "verifyCode": {
+      "title": "Controleer uw e-mail",
+      "subtitlePrefix": "We hebben een 4-cijferige verificatiecode gestuurd naar",
+      "codeLabel": "Voer verificatiecode in",
+      "submit": "Code verifiëren",
+      "didntReceive": "Geen e-mail ontvangen? ",
+      "resend": "Code opnieuw verzenden",
+      "incompleteCodeTitle": "Onvolledige code",
+      "incompleteCodeMsg": "Voer de volledige 4-cijferige verificatiecode in.",
+      "codeVerifiedTitle": "Code geverifieerd",
+      "codeVerifiedMsg": "E-mailadres succesvol geverifieerd!",
+      "resendSuccessTitle": "Code opnieuw verzonden",
+      "resendSuccessMsg": "Er is een nieuwe 4-cijferige code naar uw e-mailadres gestuurd.",
+      "verificationFailedTitle": "Verificatie mislukt",
+      "resendFailedTitle": "Opnieuw verzenden mislukt"
+    },
+    "newPassword": {
+      "title": "Nieuw wachtwoord instellen",
+      "subtitle": "Uw nieuwe wachtwoord moet anders zijn dan eerder gebruikte wachtwoorden.",
+      "passwordLabel": "Wachtwoord",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Wachtwoord bevestigen",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submit": "Nieuw wachtwoord instellen",
+      "rememberPassword": "Kent u uw wachtwoord nog? ",
+      "login": "Inloggen",
+      "passwordsDontMatch": "Wachtwoorden komen niet overeen",
+      "requiredFieldsTitle": "Verplichte velden",
+      "requiredFieldsMsg": "Voer uw nieuwe wachtwoord in en bevestig dit.",
+      "validationErrorTitle": "Validatiefout",
+      "validationErrorMsg": "Wachtwoorden komen niet overeen.",
+      "passwordTooShortTitle": "Wachtwoord te kort",
+      "passwordTooShortMsg": "Wachtwoord moet minimaal 6 tekens lang zijn.",
+      "successTitle": "Wachtwoord succesvol opnieuw ingesteld",
+      "successMsg": "U kunt nu inloggen met uw nieuwe wachtwoord.",
+      "resetFailedTitle": "Herstellen mislukt",
+      "failedToReset": "Kan wachtwoord niet opnieuw instellen."
     }
   },
   "home": {
@@ -329,7 +425,9 @@
     "label": "Je toegangscode",
     "copy": "Kopiëren",
     "instruction": "Je toegangscode wordt actief tijdens je gereserveerde tijd. Bewaar deze goed en toon deze bij aankomst.",
-    "copied": "{{code}} gekopieerd"
+    "copied": "{{code}} gekopieerd",
+    "noActive": "Geen actieve toegangscodes",
+    "noActiveDesc": "Wanneer u een saunasessie boekt, verschijnt hier uw persoonlijke slimme deurtoegangscode."
   },
   "notifications": {
     "title": "Meldingen",
@@ -700,7 +798,23 @@
       "total": "Totaal",
       "cardholderName": "Naam Kaarthouder",
       "bioNotes": "Bio / Notities",
-      "bioNotesPlaceholder": "Vertel ons over je wellnessvoorkeuren"
+      "bioNotesPlaceholder": "Vertel ons over je wellnessvoorkeuren",
+      "applyNow": "Nu aanvragen",
+      "customize": "Aanpassen",
+      "soldOut": "UITVERKOCHT",
+      "themeOrConcept": "Thema of concept (optioneel)",
+      "guestsRequired": "Gasten *",
+      "preferredDateRequired": "Gewenste datum *",
+      "desiredDurationRequired": "Gewenste tijdsduur *",
+      "selectExperiences": "Selecteer gewenste ervaringen *",
+      "specifyOtherExperiences": "Specificeer overige wensen *",
+      "contactDetailsRequired": "Contactgegevens *",
+      "change": "Wijzigen",
+      "calculatedPrice": "Berekende prijs",
+      "noActivePlan": "Geen actief abonnement of pas",
+      "noActivePlanDesc": "U heeft momenteel geen actieve terugkerende abonnementen of rittenkaarten. Bekijk de opties hieronder om exclusieve wellnesssessies te ontgrendelen.",
+      "subscription": "ABONNEMENT",
+      "perWeek": "per week"
     },
     "checkout": {
       "pciDss": "PCI-DSS 256-Bit SSL",
@@ -800,5 +914,20 @@
     "keepReservation": "Reservering Behouden",
     "confirmCancelBtn": "Annulering Bevestigen",
     "cancellingBtn": "Annuleren..."
+  },
+  "notFound": {
+    "title": "Deze pagina bestaat niet.",
+    "goHome": "Ga naar het startscherm!"
+  },
+  "imagePicker": {
+    "changeTitle": "Profielfoto wijzigen",
+    "takePhoto": "Foto maken",
+    "chooseGallery": "Kies uit galerij",
+    "removePhoto": "Foto verwijderen",
+    "cancel": "Annuleren",
+    "errorTitle": "Fout",
+    "processError": "Afbeelding verwerken mislukt. Probeer het opnieuw.",
+    "takePhotoError": "Foto maken mislukt. Probeer het opnieuw.",
+    "selectImageError": "Afbeelding selecteren mislukt. Probeer het opnieuw."
   }
 }

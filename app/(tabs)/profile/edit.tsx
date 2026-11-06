@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/toast";
 import { API_BASE_URL } from "@/utils/constants";
 
 export default function EditProfileScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const textMuted = useColor("textMuted");
   const authUser = useAuthStore.getState().user;
   const { error: showErrorToast, success: showSuccessToast } = useToast();
@@ -42,12 +42,18 @@ export default function EditProfileScreen() {
   const handleSaveChanges = async () => {
     const auth = useAuthStore.getState();
     if (!auth.accessToken) {
-      showErrorToast("Not authenticated", "Please login to update your profile.");
+      showErrorToast(
+        t("profile.editScreen.notAuthenticatedTitle", { defaultValue: "Not authenticated" }),
+        t("profile.editScreen.notAuthenticatedMsg", { defaultValue: "Please login to update your profile." })
+      );
       return;
     }
 
     if (!name.trim()) {
-      showErrorToast("Validation Error", "Full Name is required.");
+      showErrorToast(
+        t("profile.editScreen.validationErrorTitle", { defaultValue: "Validation Error" }),
+        t("profile.editScreen.fullNameRequiredMsg", { defaultValue: "Full Name is required." })
+      );
       return;
     }
 
@@ -98,17 +104,20 @@ export default function EditProfileScreen() {
       const data = await res.json();
       if (res.ok) {
         useAuthStore.setUser(data);
-        showSuccessToast("Profile Updated", "Your profile details have been saved.");
+        showSuccessToast(
+          t("profile.editScreen.profileUpdatedTitle", { defaultValue: "Profile Updated" }),
+          t("profile.editScreen.profileUpdatedMsg", { defaultValue: "Your profile details have been saved." })
+        );
         router.back();
       } else {
         const msg = data.detail || data.log || "Failed to update profile.";
         setErrorMessage(msg);
-        showErrorToast("Update Failed", msg);
+        showErrorToast(t("profile.editScreen.updateFailedTitle", { defaultValue: "Update Failed" }), msg);
       }
     } catch (e: any) {
       const msg = e.message || "Network error while saving profile.";
       setErrorMessage(msg);
-      showErrorToast("Update Failed", msg);
+      showErrorToast(t("profile.editScreen.updateFailedTitle", { defaultValue: "Update Failed" }), msg);
     } finally {
       setIsSaving(false);
     }
@@ -175,13 +184,17 @@ export default function EditProfileScreen() {
               variant="caption"
               style={{ color: textMuted, marginBottom: 8, marginLeft: 4 }}
             >
-              Preferred Language
+              {t("profile.editScreen.preferredLanguage", { defaultValue: "Preferred Language" })}
             </Text>
             <Pressable
               style={styles.languageSelector}
               onPress={() => router.push("/(tabs)/profile/language")}
             >
-              <Text>English</Text>
+              <Text>
+                {t(`language.names.${i18n.language || "en"}`, {
+                  defaultValue: (i18n.language || "en").toUpperCase() === "NL" ? "Nederlands" : (i18n.language || "en").toUpperCase() === "DE" ? "Deutsch" : "English",
+                })}
+              </Text>
               <Text style={{ color: textMuted }}>▼</Text>
             </Pressable>
           </View>
@@ -189,10 +202,14 @@ export default function EditProfileScreen() {
 
         <View style={styles.footer}>
           <Button variant="outline" onPress={() => router.back()} disabled={isSaving}>
-            Cancel
+            {t("buttons.cancel", { defaultValue: "Cancel" })}
           </Button>
           <Button onPress={handleSaveChanges} disabled={isSaving}>
-            {isSaving ? <ActivityIndicator size="small" color="#fff" /> : "Save Changes"}
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              t("buttons.saveChanges", { defaultValue: "Save Changes" })
+            )}
           </Button>
         </View>
       </Layout>

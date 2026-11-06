@@ -330,7 +330,9 @@ export default function BookingDetailsScreen() {
           <View style={styles.policySection}>
             <View style={styles.policyTitleRow}>
               <ShieldAlert size={18} color={brownGold} />
-              <Text style={styles.policyTitle}>Cancellation Policy</Text>
+              <Text style={styles.policyTitle}>
+                {t("bookingFlow.general.cancellationPolicy", { defaultValue: "Cancellation Policy" })}
+              </Text>
             </View>
             <Text style={[styles.policyText, { color: textMuted }]}>
               {t("bookingDetailPolicy.policyText", { defaultValue: "Reservations may be cancelled up to 24 hours prior to start time. Timely cancellations restore session credits or process refunds according to booking terms. Cancellations within 24 hours cannot be refunded." })}
@@ -408,7 +410,9 @@ export default function BookingDetailsScreen() {
                   onPress={handleCloseCancelModal}
                   style={[styles.modalKeepButton, { backgroundColor: brownGold }]}
                 >
-                  <Text style={styles.modalKeepText}>Done</Text>
+                  <Text style={styles.modalKeepText}>
+                    {t("bookingFlow.general.done", { defaultValue: "Done" })}
+                  </Text>
                 </Pressable>
               </View>
             ) : (

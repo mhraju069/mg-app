@@ -4,6 +4,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import {
   SafeAreaView,
   SafeAreaViewProps,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedScrollHandler,
@@ -40,6 +41,7 @@ export function Layout({
   title,
   ...props
 }: Props) {
+  const insets = useSafeAreaInsets();
   const activePaddingHorizontal = props.paddingHorizontal ?? 24;
   const background = useColor("background");
   const scrollY = useSharedValue(0);
@@ -104,7 +106,7 @@ export function Layout({
             flexGrow: 1,
             gap: 18,
             paddingHorizontal: activePaddingHorizontal,
-            paddingBottom: Platform.OS === "ios" ? 120 : 80,
+            paddingBottom: Math.max(Platform.OS === "ios" ? 120 : 80, 70 + insets.bottom),
             paddingTop: Platform.OS === "ios" ? 20 : 20,
           },
           style,

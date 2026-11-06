@@ -16,8 +16,10 @@ import {
   RefreshControl,
   StyleSheet,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 export default function TermsConditionsScreen() {
+  const { t } = useTranslation();
   const textMuted = useColor("textMuted");
   const primary = useColor("primary");
   const brownGold = "#9B7C56";
@@ -92,13 +94,16 @@ export default function TermsConditionsScreen() {
           />
         }
       >
-        <Header title="Terms & Conditions" subtitle={effectiveSubtitle} />
+        <Header
+          title={t("profile.termsScreen.title", { defaultValue: "Terms & Conditions" })}
+          subtitle={effectiveSubtitle}
+        />
 
         {loading && !refreshing ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={brownGold} />
             <Text style={[styles.loadingText, { color: textMuted }]}>
-              Loading terms & conditions...
+              {t("profile.termsScreen.loading", { defaultValue: "Loading terms & conditions..." })}
             </Text>
           </View>
         ) : (

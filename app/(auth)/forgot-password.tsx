@@ -8,8 +8,10 @@ import { Mail, ArrowRight } from "lucide-react-native";
 import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useToast } from "@/components/ui/toast";
+import { useTranslation } from "react-i18next";
 
 export default function ForgotPasswordScreen() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -17,11 +19,16 @@ export default function ForgotPasswordScreen() {
   const { error: showErrorToast, success: showSuccessToast } = useToast();
 
   const emailError =
-    email && !email.includes("@") ? "Please enter a valid email address" : "";
+    email && !email.includes("@")
+      ? t("auth.forgotPassword.invalidEmailMsg", { defaultValue: "Please enter a valid email address" })
+      : "";
 
   const handleSendOtp = async () => {
     if (!email || !email.includes("@")) {
-      showErrorToast("Invalid Email", "Please enter a valid email address.");
+      showErrorToast(
+        t("auth.forgotPassword.invalidEmailTitle", { defaultValue: "Invalid Email" }),
+        t("auth.forgotPassword.invalidEmailMsg", { defaultValue: "Please enter a valid email address." })
+      );
       return;
     }
 
@@ -38,20 +45,23 @@ export default function ForgotPasswordScreen() {
 
       const data = await res.json();
       if (res.ok && data.status) {
-        showSuccessToast("OTP Sent", data.log || "Password reset OTP sent to your email.");
+        showSuccessToast(
+          t("auth.forgotPassword.otpSentTitle", { defaultValue: "OTP Sent" }),
+          data.log || t("auth.forgotPassword.otpSentDefaultMsg", { defaultValue: "Password reset OTP sent to your email." })
+        );
         router.push({
           pathname: "/verify-code",
           params: { email: email.trim(), mode: "forgot-password" },
         });
       } else {
-        const msg = data.log || data.message || "Failed to send reset code.";
+        const msg = data.log || data.message || t("auth.forgotPassword.failedToSend", { defaultValue: "Failed to send reset code." });
         setErrorMessage(msg);
-        showErrorToast("Error", msg);
+        showErrorToast(t("auth.forgotPassword.errorTitle", { defaultValue: "Error" }), msg);
       }
     } catch (e: any) {
-      const msg = e.message || "Network error. Please try again.";
+      const msg = e.message || t("auth.forgotPassword.networkErrorMsg", { defaultValue: "Network error. Please try again." });
       setErrorMessage(msg);
-      showErrorToast("Connection Error", msg);
+      showErrorToast(t("auth.forgotPassword.connErrorTitle", { defaultValue: "Connection Error" }), msg);
     } finally {
       setIsLoading(false);
     }
@@ -59,8 +69,8 @@ export default function ForgotPasswordScreen() {
 
   return (
     <AuthLayout
-      title="Forgot Password?"
-      subtitle="Don't worry! It happens. Please enter the email address associated with your account."
+      title={t("auth.forgotPassword.title", { defaultValue: "Forgot Password?" })}
+      subtitle={t("auth.forgotPassword.subtitle", { defaultValue: "Don't worry! It happens. Please enter the email address associated with your account." })}
     >
       <View style={styles.form}>
         {errorMessage ? (
@@ -70,8 +80,8 @@ export default function ForgotPasswordScreen() {
         ) : null}
 
         <Input
-          label="Email Address"
-          placeholder="your@email.com"
+          label={t("auth.forgotPassword.emailLabel", { defaultValue: "Email Address" })}
+          placeholder={t("auth.forgotPassword.emailPlaceholder", { defaultValue: "your@email.com" })}
           icon={Mail}
           variant="outline"
           value={email}
@@ -86,21 +96,21 @@ export default function ForgotPasswordScreen() {
             <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
-              <Text>Send OTP</Text>
+              <Text>{t("auth.forgotPassword.submit", { defaultValue: "Send OTP" })}</Text>
               <ArrowRight size={18} />
             </>
           )}
         </Button>
 
         <View style={styles.footer}>
-          <Text variant="caption">Remember your password? </Text>
+          <Text variant="caption">{t("auth.forgotPassword.rememberPassword", { defaultValue: "Remember your password? " })}</Text>
           <Link href="/login" asChild>
             <Pressable>
               <Text
                 variant="caption"
                 style={{ color: brownGold, fontWeight: "700" }}
               >
-                Log in
+                {t("auth.forgotPassword.login", { defaultValue: "Login" })}
               </Text>
             </Pressable>
           </Link>

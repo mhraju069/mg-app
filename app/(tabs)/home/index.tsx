@@ -966,7 +966,9 @@ export default function HomeScreen() {
                   {isPopular && (
                     <View style={stylesPlanCard.popularBadge}>
                       <Sparkles size={12} color="#fff" />
-                      <Text style={stylesPlanCard.popularBadgeText}>MOST POPULAR</Text>
+                      <Text style={stylesPlanCard.popularBadgeText}>
+                        {t("bookingFlow.general.mostPopular", { defaultValue: "MOST POPULAR" })}
+                      </Text>
                     </View>
                   )}
 
@@ -1059,7 +1061,9 @@ export default function HomeScreen() {
                 >
                   <View style={stylesPlanCard.passBadge}>
                     <Boxes size={12} color="#9B7C56" />
-                    <Text style={stylesPlanCard.passBadgeText}>SESSION PASS</Text>
+                    <Text style={stylesPlanCard.passBadgeText}>
+                      {t("bookingFlow.general.sessionPass", { defaultValue: "SESSION PASS" })}
+                    </Text>
                   </View>
 
                   <View style={{ gap: 6 }}>
@@ -1315,7 +1319,9 @@ export default function HomeScreen() {
                 <View style={stylesModalCheckout.successIconCircle}>
                   <CheckCircle2 size={40} color="#059669" />
                 </View>
-                <Text style={stylesModalCheckout.successTitle}>Payment Successful!</Text>
+                <Text style={stylesModalCheckout.successTitle}>
+                  {t("bookingFlow.general.paymentSuccessful", { defaultValue: "Payment Successful!" })}
+                </Text>
                 <Text style={stylesModalCheckout.successSubtitle}>
                   Your {selectedPurchaseItem?.item?.name} has been activated and linked directly to your account.
                 </Text>
@@ -1339,7 +1345,9 @@ export default function HomeScreen() {
                     router.push("/(tabs)/profile");
                   }}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700" }}>View in Profile</Text>
+                  <Text style={{ color: "#fff", fontWeight: "700" }}>
+                    {t("bookingFlow.general.viewInProfile", { defaultValue: "View in Profile" })}
+                  </Text>
                 </Button>
               </View>
             ) : (
@@ -1366,22 +1374,28 @@ export default function HomeScreen() {
                       <Text style={stylesModalCheckout.summaryPrice}>
                         €{selectedPurchaseItem?.item?.price}
                       </Text>
-                      <Text style={{ fontSize: 11, color: "#64748B" }}>Total</Text>
+                      <Text style={{ fontSize: 11, color: "#64748B" }}>
+                        {t("bookingFlow.general.total", { defaultValue: "Total" })}
+                      </Text>
                     </View>
                   </View>
                 </View>
 
                 {/* Member Details */}
                 <View style={{ gap: 8 }}>
-                  <Text style={stylesModalCheckout.fieldLabel}>Cardholder Name</Text>
+                  <Text style={stylesModalCheckout.fieldLabel}>
+                    {t("bookingFlow.general.cardholderName", { defaultValue: "Cardholder Name" })}
+                  </Text>
                   <TextInput
                     style={stylesModalCheckout.textInput}
-                    placeholder="Full Name"
+                    placeholder={t("auth.signup.namePlaceholder", { defaultValue: "Full Name" })}
                     value={checkoutName}
                     onChangeText={setCheckoutName}
                   />
 
-                  <Text style={stylesModalCheckout.fieldLabel}>Email Address</Text>
+                  <Text style={stylesModalCheckout.fieldLabel}>
+                    {t("bookingFlow.general.emailAddress", { defaultValue: "Email Address" })}
+                  </Text>
                   <TextInput
                     style={stylesModalCheckout.textInput}
                     placeholder="email@example.com"

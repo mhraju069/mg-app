@@ -347,7 +347,9 @@ export default function EventSpaceScreen() {
                   <Text style={styles.pickerButtonText}>{preferredDate}</Text>
                 </View>
                 <View style={styles.changeBadge}>
-                  <Text style={styles.changeBadgeText}>Change</Text>
+                  <Text style={styles.changeBadgeText}>
+                    {t("bookingFlow.general.change", { defaultValue: "Change" })}
+                  </Text>
                 </View>
               </Pressable>
             </View>
