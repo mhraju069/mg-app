@@ -41,8 +41,6 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "500",
-          marginBottom: Platform.OS === 'ios' ? 0 : 20,
-          padding: 6
         },
       }}
     >
@@ -102,7 +100,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 8,
   },
   activeIndicator: {
     position: 'absolute',
