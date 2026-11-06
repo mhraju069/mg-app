@@ -892,6 +892,15 @@
         "confirmAndAcceptBtn": "Bevestigen & Akkoord",
         "mustAcceptPolicyError": "Lees en accepteer het Annulerings-, Wijzigings- & Terugbetalingsbeleid om verder te gaan."
       }
+    },
+    "lunchroomNotice": {
+      "title": "Vandaag nog gezellig langskomen? ✨",
+      "text": "Wil je voor vandaag reserveren? Bel of WhatsApp ons om te vragen of er nog plek is.",
+      "call": "📞 072-3030548",
+      "whatsApp": "WhatsApp",
+      "welcome": "We verwelkomen je graag bij Heaven on Earth!",
+      "sameDayErrorTitle": "Reserveren voor vandaag",
+      "sameDayErrorMsg": "Online reserveringen moeten minimaal 1 dag van tevoren worden gemaakt. Neem voor vandaag telefonisch of via WhatsApp contact met ons op!"
     }
   },
   "bookingDetailPolicy": {

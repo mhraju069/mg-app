@@ -32,6 +32,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Linking,
+  Pressable,
 } from "react-native";
 import { CardNumberElement } from "@stripe/react-stripe-js";
 
@@ -493,6 +495,41 @@ export default function ConfirmationScreen() {
           subtitle={t("createBooking.confirmation.subtitle") || "Complete your reservation with confidence via Stripe"}
         />
 
+        {errorMessage ? (
+          <View style={styles.errorAlertCard}>
+            <View style={{ flexDirection: "row", gap: 10, alignItems: "flex-start" }}>
+              <AlertCircle size={20} color="#DC2626" style={{ marginTop: 2 }} />
+              <View style={{ flex: 1, gap: 6 }}>
+                <Text style={styles.errorAlertTitle}>
+                  {errorMessage.includes("072-3030548")
+                    ? t("bookingFlow.lunchroomNotice.title", { defaultValue: "Planning to visit us today? ✨" })
+                    : t("errors.title", { defaultValue: "Reservation Notice" })}
+                </Text>
+                <Text style={styles.errorAlertText}>{errorMessage}</Text>
+
+                {errorMessage.includes("072-3030548") && (
+                  <View style={styles.sameDayContactRow}>
+                    <Pressable
+                      style={styles.contactBtn}
+                      onPress={() => Linking.openURL("tel:+31723030548")}
+                    >
+                      <Text style={styles.contactBtnText}>📞 072-3030548</Text>
+                    </Pressable>
+                    <Pressable
+                      style={[styles.contactBtn, { backgroundColor: "#25D366" }]}
+                      onPress={() => Linking.openURL("https://wa.me/31723030548")}
+                    >
+                      <Text style={[styles.contactBtnText, { color: "#fff" }]}>
+                        {t("bookingFlow.lunchroomNotice.whatsApp", { defaultValue: "WhatsApp" })}
+                      </Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        ) : null}
+
         {/* Booking Details Card */}
         <Card style={styles.summaryCard}>
           <Text style={styles.serviceName}>{storeState.serviceTitle}</Text>
@@ -694,6 +731,44 @@ export default function ConfirmationScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorAlertCard: {
+    backgroundColor: "#FEF2F2",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "#FCA5A5",
+    marginBottom: 16,
+  },
+  errorAlertTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#991B1B",
+    fontFamily: Fonts.serif,
+  },
+  errorAlertText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#B91C1C",
+  },
+  sameDayContactRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 6,
+    flexWrap: "wrap",
+  },
+  contactBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  contactBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#1F2937",
+  },
   summaryCard: {
     padding: 20,
     borderRadius: 20,

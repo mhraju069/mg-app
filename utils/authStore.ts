@@ -1,5 +1,4 @@
-import { Platform } from "react-native";
-import { createMMKV } from "react-native-mmkv";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface UserProfile {
   id: number;
@@ -27,13 +26,6 @@ export interface AuthState {
 
 const STORAGE_KEY_AUTH = "haven_wellness_auth_state_v1";
 
-let nativeStorage: any = null;
-try {
-  nativeStorage = createMMKV({ id: "auth-storage" });
-} catch (e) {
-  // MMKV fallback
-}
-
 const initialAuthState: AuthState = {
   user: null,
   accessToken: null,
@@ -45,7 +37,7 @@ const initialAuthState: AuthState = {
 let listeners: Array<() => void> = [];
 let memoryAuthState: AuthState = { ...initialAuthState };
 
-// Helper to save to native MMKV or browser localStorage
+// Helper to save to AsyncStorage or browser localStorage
 const persistAuthState = (state: AuthState) => {
   try {
     const serialized = JSON.stringify({
@@ -60,50 +52,50 @@ const persistAuthState = (state: AuthState) => {
       window.localStorage.setItem(STORAGE_KEY_AUTH, serialized);
     }
 
-    // 2. Mobile Native MMKV
-    if (nativeStorage) {
-      nativeStorage.set(STORAGE_KEY_AUTH, serialized);
-    }
+    // 2. Mobile AsyncStorage
+    AsyncStorage.setItem(STORAGE_KEY_AUTH, serialized).catch((err) => {
+      console.warn("AsyncStorage save notice:", err);
+    });
   } catch (e) {
     console.warn("Failed to persist auth state:", e);
   }
 };
 
-const loadPersistedAuthState = (): Partial<AuthState> | null => {
+// Auto-hydrate on startup from AsyncStorage / Web localStorage
+const initPersistedState = async () => {
   try {
-    // 1. Check Native MMKV first
-    if (nativeStorage) {
-      const stored = nativeStorage.getString(STORAGE_KEY_AUTH);
-      if (stored) {
-        return JSON.parse(stored);
-      }
+    let stored: string | null = null;
+
+    if (typeof window !== "undefined" && window.localStorage) {
+      stored = window.localStorage.getItem(STORAGE_KEY_AUTH);
     }
 
-    // 2. Fallback to Web localStorage
-    if (typeof window !== "undefined" && window.localStorage) {
-      const stored = window.localStorage.getItem(STORAGE_KEY_AUTH);
-      if (stored) {
-        return JSON.parse(stored);
+    if (!stored) {
+      stored = await AsyncStorage.getItem(STORAGE_KEY_AUTH);
+    }
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.accessToken) {
+        memoryAuthState = {
+          ...memoryAuthState,
+          ...parsed,
+          isAuthenticated: true,
+          isLoading: false,
+        };
+        listeners.forEach((l) => l());
+        return;
       }
     }
   } catch (e) {
     console.warn("Failed to load persisted auth state:", e);
+  } finally {
+    memoryAuthState.isLoading = false;
+    listeners.forEach((l) => l());
   }
-  return null;
 };
 
-// Auto-hydrate on startup
-const persisted = loadPersistedAuthState();
-if (persisted && persisted.accessToken) {
-  memoryAuthState = {
-    ...memoryAuthState,
-    ...persisted,
-    isAuthenticated: true,
-    isLoading: false,
-  };
-} else {
-  memoryAuthState.isLoading = false;
-}
+initPersistedState();
 
 export const useAuthStore = {
   getState: (): AuthState => memoryAuthState,

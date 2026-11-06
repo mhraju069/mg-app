@@ -1,22 +1,5 @@
-import auth from "@react-native-firebase/auth";
-import {
-  statusCodes,
-  isErrorWithCode,
-  GoogleSignin,
-} from "@react-native-google-signin/google-signin";
 import { useState } from "react";
-
-import { Platform } from "react-native";
-
-// Note: You should replace this webClientId with your own from the Google Cloud Console / Firebase Console
-// It's the client ID associated with the Web client type.
-if (Platform.OS !== "web") {
-  GoogleSignin.configure({
-    scopes: ["email", "profile"],
-    webClientId: "924899435325-bl41d05ebdietd882sdta3tj1k8joo9r.apps.googleusercontent.com",
-    offlineAccess: true,
-  });
-}
+import { Alert, Platform } from "react-native";
 
 export function useGoogleSignIn() {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,20 +7,64 @@ export function useGoogleSignIn() {
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
+      // Check if native GoogleSignin is available (not available in Expo Go)
+      let GoogleSigninModule: any;
+      let statusCodes: any;
+      let isErrorWithCode: any;
+
+      try {
+        const gModule = await import("@react-native-google-signin/google-signin");
+        GoogleSigninModule = gModule.GoogleSignin;
+        statusCodes = gModule.statusCodes;
+        isErrorWithCode = gModule.isErrorWithCode;
+      } catch (e) {
+        Alert.alert(
+          "Notice",
+          "Google Sign-In is only available in a Development Build or standalone APK/IPA, not in Expo Go."
+        );
+        return;
+      }
+
+      // Safe configure
+      if (Platform.OS !== "web") {
+        try {
+          GoogleSigninModule.configure({
+            scopes: ["email", "profile"],
+            webClientId: "924899435325-bl41d05ebdietd882sdta3tj1k8joo9r.apps.googleusercontent.com",
+            offlineAccess: true,
+          });
+        } catch (confErr) {
+          console.warn("GoogleSignin.configure error:", confErr);
+        }
+      }
+
+      // Lazy load @react-native-firebase/auth to prevent crash in Expo Go
+      let authModule: any;
+      try {
+        const fb = await import("@react-native-firebase/auth");
+        authModule = fb.default;
+      } catch (fbErr) {
+        Alert.alert(
+          "Notice",
+          "Firebase Native Module is not available in Expo Go. Please use a Development Build (npx expo run:android / run:ios)."
+        );
+        return;
+      }
+
       // Check if device has Google Play Services
-      await GoogleSignin.hasPlayServices({
+      await GoogleSigninModule.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
 
       // Optional: force fresh account picker
       try {
-        await GoogleSignin.signOut();
+        await GoogleSigninModule.signOut();
       } catch (e) {
         // Ignore if not signed in
       }
 
       // Perform sign-in (In @react-native-google-signin v13+, signIn() returns SignInResponse)
-      const signInResult = await GoogleSignin.signIn();
+      const signInResult = await GoogleSigninModule.signIn();
       console.log("Google Sign-In response:", JSON.stringify(signInResult));
 
       let idToken: string | null = null;
@@ -51,7 +78,7 @@ export function useGoogleSignIn() {
 
       // Fallback to getTokens() if idToken is not in signIn() response
       if (!idToken) {
-        const tokens = await GoogleSignin.getTokens();
+        const tokens = await GoogleSigninModule.getTokens();
         idToken = tokens.idToken;
       }
 
@@ -64,11 +91,10 @@ export function useGoogleSignIn() {
       }
 
       // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      const googleCredential = authModule.GoogleAuthProvider.credential(idToken);
 
       // Sign-in the user with the credential in Firebase
-      const userCredential =
-        await auth().signInWithCredential(googleCredential);
+      const userCredential = await authModule().signInWithCredential(googleCredential);
 
       console.log("Logged in with Google Firebase:", userCredential.user.email);
 
@@ -100,29 +126,9 @@ export function useGoogleSignIn() {
         const errMsg = data.log || data.message || "Failed to authenticate with server.";
         throw new Error(errMsg);
       }
-    } catch (error) {
-      if (isErrorWithCode(error)) {
-        switch (error.code) {
-          case statusCodes.SIGN_IN_CANCELLED:
-            console.log("User cancelled the login flow");
-            break;
-          case statusCodes.IN_PROGRESS:
-            console.log("Operation is in progress already");
-            break;
-          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
-            console.log("Play services not available or outdated");
-            break;
-          default:
-            console.log("An unknown error occurred:", error);
-            break;
-        }
-      } else {
-        console.error(
-          "An unexpected error occurred during Google Sign-In:",
-          error,
-        );
-      }
-      throw error;
+    } catch (error: any) {
+      console.error("Google Sign-In error:", error);
+      Alert.alert("Sign In Error", error?.message || "Failed to sign in with Google.");
     } finally {
       setIsLoading(false);
     }

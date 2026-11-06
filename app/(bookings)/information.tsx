@@ -26,8 +26,8 @@ import {
   Check,
   Footprints,
 } from "lucide-react-native";
-import React, { useState, useEffect, useCallback } from "react";
-import { StyleSheet, Pressable, Modal, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { StyleSheet, Pressable, Modal, TouchableOpacity, ActivityIndicator, Linking } from "react-native";
 import { Calendar } from "react-native-calendars";
 
 const OCCASIONS = [
@@ -63,6 +63,11 @@ export default function InformationScreen() {
   const brownGold = "#9B7C56";
   const textMuted = useColor("textMuted");
   const todayStr = new Date().toISOString().split("T")[0];
+  const tomorrowStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  }, []);
 
   const isLunchroom = storeState.serviceType === "lunchroom" || storeState.serviceTitle.toLowerCase().includes("lunchroom");
   const isActivity = !isLunchroom && (storeState.serviceType === "activity" || Boolean(storeState.activityDetails));
@@ -74,8 +79,9 @@ export default function InformationScreen() {
   const [phone, setPhone] = useState(storeState.phone || "");
   const [specialRequests, setSpecialRequests] = useState(storeState.specialRequests || "");
 
-  // Lunchroom Table Reservation State
-  const [reservationDate, setReservationDate] = useState<string>(storeState.date || todayStr);
+  // Lunchroom Table Reservation State (Defaults to tomorrow or later)
+  const initialLunchDate = storeState.date && storeState.date >= tomorrowStr ? storeState.date : tomorrowStr;
+  const [reservationDate, setReservationDate] = useState<string>(isLunchroom ? initialLunchDate : storeState.date || todayStr);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [timeSlot, setTimeSlot] = useState<string>(storeState.timeSlot || "12:00");
   const [lunchGuests, setLunchGuests] = useState<number>(storeState.guestsCount || 2);
@@ -234,6 +240,35 @@ export default function InformationScreen() {
                 )}
               </View>
 
+              {/* Same-day reservation notice banner (Call/WhatsApp) */}
+              <View style={styles.sameDayNoticeCard}>
+                <Text style={styles.sameDayNoticeTitle}>
+                  {t("bookingFlow.lunchroomNotice.title", { defaultValue: "Planning to visit us today? ✨" })}
+                </Text>
+                <Text style={styles.sameDayNoticeText}>
+                  {t("bookingFlow.lunchroomNotice.text", { defaultValue: "To reserve for today, call or WhatsApp us to check if a table is available." })}
+                </Text>
+                <View style={styles.sameDayButtonsRow}>
+                  <Pressable
+                    style={styles.sameDayCallBtn}
+                    onPress={() => Linking.openURL("tel:+31723030548")}
+                  >
+                    <Text style={styles.sameDayCallText}>📞 072-3030548</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.sameDayWaBtn}
+                    onPress={() => Linking.openURL("https://wa.me/31723030548")}
+                  >
+                    <Text style={styles.sameDayWaText}>
+                      {t("bookingFlow.lunchroomNotice.whatsApp", { defaultValue: "WhatsApp" })}
+                    </Text>
+                  </Pressable>
+                </View>
+                <Text style={styles.sameDayWelcomeText}>
+                  {t("bookingFlow.lunchroomNotice.welcome", { defaultValue: "We look forward to welcoming you to Heaven on Earth!" })}
+                </Text>
+              </View>
+
               {/* Reservation Date Picker */}
               <View style={{ marginTop: 14 }}>
                 <Text style={styles.fieldLabel}>{t("bookingFlow.info.reservationDate", { defaultValue: "Reservation Date *" })}</Text>
@@ -273,7 +308,7 @@ export default function InformationScreen() {
                     </View>
 
                     <Calendar
-                      minDate={todayStr}
+                      minDate={tomorrowStr}
                       enableSwipeMonths
                       hideExtraDays
                       current={reservationDate}
@@ -285,7 +320,7 @@ export default function InformationScreen() {
                         },
                       }}
                       onDayPress={(day) => {
-                        if (day.dateString >= todayStr) {
+                        if (day.dateString >= tomorrowStr) {
                           setReservationDate(day.dateString);
                           setShowDatePicker(false);
                         }
@@ -739,6 +774,62 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "800",
     color: "#059669",
+  },
+  sameDayNoticeCard: {
+    backgroundColor: "#FCF2E9",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+    marginTop: 12,
+  },
+  sameDayNoticeTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1d1a17",
+    fontFamily: Fonts.serif,
+  },
+  sameDayNoticeText: {
+    fontSize: 12,
+    color: "#475569",
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  sameDayButtonsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+    flexWrap: "wrap",
+  },
+  sameDayCallBtn: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+  },
+  sameDayCallText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#9B7C56",
+  },
+  sameDayWaBtn: {
+    backgroundColor: "#25D366",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  sameDayWaText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#fff",
+  },
+  sameDayWelcomeText: {
+    fontSize: 11,
+    color: "#64748B",
+    marginTop: 8,
+    fontStyle: "italic",
   },
   hoursBanner: {
     flexDirection: "row",

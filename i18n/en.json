@@ -893,6 +893,15 @@
         "confirmAndAcceptBtn": "Confirm & Accept",
         "mustAcceptPolicyError": "Please read and accept the Cancellation, Rescheduling & Refund Policy to proceed."
       }
+    },
+    "lunchroomNotice": {
+      "title": "Planning to visit us today? ✨",
+      "text": "To reserve for today, call or WhatsApp us to check if a table is available.",
+      "call": "📞 072-3030548",
+      "whatsApp": "WhatsApp",
+      "welcome": "We look forward to welcoming you to Heaven on Earth!",
+      "sameDayErrorTitle": "Same-day Reservation Notice",
+      "sameDayErrorMsg": "Online reservations must be made at least 1 day in advance. For today, please call or WhatsApp us!"
     }
   },
   "bookingDetailPolicy": {

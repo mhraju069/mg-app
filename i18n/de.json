@@ -893,6 +893,15 @@
         "confirmAndAcceptBtn": "Bestätigen & Akzeptieren",
         "mustAcceptPolicyError": "Bitte lesen und akzeptieren Sie die Stornierungs-, Umbuchungs- & Erstattungsrichtlinie, um fortzufahren."
       }
+    },
+    "lunchroomNotice": {
+      "title": "Heute noch bei uns vorbeischauen? ✨",
+      "text": "Möchtest du für heute reservieren? Ruf uns an oder schreib uns auf WhatsApp, um die Verfügbarkeit zu prüfen.",
+      "call": "📞 072-3030548",
+      "whatsApp": "WhatsApp",
+      "welcome": "Wir freuen uns darauf, dich bei Heaven on Earth willkommen zu heißen!",
+      "sameDayErrorTitle": "Hinweis zur Reservierung für heute",
+      "sameDayErrorMsg": "Online-Reservierungen müssen mindestens 1 Tag im Voraus erfolgen. Für heute kontaktieren Sie uns bitte per Telefon oder WhatsApp!"
     }
   },
   "bookingDetailPolicy": {

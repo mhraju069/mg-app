@@ -1,8 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import { createMMKV } from "react-native-mmkv";
-
-const storage = createMMKV({ id: "language-storage" });
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Import translation files
 import en from "./en.json";
@@ -15,6 +13,8 @@ const resources = {
   de: { translation: de },
 };
 
+const LANGUAGE_KEY = "user-language";
+
 const LANGUAGE_DETECTOR = {
   type: "languageDetector" as const,
   async: true,
@@ -22,15 +22,15 @@ const LANGUAGE_DETECTOR = {
     try {
       // 1. Check browser/web localStorage
       if (typeof window !== "undefined" && window.localStorage) {
-        const localLang = window.localStorage.getItem("user-language");
+        const localLang = window.localStorage.getItem(LANGUAGE_KEY);
         if (localLang && (localLang === "en" || localLang === "nl" || localLang === "de")) {
           return callback(localLang);
         }
       }
 
-      // 2. Check native MMKV storage
+      // 2. Check AsyncStorage for React Native mobile / Expo Go
       try {
-        const savedLanguage = storage.getString("user-language");
+        const savedLanguage = await AsyncStorage.getItem(LANGUAGE_KEY);
         if (savedLanguage && (savedLanguage === "en" || savedLanguage === "nl" || savedLanguage === "de")) {
           return callback(savedLanguage);
         }
@@ -47,10 +47,10 @@ const LANGUAGE_DETECTOR = {
   cacheUserLanguage: async (language: string) => {
     try {
       if (typeof window !== "undefined" && window.localStorage) {
-        window.localStorage.setItem("user-language", language);
+        window.localStorage.setItem(LANGUAGE_KEY, language);
       }
       try {
-        storage.set("user-language", language);
+        await AsyncStorage.setItem(LANGUAGE_KEY, language);
       } catch {}
     } catch (error) {
       console.log("Error caching language:", error);

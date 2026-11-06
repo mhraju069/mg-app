@@ -1,6 +1,5 @@
 import React, { ReactNode } from "react";
-import { Platform, View, StyleSheet } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { Platform, View, StyleSheet, ScrollView } from "react-native";
 import {
   SafeAreaView,
   SafeAreaViewProps,
@@ -27,10 +26,6 @@ type Props = {
   fixedHeader?: ReactNode;
   title?: string;
 } & SafeAreaViewProps;
-
-const AnimatedKeyboardAwareScrollView = Animated.createAnimatedComponent(
-  KeyboardAwareScrollView,
-);
 
 export function Layout({
   children,
@@ -92,12 +87,12 @@ export function Layout({
 
       {fixedHeader}
 
-      <AnimatedKeyboardAwareScrollView
+      <Animated.ScrollView
         stickyHeaderIndices={props.stickyHeaderIndices}
         showsVerticalScrollIndicator={false}
         showsHorizontalScrollIndicator={false}
         keyboardDismissMode="interactive"
-        bottomOffset={Platform.OS === "android" ? 40 : 20}
+        keyboardShouldPersistTaps="handled"
         refreshControl={refreshControl}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -113,7 +108,7 @@ export function Layout({
         ]}
       >
         {children}
-      </AnimatedKeyboardAwareScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }

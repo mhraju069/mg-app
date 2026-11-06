@@ -26,10 +26,14 @@ import { registerForPushNotificationsAsync, handleNotificationResponse } from "@
 
 LogBox.ignoreAllLogs();
 
-SplashScreen.setOptions({
-  duration: 200,
-  fade: true,
-});
+try {
+  SplashScreen.setOptions({
+    duration: 200,
+    fade: true,
+  });
+} catch (e) {
+  // Ignore in environments where setOptions is unsupported (e.g. Expo Go)
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme() || "light";
@@ -78,9 +82,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS === "android") {
-      NavigationBar.setButtonStyleAsync(
-        colorScheme === "light" ? "dark" : "light",
-      );
+      try {
+        const style = colorScheme === "light" ? "dark" : "light";
+        if (typeof (NavigationBar as any).setStyle === "function") {
+          (NavigationBar as any).setStyle(style);
+        } else if (typeof (NavigationBar as any).setButtonStyleAsync === "function") {
+          (NavigationBar as any).setButtonStyleAsync(style);
+        }
+      } catch (e) {
+        // Safe fallback for varying NavigationBar method availability
+      }
     }
   }, [colorScheme]);
 

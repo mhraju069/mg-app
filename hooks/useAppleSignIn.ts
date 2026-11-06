@@ -1,4 +1,3 @@
-import auth from "@react-native-firebase/auth";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { Platform } from "react-native";
 import { useState } from "react";
@@ -52,6 +51,17 @@ export function useAppleSignIn() {
         setIsLoading(true);
 
         try {
+            // Lazy load @react-native-firebase/auth to prevent crash in Expo Go
+            let authModule: any;
+            try {
+                const fb = await import("@react-native-firebase/auth");
+                authModule = fb.default;
+            } catch (fbErr) {
+                throw new Error(
+                    "Firebase Native Module is not available in Expo Go. Please use a Development Build for social authentication."
+                );
+            }
+
             if (Platform.OS === "ios") {
                 // Request Apple Sign-In without a manual nonce to avoid expo-crypto dependency
                 const credential = await AppleAuthentication.signInAsync({
@@ -66,21 +76,21 @@ export function useAppleSignIn() {
                 }
 
                 // Create Firebase credential using just the identity token
-                const firebaseCredential = auth.AppleAuthProvider.credential(
+                const firebaseCredential = authModule.AppleAuthProvider.credential(
                     credential.identityToken
                 );
 
-                const userCred = await auth().signInWithCredential(firebaseCredential);
+                const userCred = await authModule().signInWithCredential(firebaseCredential);
                 console.log("Apple Sign-In Success on iOS");
                 await exchangeWithBackend(userCred.user);
             } else {
                 // For Android, we use the Firebase OAuth provider (web-based flow)
-                const provider = new auth.OAuthProvider('apple.com');
+                const provider = new authModule.OAuthProvider('apple.com');
 
                 provider.addScope('email');
                 provider.addScope('name');
 
-                const userCred = await auth().signInWithProvider(provider);
+                const userCred = await authModule().signInWithProvider(provider);
                 console.log("Apple Sign-In Success on Android (via Firebase OAuth)");
                 await exchangeWithBackend(userCred.user);
             }

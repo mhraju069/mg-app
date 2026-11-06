@@ -34,12 +34,16 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
     // Android channel configuration
     if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("default", {
-        name: "Default",
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: "#9F634A",
-      });
+      try {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "Default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#9F634A",
+        });
+      } catch (channelErr) {
+        console.warn("Could not set notification channel (e.g. running in Expo Go):", channelErr);
+      }
     }
 
     // Request permissions
