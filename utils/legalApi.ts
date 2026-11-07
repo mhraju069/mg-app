@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 /**
  * Legal & Contact API Service for Terms & Conditions, Privacy Policy, Contact/Support Messages,
  * and Social Media Links (/api/others/social-media/)
@@ -143,14 +144,14 @@ export const legalApi = {
   async getTermsAndConditions(): Promise<TermsAndConditionsData> {
     const baseUrl = getBaseUrl();
     try {
-      const res = await fetch(`${baseUrl}/api/contact/terms/`, {
+      const res = await appFetch(`${baseUrl}/api/contact/terms/`, {
         headers: {
           Accept: "application/json",
         },
       });
 
       if (!res.ok) {
-        const altRes = await fetch(`${baseUrl}/api/contact/terms-and-conditions/`, {
+        const altRes = await appFetch(`${baseUrl}/api/contact/terms-and-conditions/`, {
           headers: {
             Accept: "application/json",
           },
@@ -176,7 +177,7 @@ export const legalApi = {
   async getPrivacyPolicy(): Promise<PrivacyPolicyData> {
     const baseUrl = getBaseUrl();
     try {
-      const res = await fetch(`${baseUrl}/api/contact/privacy-policy/`, {
+      const res = await appFetch(`${baseUrl}/api/contact/privacy-policy/`, {
         headers: {
           Accept: "application/json",
         },
@@ -200,14 +201,14 @@ export const legalApi = {
   async getContactInfo(): Promise<ContactInfoData> {
     const baseUrl = getBaseUrl();
     try {
-      const res = await fetch(`${baseUrl}/api/contact/contact/`, {
+      const res = await appFetch(`${baseUrl}/api/contact/contact/`, {
         headers: {
           Accept: "application/json",
         },
       });
 
       if (!res.ok) {
-        const altRes = await fetch(`${baseUrl}/api/others/contact-info/`, {
+        const altRes = await appFetch(`${baseUrl}/api/others/contact-info/`, {
           headers: {
             Accept: "application/json",
           },
@@ -233,7 +234,7 @@ export const legalApi = {
   async getSocialMediaLinks(): Promise<SocialMediaLinksData> {
     const baseUrl = getBaseUrl();
     try {
-      const res = await fetch(`${baseUrl}/api/others/social-media/`, {
+      const res = await appFetch(`${baseUrl}/api/others/social-media/`, {
         headers: {
           Accept: "application/json",
         },
@@ -294,7 +295,7 @@ export const legalApi = {
     }
 
     try {
-      const res = await fetch(`${baseUrl}/api/contact/messages/`, {
+      const res = await appFetch(`${baseUrl}/api/contact/messages/`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import { Text } from '@/components/ui/text';
 import { View } from '@/components/ui/view';
 import { useKeyboardHeight } from '@/hooks/useKeyboardHeight'; // Make sure this path is correct
@@ -300,25 +301,27 @@ export function BottomSheet({
 
           {disablePanGesture ? (
             <BottomSheetContent
-              children={children}
               title={title}
               style={style}
               rBottomSheetStyle={rBottomSheetStyle}
               cardColor={cardColor}
               mutedColor={mutedColor}
               onHandlePress={() => runOnJS(handlePress)()}
-            />
+            >
+              {children}
+            </BottomSheetContent>
           ) : (
             <GestureDetector gesture={gesture}>
               <BottomSheetContent
-                children={children}
                 title={title}
                 style={style}
                 rBottomSheetStyle={rBottomSheetStyle}
                 cardColor={cardColor}
                 mutedColor={mutedColor}
                 onHandlePress={() => runOnJS(handlePress)()}
-              />
+              >
+                {children}
+              </BottomSheetContent>
             </GestureDetector>
           )}
         </Animated.View>

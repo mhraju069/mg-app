@@ -3,8 +3,10 @@ import { useColor } from '@/hooks/useColor';
 import { Platform, useColorScheme } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
+import { useTranslation } from 'react-i18next';
 
 export default function SettingsLayout() {
+  const { t } = useTranslation();
   const theme = useColorScheme();
   const text = useColor('text');
   const background = useColor('background');
@@ -18,20 +20,20 @@ export default function SettingsLayout() {
       <Stack.Screen
         name='index'
         options={{
-          title: 'Profile',
+          title: t('tabs.profile', { defaultValue: 'Profile' }),
           headerTitle: () =>
             Platform.OS === 'android' ? (
-              <Text variant='heading'>Profile</Text>
+              <Text variant='heading'>{t('tabs.profile', { defaultValue: 'Profile' })}</Text>
             ) : undefined,
         }}
       />
       <Stack.Screen
         name='preview'
         options={{
-          title: 'Profile',
+          title: t('tabs.profile', { defaultValue: 'Profile' }),
           headerTitle: () =>
             Platform.OS === 'android' ? (
-              <Text variant='heading'>Profile</Text>
+              <Text variant='heading'>{t('tabs.profile', { defaultValue: 'Profile' })}</Text>
             ) : undefined,
         }}
       />

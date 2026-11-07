@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useToast } from "@/components/ui/toast";
 import { useTranslation } from "react-i18next";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function ForgotPasswordScreen() {
   const { t } = useTranslation();
@@ -36,7 +37,6 @@ export default function ForgotPasswordScreen() {
     setIsLoading(true);
 
     try {
-      const { API_BASE_URL } = await import("@/utils/constants");
       const res = await fetch(`${API_BASE_URL}/auth/forgot-password/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

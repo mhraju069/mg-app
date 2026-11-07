@@ -11,11 +11,12 @@ import {
   NativeSyntheticEvent,
   Pressable,
   TextInput,
-  TextInputKeyPressEventData,
+  TextInputKeyPressEvent,
   TextInputProps,
   TextStyle,
   View,
   ViewStyle,
+  type TextInputInstance,
 } from 'react-native';
 
 export interface InputOTPProps
@@ -76,7 +77,7 @@ export const InputOTP = forwardRef<InputOTPRef, InputOTPProps>(
   ) => {
     const [isFocused, setIsFocused] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
-    const inputRef = useRef<TextInput>(null);
+    const inputRef = useRef<TextInputInstance>(null);
 
     const textColor = useColor('text');
     const muted = useColor('textMuted');
@@ -119,7 +120,7 @@ export const InputOTP = forwardRef<InputOTPRef, InputOTPProps>(
     );
 
     const handleKeyPress = useCallback(
-      (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
+      (e: TextInputKeyPressEvent) => {
         const { key } = e.nativeEvent;
 
         if (key === 'Backspace' && normalizedValue.length > 0) {

@@ -12,6 +12,7 @@ import {
   TextStyle,
   View,
   ViewStyle,
+  type TextInputInstance,
 } from "react-native";
 
 export interface InputProps extends Omit<TextInputProps, "style"> {
@@ -31,7 +32,7 @@ export interface InputProps extends Omit<TextInputProps, "style"> {
   borderRadius?: number;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(
+export const Input = forwardRef<TextInputInstance, InputProps>(
   (
     {
       label,
@@ -164,7 +165,7 @@ export const Input = forwardRef<TextInput, InputProps>(
           <Pressable
             style={[getVariantStyle(), disabled && { opacity: 0.6 }]}
             onPress={() => {
-              if (!disabled && ref && "current" in ref && ref.current) {
+              if (!disabled && ref && typeof ref === "object" && "current" in ref && ref.current) {
                 ref.current.focus();
               }
             }}
@@ -327,7 +328,7 @@ export interface GroupedInputItemProps extends Omit<TextInputProps, "style"> {
   rows?: number; // Only used when type="textarea"
 }
 
-export const GroupedInputItem = forwardRef<TextInput, GroupedInputItemProps>(
+export const GroupedInputItem = forwardRef<TextInputInstance, GroupedInputItemProps>(
   (
     {
       label,
@@ -371,7 +372,7 @@ export const GroupedInputItem = forwardRef<TextInput, GroupedInputItemProps>(
 
     const renderItemContent = () => (
       <Pressable
-        onPress={() => ref && "current" in ref && ref.current?.focus()}
+        onPress={() => ref && typeof ref === "object" && "current" in ref && ref.current?.focus()}
         disabled={disabled}
         style={{ opacity: disabled ? 0.6 : 1 }}
       >

@@ -124,7 +124,7 @@ export default function BookingDetailsScreen() {
 
   const copyToClipboard = async (text: string) => {
     await Clipboard.setStringAsync(text);
-    toast.success("Copied to clipboard");
+    toast.success(t("common.toasts.copiedToClipboard", { defaultValue: "Copied to clipboard" }));
   };
 
   const handleOpenCancelModal = () => {
@@ -159,7 +159,7 @@ export default function BookingDetailsScreen() {
       if (res.success) {
         setCancelSuccess(res);
         setBookingDetail((prev) => ({ ...prev, status: "Cancelled" }));
-        toast.success("Reservation cancelled successfully");
+        toast.success(t("booking.detail.cancelSuccess", { defaultValue: "Reservation cancelled successfully" }));
       } else {
         setCancelError(
           res.message ||

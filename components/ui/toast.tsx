@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 import { Text } from '@/components/ui/text';
 import { AlertCircle, Check, Info, X } from 'lucide-react-native';
 import React, {
@@ -69,16 +70,24 @@ export function Toast({
   index,
   action,
 }: ToastProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(
+    () => Boolean(title || description || action)
+  );
 
   // Reanimated shared values
   const translateY = useSharedValue(-50);
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
-  const width = useSharedValue(DYNAMIC_ISLAND_WIDTH);
-  const height = useSharedValue(DYNAMIC_ISLAND_HEIGHT);
-  const borderRadius = useSharedValue(18.5);
+  const width = useSharedValue(
+    Boolean(title || description || action) ? EXPANDED_WIDTH : DYNAMIC_ISLAND_WIDTH
+  );
+  const height = useSharedValue(
+    Boolean(title || description || action) ? EXPANDED_HEIGHT : DYNAMIC_ISLAND_HEIGHT
+  );
+  const borderRadius = useSharedValue(
+    Boolean(title || description || action) ? 20 : 18.5
+  );
   const contentOpacity = useSharedValue(0);
 
   // Dynamic Island colors (dark theme optimized)
@@ -89,22 +98,12 @@ export function Toast({
     const hasContentToShow = Boolean(title || description || action);
 
     if (hasContentToShow) {
-      // If there's content, start directly with expanded state
-      width.value = EXPANDED_WIDTH;
-      height.value = EXPANDED_HEIGHT;
-      borderRadius.value = 20;
-      setIsExpanded(true);
-
       // Animate in expanded toast
       translateY.value = withSpring(0, SPRING_CONFIG);
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, SPRING_CONFIG);
-      // CORRECTED LINE: Use withDelay to wrap withTiming
       contentOpacity.value = withDelay(100, withTiming(1, { duration: 300 }));
     } else {
-      // If no content, show compact Dynamic Island with icon only
-      setIsExpanded(false);
-
       // Animate in compact toast
       translateY.value = withSpring(0, SPRING_CONFIG);
       opacity.value = withTiming(1, { duration: 200 });
@@ -359,6 +358,10 @@ export function ToastProvider({ children, maxToasts = 3 }: ToastProviderProps) {
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
   const addToast = useCallback(
     (toastData: Omit<ToastData, 'id'>) => {
       const id = generateId();
@@ -380,12 +383,8 @@ export function ToastProvider({ children, maxToasts = 3 }: ToastProviderProps) {
         }, newToast.duration);
       }
     },
-    [maxToasts]
+    [maxToasts, dismissToast]
   );
-
-  const dismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
 
   const dismissAll = useCallback(() => {
     setToasts([]);

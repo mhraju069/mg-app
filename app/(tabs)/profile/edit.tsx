@@ -29,16 +29,6 @@ export default function EditProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const auth = useAuthStore.getState();
-    if (auth.user) {
-      setName(auth.user.name || "");
-      setEmail(auth.user.email || "");
-      setPhone(auth.user.phone || "");
-      setBio(auth.user.bio || "");
-    }
-  }, []);
-
   const handleSaveChanges = async () => {
     const auth = useAuthStore.getState();
     if (!auth.accessToken) {
@@ -158,18 +148,18 @@ export default function EditProfileScreen() {
             variant="outline"
           />
           <Input
-            label="Email Address (Registered)"
+            label={t("profile.edit.emailRegisteredLabel", { defaultValue: "Email Address (Registered)" })}
             value={email}
             editable={false}
             variant="outline"
           />
           <Input
-            label={t("profile.phone") || "Phone"}
+            label={t("profile.phone", { defaultValue: "Phone" })}
             value={phone}
             onChangeText={setPhone}
             variant="outline"
             keyboardType="phone-pad"
-            placeholder="+31 6 12345678"
+            placeholder={t("common.placeholders.phone", { defaultValue: "+31 6 12345678" })}
           />
           <Input
             label={t("bookingFlow.general.bioNotes", { defaultValue: "Bio / Notes" })}

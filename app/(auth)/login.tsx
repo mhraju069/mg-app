@@ -24,6 +24,7 @@ import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/components/ui/toast";
 import { API_BASE_URL } from "@/utils/constants";
+import { useAuthStore } from "@/utils/authStore";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -97,7 +98,6 @@ export default function LoginScreen() {
 
       const data = await res.json();
       if (res.ok && data.status && data.access) {
-        const { useAuthStore } = await import("@/utils/authStore");
         useAuthStore.login({
           user: data.user,
           access: data.access,

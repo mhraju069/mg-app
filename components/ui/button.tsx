@@ -14,6 +14,7 @@ import {
   TouchableOpacityProps,
   View,
   ViewStyle,
+  type ViewInstance,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -48,7 +49,7 @@ export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   textStyle?: TextStyle;
 }
 
-export const Button = forwardRef<View, ButtonProps>(
+export const Button = forwardRef<ViewInstance, ButtonProps>(
   (
     {
       children,

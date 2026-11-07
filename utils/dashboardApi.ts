@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 /**
  * Dashboard & Bookings API Service for Mobile App
  * Synchronized with Website User Dashboard (/api/dashboard/user/) & Backend Cancel API
@@ -117,7 +118,7 @@ export const dashboardApi = {
     }
 
     try {
-      const res = await fetch(`${getBaseUrl()}/api/dashboard/user/`, {
+      const res = await appFetch(`${getBaseUrl()}/api/dashboard/user/`, {
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
           "Content-Type": "application/json",
@@ -154,7 +155,7 @@ export const dashboardApi = {
         payload.reason = reason.trim();
       }
 
-      const res = await fetch(`${baseUrl}/api/bookings/${bookingId}/cancel/`, {
+      const res = await appFetch(`${baseUrl}/api/bookings/${bookingId}/cancel/`, {
         method: "POST",
         headers: {
           Authorization: auth.accessToken ? `Bearer ${auth.accessToken}` : "",

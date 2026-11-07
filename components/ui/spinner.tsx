@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 9999,

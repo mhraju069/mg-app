@@ -1,3 +1,4 @@
+import { appFetch, getLocalizedField } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -107,12 +108,12 @@ export default function CategoryScreen() {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
 
     const fetchCategoryDetails = async () => {
+      setLoading(true);
       try {
         const endpointType = cleanCategory === "arrangements" ? "saltroom" : cleanCategory;
-        const res = await fetch(`${API_BASE_URL}/services/details/${endpointType}/`);
+        const res = await appFetch(`${API_BASE_URL}/services/details/${endpointType}/`);
         if (res.ok) {
           const resJson = await res.json();
           const apiData = resJson?.data;
@@ -267,7 +268,7 @@ export default function CategoryScreen() {
     return () => {
       isMounted = false;
     };
-  }, [cleanCategory, isSaunaCategory, isSaltRoomCategory]);
+  }, [cleanCategory, isSaunaCategory, isSaltRoomCategory, i18n.language]);
 
   // =========================================================================
   // SAUNA CONFIGURATOR CALCULATIONS
@@ -376,9 +377,10 @@ export default function CategoryScreen() {
 
     setLoadingSaltSlots(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/services/slots/?type=saltroom&date=${newDate}`);
+      const res = await appFetch(`${API_BASE_URL}/services/slots/?type=saltroom&date=${newDate}`);
       if (res.ok) {
         const json = await res.json();
+        console.log("[DEV LOG - SALTROOM SLOTS USER MEMBERSHIP]", json?.data?.user_membership || json?.user_membership);
         if (json.is_blocked) {
           setIsSaltDateBlocked(true);
           setSaltDateBlockedMsg(json.message || "This date is currently blocked for reservations.");
@@ -401,66 +403,91 @@ export default function CategoryScreen() {
 
   // Build 4 salt options array (matching Web arrangements)
   const saltOptionsList = useMemo(() => {
+    const localizedSingleTitle =
+      getLocalizedField(saltroomInfo, "title", i18n.language) ||
+      t("bookingFlow.saltroom.title", { defaultValue: "Salt Room" });
+
+    const localizedSingleSub =
+      getLocalizedField(saltroomInfo, "subtitle", i18n.language) ||
+      getLocalizedField(saltroomInfo, "description", i18n.language) ||
+      t("bookingFlow.saltroom.subtitle", { defaultValue: "Aerosol Halotherapy Session" });
+
+    const passFeatures: string[] = t("bookingFlow.saltRoomFeatures.pass", {
+      returnObjects: true,
+      defaultValue: [
+        "10-session salt pass (€20 per session)",
+        "Linked directly to customer account",
+        "Valid for 1 full year after purchase",
+      ],
+    }) as string[];
+
+    const weeklyFeatures: string[] = t("bookingFlow.saltRoomFeatures.weekly", {
+      returnObjects: true,
+      defaultValue: [
+        "1 Salt Room session per week included",
+        "Maximum 4 included sessions per 4-week period",
+        "Automated door access",
+      ],
+    }) as string[];
+
+    const unlimitedFeatures: string[] = t("bookingFlow.saltRoomFeatures.unlimited", {
+      returnObjects: true,
+      max: dynamicMaxCapacity,
+      defaultValue: [
+        "Unlimited use within available capacity",
+        "1-hour Salt Room halotherapy access",
+        "No session limits",
+      ],
+    }) as string[];
+
     const list = [
       {
         id: "single" as const,
-        title: saltroomInfo?.title || "Salt Room",
-        badge: "Standard Booking",
-        price: `€${saltPricePerPerson.toFixed(0)} / person`,
-        subtitle: saltroomInfo?.subtitle || "Aerosol Halotherapy Session",
+        title: localizedSingleTitle,
+        badge: t("bookingFlow.saltroom.standardBooking", { defaultValue: "Standard Booking" }),
+        price: `€${saltPricePerPerson.toFixed(0)} / ${t("bookingFlow.saltroom.perPerson", { defaultValue: "person" })}`,
+        subtitle: localizedSingleSub,
         icon: <Sparkles size={20} color={brownGold} />,
         features: [
-          "1-hour pure aerosol halotherapy session",
-          `Maximum ${dynamicMaxCapacity} people per session`,
-          "Respiratory & skin restoration",
+          t("bookingFlow.saltRoom.singleFeature1", { defaultValue: "1-hour pure aerosol halotherapy session" }),
+          t("bookingFlow.saltRoom.singleFeature2", { max: dynamicMaxCapacity, defaultValue: `Maximum ${dynamicMaxCapacity} people per session` }),
+          t("bookingFlow.saltRoom.singleFeature3", { defaultValue: "Respiratory & skin restoration" }),
         ],
         isCovered: false,
       },
       {
         id: "10_session_pass" as const,
-        title: sessionPass?.name || "10 Session pass",
-        badge: "Best Value Pass",
+        title: getLocalizedField(sessionPass, "name", i18n.language) || t("bookingFlow.services.10 Session pass", { defaultValue: "10 Session pass" }),
+        badge: t("bookingFlow.saltroom.bestValuePass", { defaultValue: "Best Value Pass" }),
         price: `€${parseFloat(String(sessionPass?.price || 200)).toFixed(0)}`,
-        subtitle: "10 Sessions (€20 per session)",
+        subtitle: t("bookingFlow.saltRoom.tenSessionsSub", { defaultValue: "10 Sessions (€20 per session)" }),
         icon: <Boxes size={20} color={brownGold} />,
-        features: [
-          "10-session salt pass (€20 per session)",
-          "Linked directly to customer account",
-          "Valid for 1 full year after purchase",
-        ],
+        features: Array.isArray(passFeatures) ? passFeatures : [],
         isCovered: Boolean(selectedSaltDate && isPassCovered),
       },
       {
         id: "once_a_week" as const,
-        title: weeklyPlan?.name || "Once a Week",
-        badge: "Weekly Ritual",
-        price: `€${parseFloat(String(weeklyPlan?.price || 70)).toFixed(0)} / 4 weeks`,
-        subtitle: "1 Session Every Week",
+        title: getLocalizedField(weeklyPlan, "name", i18n.language) || t("bookingFlow.services.Once a Week", { defaultValue: "Once a Week" }),
+        badge: t("bookingFlow.saltroom.weeklyRitual", { defaultValue: "Weekly Ritual" }),
+        price: `€${parseFloat(String(weeklyPlan?.price || 70)).toFixed(0)} / 4 ${t("bookingFlow.general.weeks", { defaultValue: "weeks" })}`,
+        subtitle: t("bookingFlow.saltRoom.onceAWeekSub", { defaultValue: "1 Session Every Week" }),
         icon: <CalendarIcon size={20} color={brownGold} />,
-        features: [
-          "1 Salt Room session per week included",
-          "Maximum 4 included sessions per 4-week period",
-          "Automated door access",
-        ],
+        features: Array.isArray(weeklyFeatures) ? weeklyFeatures : [],
         isCovered: Boolean(selectedSaltDate && isWeeklySubscriptionCovered),
       },
       {
         id: "unlimited" as const,
-        title: unlimitedPlan?.name || "Unlimited",
-        badge: "Ultimate Wellness",
-        price: `€${parseFloat(String(unlimitedPlan?.price || 100)).toFixed(0)} / 4 weeks`,
-        subtitle: "Unlimited Halotherapy Access",
+        title: getLocalizedField(unlimitedPlan, "name", i18n.language) || t("bookingFlow.services.Unlimited", { defaultValue: "Unlimited" }),
+        badge: t("bookingFlow.saltroom.ultimateWellness", { defaultValue: "Ultimate Wellness" }),
+        price: `€${parseFloat(String(unlimitedPlan?.price || 100)).toFixed(0)} / 4 ${t("bookingFlow.general.weeks", { defaultValue: "weeks" })}`,
+        subtitle: t("bookingFlow.saltRoom.unlimitedSub", { defaultValue: "Unlimited Halotherapy Access" }),
         icon: <Infinity size={20} color={brownGold} />,
-        features: [
-          "Unlimited use within available capacity",
-          "1-hour Salt Room halotherapy access",
-          "No session limits",
-        ],
+        features: Array.isArray(unlimitedFeatures) ? unlimitedFeatures : [],
         isCovered: Boolean(selectedSaltDate && isUnlimitedSubscriptionCovered),
       },
     ];
     return list;
-  }, [saltroomInfo, sessionPass, weeklyPlan, unlimitedPlan, saltPricePerPerson, dynamicMaxCapacity, selectedSaltDate, isPassCovered, isWeeklySubscriptionCovered, isUnlimitedSubscriptionCovered]);
+  }, [saltroomInfo, sessionPass, weeklyPlan, unlimitedPlan, saltPricePerPerson, dynamicMaxCapacity, selectedSaltDate, isPassCovered, isWeeklySubscriptionCovered, isUnlimitedSubscriptionCovered, t, i18n.language]);
 
   const handleContinue = () => {
     // 1. Sauna Continue Flow
@@ -510,6 +537,42 @@ export default function CategoryScreen() {
       if (!selectedSaltDate || isSaltDateBlocked) return;
 
       const chosenOpt = saltOptionsList.find((o) => o.id === selectedSaltOption);
+
+      let paymentMode: "pass" | "subscription" | "weekly_subscription" | "unlimited_subscription" | "card" = "card";
+      let purchaseId: string | undefined = undefined;
+      let planId: number | string | undefined = undefined;
+      let passId: number | string | undefined = undefined;
+
+      if (selectedSaltOption === "single") {
+        paymentMode = "card";
+      } else if (selectedSaltOption === "10_session_pass") {
+        if (isPassCovered && passObj) {
+          paymentMode = "pass";
+          purchaseId = passObj.purchase_id || passObj.pass_id;
+          passId = passObj.pass_id || passObj.id || passObj.purchase_id;
+        } else {
+          paymentMode = "card";
+          passId = sessionPass?.id;
+          planId = sessionPass?.id;
+        }
+      } else if (selectedSaltOption === "once_a_week") {
+        if (isWeeklySubscriptionCovered && weeklySubObj) {
+          paymentMode = "weekly_subscription";
+          purchaseId = weeklySubObj.purchase_id || weeklySubObj.subscription_id;
+        } else {
+          paymentMode = "card";
+          planId = weeklyPlan?.id;
+        }
+      } else if (selectedSaltOption === "unlimited") {
+        if (isUnlimitedSubscriptionCovered && unlimitedSubObj) {
+          paymentMode = "unlimited_subscription";
+          purchaseId = unlimitedSubObj.purchase_id || unlimitedSubObj.subscription_id;
+        } else {
+          paymentMode = "card";
+          planId = unlimitedPlan?.id;
+        }
+      }
+
       useBookingStore.setState({
         serviceId: "salt-room",
         serviceType: "saltroom",
@@ -519,13 +582,14 @@ export default function CategoryScreen() {
         serviceSubtitle: chosenOpt?.subtitle || "Halotherapy Session",
         serviceImage: `${getBaseUrl()}/media/services/saltroom-v2.png`,
         price: saltTotal,
-        isFree: isSelectedSaltOptionCovered,
+        isFree: isSelectedSaltOptionCovered && saltTotal === 0,
         isPassCovered: isSelectedSaltOptionCovered,
         date: selectedSaltDate,
         guestsCount: saltGuestsCount,
-        planId: selectedSaltOption === "once_a_week" ? weeklyPlan?.id : selectedSaltOption === "unlimited" ? unlimitedPlan?.id : undefined,
-        passId: selectedSaltOption === "10_session_pass" ? sessionPass?.id : undefined,
-        paymentMode: isSelectedSaltOptionCovered ? (selectedSaltOption === "10_session_pass" ? "pass" : "subscription") : "card",
+        planId,
+        passId,
+        purchaseId,
+        paymentMode,
       });
 
       // Jump directly to choose time since date was already selected in step 1
@@ -646,7 +710,8 @@ export default function CategoryScreen() {
             isSaunaCategory
               ? t("bookingFlow.sauna.title", { defaultValue: "Sauna & Wellness" })
               : isSaltRoomCategory
-              ? t("bookingFlow.saltRoom.title", { defaultValue: "Salt Room Halotherapy" })
+              ? (getLocalizedField(saltroomInfo, "title", i18n.language) ||
+                t("bookingFlow.saltRoom.title", { defaultValue: "Zoutkamer" }))
               : isActivityCategory
               ? t("home.categories.activities.title", { defaultValue: "Activities" })
               : isPackagesCategory
@@ -657,7 +722,9 @@ export default function CategoryScreen() {
             isSaunaCategory
               ? t("bookingFlow.sauna.subtitle", { defaultValue: "Exclusive private sanctuary or peaceful shared wellness experience." })
               : isSaltRoomCategory
-              ? t("bookingFlow.saltRoom.subtitle", { defaultValue: "Pure aerosol micro-climate. Select your reservation date first, then choose your session or pass." })
+              ? (getLocalizedField(saltroomInfo, "description", i18n.language) ||
+                getLocalizedField(saltroomInfo, "subtitle", i18n.language) ||
+                t("bookingFlow.saltRoom.subtitle", { defaultValue: "Therapeutische microklimaat zoutkamersessies om de luchtwegen te zuiveren, de huid te reinigen en vitaliteit te herstellen." }))
               : isActivityCategory
               ? t("home.categories.activities.subtitle", { defaultValue: "Movement. Breath. Flow." })
               : isPackagesCategory
@@ -676,6 +743,69 @@ export default function CategoryScreen() {
           /* DEDICATED SALT ROOM CONFIGURATOR (MATCHES WEB ARRANGEMENTS EXACTLY)       */
           /* ========================================================================= */
           <View style={{ gap: 20 }}>
+            {/* Authenticated User Active Membership / Pass Banner */}
+            {userMembership && (userMembership.has_active_subscription || userMembership.has_active_pass) && (
+              <View style={{ gap: 12 }}>
+                {userMembership.has_active_subscription && userMembership.subscription && (
+                  <View style={styles.activePlanCardGreen}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                      <View style={styles.activePlanIconCircleGreen}>
+                        <CheckCircle2 size={22} color="#15803D" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <View style={styles.activePlanBadgeGreen}>
+                            <Text style={styles.activePlanBadgeTextGreen}>ACTIVE SUBSCRIPTION</Text>
+                          </View>
+                          <Text style={styles.activePlanTitleGreen}>
+                            {userMembership.subscription.name}
+                          </Text>
+                        </View>
+                        <Text style={styles.activePlanSubGreen}>
+                          {userMembership.subscription.is_unlimited
+                            ? `Unlimited sessions • Valid until ${new Date(userMembership.subscription.end_date).toLocaleDateString()}`
+                            : `${userMembership.subscription.remaining_sessions} session(s) left (${userMembership.subscription.sessions_per_week}/week) • Valid until ${new Date(userMembership.subscription.end_date).toLocaleDateString()}`}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.activePlanRefPillGreen}>
+                      <Text style={styles.activePlanRefTextGreen}>
+                        Ref: {userMembership.subscription.purchase_id}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {userMembership.has_active_pass && userMembership.session_pass && (
+                  <View style={styles.activePlanCardAmber}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                      <View style={styles.activePlanIconCircleAmber}>
+                        <Boxes size={20} color="#B45309" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <View style={styles.activePlanBadgeAmber}>
+                            <Text style={styles.activePlanBadgeTextAmber}>SESSION PASS</Text>
+                          </View>
+                          <Text style={styles.activePlanTitleAmber}>
+                            {userMembership.session_pass.name}
+                          </Text>
+                        </View>
+                        <Text style={styles.activePlanSubAmber}>
+                          {userMembership.session_pass.remaining_sessions} credits remaining (Total across passes: {userMembership.session_pass.total_remaining_across_all_passes || userMembership.session_pass.remaining_sessions}) • No expiration
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.activePlanRefPillAmber}>
+                      <Text style={styles.activePlanRefTextAmber}>
+                        Ref: {userMembership.session_pass.purchase_id}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            )}
+
             {/* Overview parameter banner */}
             <Card style={styles.bannerCard}>
               <View style={{ flexDirection: "row", gap: 10 }}>
@@ -696,9 +826,9 @@ export default function CategoryScreen() {
 
             {/* STEP 1: Select Reservation Date First */}
             <Card style={styles.sectionCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={styles.sectionTitle}>{t("bookingFlow.saltRoom.step1Date", { defaultValue: "1. Select Reservation Date" })}</Text>
-                <Text style={{ fontSize: 11, fontWeight: "600", color: brownGold }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                <Text style={[styles.sectionTitle, { flexShrink: 1 }]}>{t("bookingFlow.saltRoom.step1Date", { defaultValue: "1. Select Reservation Date" })}</Text>
+                <Text style={{ fontSize: 11, fontWeight: "600", color: brownGold, flexShrink: 0 }}>
                   {t("bookingFlow.saltRoom.operatingHours", { defaultValue: "Operating: 09:00 – 21:00" })}
                 </Text>
               </View>
@@ -819,12 +949,17 @@ export default function CategoryScreen() {
                   <View style={styles.hintNoticeBox}>
                     <Info size={15} color="#D97706" />
                     <Text style={styles.hintNoticeText}>
-                      Please select a reservation date above first to unlock booking cards & passes.
+                      {t("bookingFlow.saltRoom.pleaseSelectDateNotice", {
+                        defaultValue: "Please select a reservation date above first to unlock booking cards & passes.",
+                      })}
                     </Text>
                   </View>
                 ) : (
                   <Text style={{ fontSize: 12, color: "#059669", fontWeight: "600", marginTop: 2 }}>
-                    ✓ Date locked for session: {selectedSaltDate}
+                    {t("bookingFlow.saltRoom.dateLocked", {
+                      date: selectedSaltDate,
+                      defaultValue: `✓ Date locked for session: ${selectedSaltDate}`,
+                    })}
                   </Text>
                 )}
               </View>
@@ -850,7 +985,12 @@ export default function CategoryScreen() {
                         isSelected && !isCardDisabled && styles.saltOptionCardActive,
                         isCardDisabled && styles.saltOptionCardDisabled,
                       ]}
-                      onPress={() => setSelectedSaltOption(opt.id)}
+                      onPress={() => {
+                        setSelectedSaltOption(opt.id);
+                        if (opt.id !== "single") {
+                          setSaltGuestsCount(1);
+                        }
+                      }}
                     >
                       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <View style={styles.optionBadge}>
@@ -860,7 +1000,9 @@ export default function CategoryScreen() {
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                           {opt.isCovered && (
                             <View style={styles.coveredBadge}>
-                              <Text style={styles.coveredBadgeText}>{t("bookingFlow.saltRoom.activePassCovered", { defaultValue: "Active Pass (Covered)" })}</Text>
+                              <Text style={styles.coveredBadgeText}>
+                                {t("bookingFlow.saltroom.activeCovered", { defaultValue: "ACTIEF (GEDEKT)" })}
+                              </Text>
                             </View>
                           )}
                           <View
@@ -910,19 +1052,22 @@ export default function CategoryScreen() {
 
             {/* STEP 3: Number of Guests (1 to dynamicMaxCapacity) */}
             <Card style={styles.sectionCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={styles.sectionTitle}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+                <Text style={[styles.sectionTitle, { flexShrink: 1 }]}>
                   {t("bookingFlow.saltRoom.step3Guests", { max: dynamicMaxCapacity, defaultValue: `3. Number of Guests (Max ${dynamicMaxCapacity})` })}
                 </Text>
-                <Text style={{ fontSize: 12, fontWeight: "600", color: brownGold }}>
-                  Strict micro-climate capacity
+                <Text style={{ fontSize: 11, fontWeight: "600", color: brownGold, flexShrink: 0 }}>
+                  {t("bookingFlow.saltRoom.strictMicroclimateCapacity", { defaultValue: "Strict micro-climate capacity" })}
                 </Text>
               </View>
 
               <View style={{ flexDirection: "row", gap: 10, marginTop: 8 }}>
                 {Array.from({ length: dynamicMaxCapacity }, (_, i) => i + 1).map((num) => {
                   const isSel = saltGuestsCount === num;
-                  const isGuestDisabled = !selectedSaltDate || isSaltDateBlocked;
+                  const isPassOrSubscription = selectedSaltOption !== "single";
+                  // When a pass or subscription is chosen, only 1 person can be selected (2 people option is disabled)
+                  const isDisallowedForPass = isPassOrSubscription && num > 1;
+                  const isGuestDisabled = !selectedSaltDate || isSaltDateBlocked || isDisallowedForPass;
 
                   return (
                     <Pressable
@@ -931,19 +1076,27 @@ export default function CategoryScreen() {
                       style={[
                         styles.guestOption,
                         isSel && !isGuestDisabled && styles.guestOptionActive,
-                        isGuestDisabled && { opacity: 0.5 },
+                        isGuestDisabled && { opacity: 0.35, backgroundColor: "rgba(0,0,0,0.03)" },
                       ]}
-                      onPress={() => setSaltGuestsCount(num)}
+                      onPress={() => {
+                        if (!isGuestDisabled) {
+                          setSaltGuestsCount(num);
+                        }
+                      }}
                     >
                       <Text style={[styles.guestNumber, isSel && !isGuestDisabled && styles.guestNumberActive]}>
-                        {num} {num === 1 ? "Person" : "People"}
+                        {num === 1
+                          ? (t("bookingFlow.saltroom.person", { count: 1 }) || "1 Persoon")
+                          : (t("bookingFlow.saltroom.people", { count: num }) || `${num} Personen`)}
                       </Text>
                       <Text style={[styles.guestSub, isSel && !isGuestDisabled && styles.guestSubActive]}>
-                        {selectedSaltOption === "single"
+                        {isDisallowedForPass
+                          ? t("bookingFlow.saltroom.includedInPlan", { defaultValue: "Inbegrepen in plan" })
+                          : selectedSaltOption === "single"
                           ? `€${(num * saltPricePerPerson).toFixed(0)}`
                           : isSelectedSaltOptionCovered
-                          ? "Covered (€0)"
-                          : "Included in Pass"}
+                          ? t("bookingFlow.saltroom.coveredZero", { defaultValue: "Gedekt (€0)" })
+                          : t("bookingFlow.saltroom.includedInPlan", { defaultValue: "Inbegrepen in plan" })}
                       </Text>
                     </Pressable>
                   );
@@ -953,25 +1106,30 @@ export default function CategoryScreen() {
 
             {/* Total Price Section */}
             <Card style={styles.pricingSummaryCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.totalLabel}>
-                    {t("bookingFlow.general.calculatedPrice", { defaultValue: "Calculated Price" })}
+                    {t("bookingFlow.saltroom.calculatedPrice", { defaultValue: "Berekende prijs" })}
                   </Text>
                   <Text style={styles.totalSub}>
                     {selectedSaltOption === "single"
-                      ? `${saltroomInfo?.title || "Salt Room"} • ${saltGuestsCount} Guest(s)`
+                      ? `${saltroomInfo?.title || "Salt Room"} • ${saltGuestsCount === 1 ? (t("bookingFlow.saltroom.person", { count: 1 }) || "1 Persoon") : (t("bookingFlow.saltroom.people", { count: saltGuestsCount }) || `${saltGuestsCount} Personen`)}`
                       : saltOptionsList.find((o) => o.id === selectedSaltOption)?.title}
                   </Text>
                   <Text style={{ fontSize: 11, color: isSelectedSaltOptionCovered ? "#059669" : "#64748B", marginTop: 2 }}>
                     {isSelectedSaltOptionCovered
-                      ? "✓ Active pass detected — €0 due today."
+                      ? t("bookingFlow.saltroom.coveredActiveNote", { defaultValue: "✓ Actief abonnement / strippenkaart herkend & geldig — €0 vandaag te betalen." })
                       : selectedSaltOption === "single"
-                      ? `€${saltPricePerPerson.toFixed(0)} × ${saltGuestsCount} guest(s)`
-                      : "Standard pass fee applies."}
+                      ? (t("bookingFlow.saltroom.standardPriceNote", { price: saltPricePerPerson.toFixed(0), count: saltGuestsCount }) || `€${saltPricePerPerson.toFixed(0)} × ${saltGuestsCount} gast(en)`)
+                      : t("bookingFlow.saltroom.noMembershipNote", { defaultValue: "Geen actief lidmaatschap voor deze optie — standaard tarief van toepassing." })}
                   </Text>
                 </View>
-                <Text style={styles.totalAmount}>€{saltTotal.toFixed(0)}</Text>
+                <View style={{ alignItems: "flex-end", flexShrink: 0 }}>
+                  <Text style={[styles.totalLabel, { textTransform: "uppercase", fontSize: 11 }]}>
+                    {t("bookingFlow.saltroom.totalDue", { defaultValue: "Totaal te voldoen" })}
+                  </Text>
+                  <Text style={styles.totalAmount}>€{saltTotal.toFixed(0)}</Text>
+                </View>
               </View>
             </Card>
           </View>
@@ -1043,7 +1201,16 @@ export default function CategoryScreen() {
                     {saunaType === "private" ? t("bookingFlow.sauna.vipTitle", { defaultValue: "VIP Sauna Sanctuary" }) : t("bookingFlow.sauna.sharedTitle", { defaultValue: "Sauna Experience" })}
                   </Text>
                   <Text style={styles.bannerDesc}>
-                    {saunaType === "private" ? t("bookingFlow.sauna.vipDesc", { defaultValue: "Booked exclusively by your group (2 to 6 people). Includes sauna, heated pool, relaxation lounge & +30m auto cleaning buffer." }) : t("bookingFlow.sauna.sharedDesc", { defaultValue: "Different customers book the same 1.5h session. Max 6 people per session + 15m changeover buffer." })}
+                    {saunaType === "private"
+                      ? t("bookingFlow.sauna.vipDesc", {
+                          defaultValue:
+                            "Booked exclusively by your group (2 to 6 people). Includes sauna, heated pool, relaxation lounge & +30m auto cleaning buffer.",
+                        })
+                      : t("bookingFlow.sauna.sharedDesc", {
+                          max: sharedItem?.max_capacity || 6,
+                          defaultValue:
+                            "Geniet van 1,5 uur heerlijke ontspanning in onze sfeervolle sauna. Kom alleen of samen en geniet van een fijn wellnessmoment. Maximaal 6 personen per sessie.",
+                        })}
                   </Text>
                 </View>
               </View>
@@ -1065,12 +1232,15 @@ export default function CategoryScreen() {
                       onPress={() => setDurationHours(3)}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.popularChoice", { defaultValue: "POPULAR CHOICE" })}</Text>
-                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours3", { defaultValue: "3 Hours" })}</Text>
+                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.popularChoice", { defaultValue: "POPULAIRE KEUZE" })}</Text>
+                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours3", { defaultValue: "3 uur genieten" })}</Text>
                         <Text style={styles.durationSub}>
-                          {t("bookingFlow.sauna.base2Guests", { defaultValue: "Base (2 guests)" })}: €{price3Hrs}
+                          {t("bookingFlow.sauna.threeHoursBaseDesc", {
+                            price: price3Hrs,
+                            extra: extraPersonFee,
+                            defaultValue: `€${price3Hrs} voor 2 personen • Extra persoon: €${extraPersonFee}`,
+                          })}
                         </Text>
-                        <Text style={styles.durationExtra}>{t("bookingFlow.sauna.extraPerson", { fee: extraPersonFee, defaultValue: `+€${extraPersonFee}/extra person` })}</Text>
                       </View>
                       <View
                         style={[
@@ -1091,12 +1261,15 @@ export default function CategoryScreen() {
                       onPress={() => setDurationHours(4)}
                     >
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.extendedRelaxation", { defaultValue: "EXTENDED RELAXATION" })}</Text>
-                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours4", { defaultValue: "4 Hours" })}</Text>
+                        <Text style={styles.durationBadge}>{t("bookingFlow.sauna.extendedRelaxation", { defaultValue: "EXTRA LANG GENIETEN" })}</Text>
+                        <Text style={styles.durationTitle}>{t("bookingFlow.sauna.hours4", { defaultValue: "4 uur genieten" })}</Text>
                         <Text style={styles.durationSub}>
-                          {t("bookingFlow.sauna.base2Guests", { defaultValue: "Base (2 guests)" })}: €{price4Hrs}
+                          {t("bookingFlow.sauna.fourHoursBaseDesc", {
+                            price: price4Hrs,
+                            extra: extraPersonFee,
+                            defaultValue: `€${price4Hrs} voor 2 personen • Extra persoon: €${extraPersonFee}`,
+                          })}
                         </Text>
-                        <Text style={styles.durationExtra}>+€{extraPersonFee}/extra person</Text>
                       </View>
                       <View
                         style={[
@@ -1112,9 +1285,9 @@ export default function CategoryScreen() {
 
                 {/* Number of Guests (2 to 6) */}
                 <Card style={styles.sectionCard}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <Text style={styles.sectionTitle}>{t("bookingFlow.sauna.step2Guests", { defaultValue: "2. Number of Guests (2–6)" })}</Text>
-                    <Text style={{ fontSize: 12, fontWeight: "600", color: brownGold }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                    <Text style={[styles.sectionTitle, { flexShrink: 1 }]}>{t("bookingFlow.sauna.step2Guests", { defaultValue: "2. Number of Guests (2–6)" })}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: brownGold, flexShrink: 0 }}>
                       {saunaGuestsCount > 2 ? t("bookingFlow.sauna.baseAndExtra", { extra: saunaGuestsCount - 2, defaultValue: `2 Base + ${saunaGuestsCount - 2} Extra` }) : t("bookingFlow.sauna.baseGuestsOnly", { defaultValue: "2 Base Guests" })}
                     </Text>
                   </View>
@@ -1238,14 +1411,16 @@ export default function CategoryScreen() {
 
             {/* Total Price Calculation Card */}
             <Card style={styles.pricingSummaryCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.totalLabel}>{t("bookingFlow.sauna.totalCalculatedPrice", { defaultValue: "Total Calculated Price" })}</Text>
                   <Text style={styles.totalSub}>
                     {saunaType === "private" ? t("bookingFlow.sauna.privateSummary", { hours: durationHours, guests: saunaGuestsCount, defaultValue: `${durationHours}h private session for ${saunaGuestsCount} guests` }) : t("bookingFlow.sauna.sharedSummary", { guests: saunaGuestsCount, price: sharedPricePerson, defaultValue: `${saunaGuestsCount} place(s) @ €${sharedPricePerson}` })}
                   </Text>
                 </View>
-                <Text style={styles.totalAmount}>€{saunaTotal.toFixed(2)}</Text>
+                <View style={{ alignItems: "flex-end", flexShrink: 0 }}>
+                  <Text style={styles.totalAmount}>€{saunaTotal.toFixed(2)}</Text>
+                </View>
               </View>
             </Card>
           </View>
@@ -1570,7 +1745,7 @@ export default function CategoryScreen() {
                   <TextInput
                     value={customForm.title}
                     onChangeText={(val) => setCustomForm({ ...customForm, title: val })}
-                    placeholder="e.g. Couples Rejuvenation Day"
+                    placeholder={t("bookingFlow.placeholders.packageName", { defaultValue: "e.g. Couples Rejuvenation Day" })}
                     placeholderTextColor="#94A3B8"
                     style={styles.modalInput}
                   />
@@ -1692,7 +1867,7 @@ export default function CategoryScreen() {
                     <TextInput
                       value={customForm.otherExperienceDetails}
                       onChangeText={(val) => setCustomForm({ ...customForm, otherExperienceDetails: val })}
-                      placeholder="e.g. Aromatherapy, Singing Bowl, Ice Bath"
+                      placeholder={t("bookingFlow.placeholders.activities", { defaultValue: "e.g. Aromatherapy, Singing Bowl, Ice Bath" })}
                       placeholderTextColor="#94A3B8"
                       style={styles.modalInput}
                     />
@@ -1776,7 +1951,7 @@ export default function CategoryScreen() {
                         notes: notesString,
                       };
 
-                      const res = await fetch(`${API_BASE_URL}/bookings/packages/`, {
+                      const res = await appFetch(`${API_BASE_URL}/bookings/packages/`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload),
@@ -1867,12 +2042,12 @@ export default function CategoryScreen() {
           <Text>
             {isSaltRoomCategory
               ? !selectedSaltDate
-                ? "Please Select a Date to Continue"
+                ? (t("bookingFlow.saltroom.btnSelectDatePrompt") || "Selecteer eerst een datum om door te gaan")
                 : isSaltDateBlocked
-                ? "Date Blocked — Select Another"
+                ? (t("bookingFlow.saltroom.btnDateBlocked") || "Datum geblokkeerd — Kies een andere datum")
                 : isSelectedSaltOptionCovered
-                ? "Book with Membership / Pass (Free)"
-                : `Continue to Choose Time (€${saltTotal.toFixed(0)})`
+                ? (t("bookingFlow.saltroom.btnBookFree") || "Boek met lidmaatschap / pas (Gratis)")
+                : (t("bookingFlow.saltroom.btnContinueToTime") || "Doorgaan naar tijd kiezen")
               : t("buttons.continue", { defaultValue: "Continue" })}
           </Text>
           <ArrowRight size={18} />
@@ -1970,7 +2145,7 @@ const styles = StyleSheet.create({
   },
   durationCard: {
     flex: 1,
-    padding: 16,
+    padding: 12,
     borderRadius: 16,
     backgroundColor: "#FDFBF8",
     borderWidth: 1.5,
@@ -1990,13 +2165,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   durationTitle: {
-    fontSize: 18,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: "700",
     fontFamily: Fonts.serif,
     color: "#1d1a17",
   },
   durationSub: {
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 16,
     fontWeight: "600",
     color: "#3D2E24",
     marginTop: 2,
@@ -2021,7 +2198,8 @@ const styles = StyleSheet.create({
   },
   guestOption: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#EBE3DA",
@@ -2034,19 +2212,22 @@ const styles = StyleSheet.create({
     borderColor: "#9B7C56",
   },
   guestNumber: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
     fontFamily: Fonts.serif,
     color: "#1d1a17",
+    textAlign: "center",
   },
   guestNumberActive: {
     color: "#fff",
   },
   guestSub: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "600",
     color: "#64748B",
     marginTop: 2,
+    textAlign: "center",
+    letterSpacing: -0.2,
   },
   guestSubActive: {
     color: "rgba(255,255,255,0.9)",
@@ -2289,6 +2470,116 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#86EFAC",
   },
+  activePlanCardGreen: {
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  activePlanIconCircleGreen: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#DCFCE7",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activePlanBadgeGreen: {
+    backgroundColor: "#15803D",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  activePlanBadgeTextGreen: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+  activePlanTitleGreen: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#14532D",
+    fontFamily: Fonts.serif,
+  },
+  activePlanSubGreen: {
+    fontSize: 11,
+    color: "#166534",
+    marginTop: 2,
+  },
+  activePlanRefPillGreen: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#86EFAC",
+  },
+  activePlanRefTextGreen: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#15803D",
+  },
+  activePlanCardAmber: {
+    backgroundColor: "#FFFBEB",
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  activePlanIconCircleAmber: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#FEF3C7",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  activePlanBadgeAmber: {
+    backgroundColor: "#B45309",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  activePlanBadgeTextAmber: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#fff",
+    letterSpacing: 0.5,
+  },
+  activePlanTitleAmber: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#78350F",
+    fontFamily: Fonts.serif,
+  },
+  activePlanSubAmber: {
+    fontSize: 11,
+    color: "#92400E",
+    marginTop: 2,
+  },
+  activePlanRefPillAmber: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FDE68A",
+  },
+  activePlanRefTextAmber: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#B45309",
+  },
   coveredBadgeText: {
     fontSize: 10,
     fontWeight: "800",
@@ -2435,7 +2726,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FBF9F6",
   },
   soldOutOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "center",
     alignItems: "center",

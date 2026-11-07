@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -120,15 +121,15 @@ export default function SelectTimeScreen() {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
-    setIsBlocked(false);
-    setIsClosed(false);
-    setClosedInfo("");
 
     const fetchSlots = async () => {
+      setLoading(true);
+      setIsBlocked(false);
+      setIsClosed(false);
+      setClosedInfo("");
       try {
         if (isPackage) {
-          const res = await fetch(`${API_BASE_URL}/services/slots/?type=package&date=${date}`);
+          const res = await appFetch(`${API_BASE_URL}/services/slots/?type=package&date=${date}`);
           if (res.ok) {
             const json = await res.json();
             if (isMounted) {
@@ -166,7 +167,7 @@ export default function SelectTimeScreen() {
         }
 
         const queryType = isSaltRoom ? "saltroom" : serviceType;
-        const res = await fetch(`${API_BASE_URL}/services/slots/?type=${queryType}&date=${date}`);
+        const res = await appFetch(`${API_BASE_URL}/services/slots/?type=${queryType}&date=${date}`);
         if (res.ok) {
           const json = await res.json();
           if (isMounted) {
@@ -320,15 +321,7 @@ export default function SelectTimeScreen() {
       <Layout>
         <Header
           title={t("createBooking.selectTime.title") || "Select Time Slot"}
-          subtitle={
-            isSaltRoom
-              ? "Choose your 1-hour pure halotherapy session window (10m changeover buffer)"
-              : isSauna
-              ? isSharedSauna
-                ? "Choose your 90-minute shared wellness session"
-                : `Choose your ${durationHours}-hour exclusive sanctuary session`
-              : t("createBooking.selectTime.subtitle") || "Choose your preferred arrival or session window"
-          }
+          subtitle={""}
         />
 
         {/* Selected Date Card */}
@@ -363,10 +356,7 @@ export default function SelectTimeScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.bufferTitle}>
-                Salt Room Session (1 Hour + 10 Mins Buffer)
-              </Text>
-              <Text style={styles.bufferDesc}>
-                Includes 10-minute automated ventilation and salt particle recharge buffer. Strict 2 persons per session.
+                Salt Room Session (1 Hour)
               </Text>
             </View>
           </View>
@@ -381,9 +371,6 @@ export default function SelectTimeScreen() {
               <Text style={styles.bufferTitle}>
                 VIP Sauna ({durationHours} Hours Session)
               </Text>
-              <Text style={styles.bufferDesc}>
-                Automatic 30-minute cleaning buffer reserved after your time slot for ultimate hygiene and sanitation.
-              </Text>
             </View>
           </View>
         )}
@@ -396,9 +383,6 @@ export default function SelectTimeScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.bufferTitle}>
                 Sauna (1.5 Hours Session)
-              </Text>
-              <Text style={styles.bufferDesc}>
-                Includes 15-minute changeover buffer. Real-time remaining seats shown per session.
               </Text>
             </View>
           </View>
@@ -586,9 +570,6 @@ export default function SelectTimeScreen() {
                             <Text style={[styles.slotTimeText, isSelected && styles.slotTimeTextActive]}>
                               {label}
                             </Text>
-                            <Text style={styles.slotBufferText}>
-                              90m shared session • Changeover buffer until {slot.buffer_end_time}
-                            </Text>
                           </View>
 
                           <View style={{ alignItems: "flex-end", gap: 4 }}>
@@ -606,12 +587,6 @@ export default function SelectTimeScreen() {
                                   {remaining} {remaining === 1 ? "place" : "places"} remaining
                                 </Text>
                               </View>
-                            )}
-
-                            {isSelected && (
-                              <Text style={{ fontSize: 11, fontWeight: "700", color: brownGold }}>
-                                Selected
-                              </Text>
                             )}
                           </View>
                         </View>

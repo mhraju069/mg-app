@@ -87,15 +87,8 @@ function InnerStripeElementsCheckoutWeb({
     onElementsReady,
   } = props;
 
-  let stripe: any = null;
-  let elements: any = null;
-
-  try {
-    stripe = useStripe();
-    elements = useElements();
-  } catch {
-    // Ignore web elements hook fallback
-  }
+  const stripe = useStripe();
+  const elements = useElements();
 
   React.useEffect(() => {
     if (elements && stripe && onElementsReady) {

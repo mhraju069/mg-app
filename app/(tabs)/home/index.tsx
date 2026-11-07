@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
@@ -144,19 +145,12 @@ export default function HomeScreen() {
   });
 
   // User profile state synchronized with Auth Store and backend API
-  const [currentUser, setCurrentUser] = useState<any>(useAuthStore.getState().user);
-  const [isLoggedIn, setIsLoggedIn] = useState(useAuthStore.getState().isAuthenticated);
+  const [currentUser, setCurrentUser] = useState<any>(() => useAuthStore.getState().user);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => useAuthStore.getState().isAuthenticated);
   const { unreadCount } = useNotifications();
 
-  // Sync user info from auth store
+  // Sync user info from auth store on updates
   useEffect(() => {
-    const auth = useAuthStore.getState();
-    if (auth.user) {
-      setCurrentUser(auth.user);
-      setIsLoggedIn(auth.isAuthenticated);
-      setCheckoutName(auth.user.name || "");
-      setCheckoutEmail(auth.user.email || "");
-    }
     return useAuthStore.subscribe(() => {
       const state = useAuthStore.getState();
       setCurrentUser(state.user);
@@ -206,7 +200,7 @@ export default function HomeScreen() {
       }
 
       // 1. Call purchase creation endpoint
-      const res = await fetch(`${API_BASE_URL}/payments/purchase/`, {
+      const res = await appFetch(`${API_BASE_URL}/payments/purchase/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -256,7 +250,7 @@ export default function HomeScreen() {
               if (confirmResult?.paymentIntent && (confirmResult.paymentIntent.status === "succeeded" || confirmResult.paymentIntent.status === "processing")) {
                 const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
                 try {
-                  await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+                  await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
                     method: "POST",
                     headers: {
                       "Content-Type": "application/json",
@@ -292,7 +286,7 @@ export default function HomeScreen() {
           if (nativeRes.paymentIntent?.id) {
             const purchaseId = purchaseRecord?.purchase_id || resData?.purchase_id || purchaseRecord?.booking_id || resData?.booking_id;
             try {
-              await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+              await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -323,7 +317,7 @@ export default function HomeScreen() {
     let isMounted = true;
     const fetchServices = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/services/`);
+        const response = await appFetch(`${API_BASE_URL}/services/`);
         if (response.ok) {
           const resJson = await response.json();
           const list = resJson?.data || (Array.isArray(resJson) ? resJson : []);
@@ -393,7 +387,7 @@ export default function HomeScreen() {
 
     const fetchPlansAndPasses = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/payments/plans-and-passes/`);
+        const res = await appFetch(`${API_BASE_URL}/payments/plans-and-passes/`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data) {
@@ -413,8 +407,8 @@ export default function HomeScreen() {
       // Secondary fallback attempts for individual endpoints
       try {
         const [subRes, passRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/payments/subscription-plans/`).catch(() => null),
-          fetch(`${API_BASE_URL}/payments/session-passes/`).catch(() => null),
+          appFetch(`${API_BASE_URL}/payments/subscription-plans/`).catch(() => null),
+          appFetch(`${API_BASE_URL}/payments/session-passes/`).catch(() => null),
         ]);
 
         let hasData = false;
@@ -486,7 +480,7 @@ export default function HomeScreen() {
         if (auth.accessToken) {
           // Fetch fresh user profile from API
           try {
-            const userRes = await fetch(`${API_BASE_URL}/auth/user/`, {
+            const userRes = await appFetch(`${API_BASE_URL}/auth/user/`, {
               headers: {
                 Authorization: `Bearer ${auth.accessToken}`,
               },
@@ -514,7 +508,7 @@ export default function HomeScreen() {
 
     const fetchContactInfo = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/others/contact-info/`);
+        const res = await appFetch(`${API_BASE_URL}/others/contact-info/`);
         if (res.ok) {
           const json = await res.json();
           if (isMounted && json?.data) {
@@ -894,7 +888,7 @@ export default function HomeScreen() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <View>
             <Text style={styles.sectionTitle}>
-              {"Memberships, Plans & Passes"}
+              {t("home.passesSection.title", { defaultValue: "Memberships, Plans & Passes" })}
             </Text>
           </View>
         </View>
@@ -1398,7 +1392,7 @@ export default function HomeScreen() {
                   </Text>
                   <TextInput
                     style={stylesModalCheckout.textInput}
-                    placeholder="email@example.com"
+                    placeholder={t("common.placeholders.email", { defaultValue: "email@example.com" })}
                     value={checkoutEmail}
                     onChangeText={setCheckoutEmail}
                     keyboardType="email-address"
@@ -1549,7 +1543,7 @@ const stylesServiceCard = StyleSheet.create({
     height: "100%",
   },
   imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.38)",
     justifyContent: "flex-end",
     padding: 16,

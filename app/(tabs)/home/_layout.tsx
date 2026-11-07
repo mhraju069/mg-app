@@ -1,8 +1,10 @@
 import { Stack } from 'expo-router';
 import { Platform } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { useTranslation } from 'react-i18next';
 
 export default function ProfileLayout() {
+  const { t } = useTranslation();
 
   return (
     <Stack
@@ -13,10 +15,10 @@ export default function ProfileLayout() {
       <Stack.Screen
         name='index'
         options={{
-          title: 'Home',
+          title: t('tabs.home', { defaultValue: 'Home' }),
           headerTitle: () =>
             Platform.OS === 'android' ? (
-              <Text variant='heading'>Profile</Text>
+              <Text variant='heading'>{t('tabs.home', { defaultValue: 'Home' })}</Text>
             ) : undefined,
         }}
       />

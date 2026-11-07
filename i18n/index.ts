@@ -64,6 +64,15 @@ i18n
   .init({
     resources,
     fallbackLng: "en",
+    supportedLngs: ["en", "nl", "de"],
+    returnEmptyString: false,
+    returnNull: false,
+    parseMissingKeyHandler: (key: string) => {
+      // Fallback: missing translation -> friendly last segment or key name formatted
+      const parts = key.split(".");
+      const last = parts[parts.length - 1];
+      return last ? last.replace(/([A-Z])/g, " $1").trim() : key;
+    },
     interpolation: {
       escapeValue: false, // React already escapes values
     },

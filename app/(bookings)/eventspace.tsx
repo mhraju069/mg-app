@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import Header from "@/components/shared/inside-header";
@@ -69,6 +70,7 @@ export default function EventSpaceScreen() {
   const { t } = useTranslation();
   const brownGold = "#9B7C56";
   const textMuted = useColor("textMuted");
+  const borderColor = useColor("border");
   const todayStr = new Date().toISOString().split("T")[0];
 
   // 1. Event Type
@@ -150,7 +152,7 @@ export default function EventSpaceScreen() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/bookings/events/`, {
+      const res = await appFetch(`${API_BASE_URL}/bookings/events/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -590,14 +592,14 @@ export default function EventSpaceScreen() {
             <View style={{ gap: 14, marginTop: 12 }}>
               <Input
                 label={t("bookingFlow.events.fullName", { defaultValue: "Full Name *" })}
-                placeholder="John Doe"
+                placeholder={t("common.placeholders.fullName", { defaultValue: "John Doe" })}
                 variant="outline"
                 value={name}
                 onChangeText={setName}
               />
               <Input
                 label={t("bookingFlow.events.phoneNumber", { defaultValue: "Phone Number *" })}
-                placeholder="+31 6 12345678"
+                placeholder={t("common.placeholders.phone", { defaultValue: "+31 6 12345678" })}
                 variant="outline"
                 keyboardType="phone-pad"
                 value={phone}
@@ -605,7 +607,7 @@ export default function EventSpaceScreen() {
               />
               <Input
                 label={t("bookingFlow.events.emailAddress", { defaultValue: "Email Address *" })}
-                placeholder="john@example.com"
+                placeholder={t("common.placeholders.email", { defaultValue: "john@example.com" })}
                 variant="outline"
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -619,7 +621,7 @@ export default function EventSpaceScreen() {
         </View>
       </Layout>
 
-      <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
+      <View style={[styles.footer, { borderTopColor: borderColor }]}>
         <Button onPress={handleSubmit} disabled={submitting}>
           {submitting ? (
             <ActivityIndicator size="small" color="#fff" />

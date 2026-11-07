@@ -11,6 +11,7 @@ import { StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Icon } from "@/components/ui/icon";
 import { useToast } from "@/components/ui/toast";
 import { useTranslation } from "react-i18next";
+import { API_BASE_URL } from "@/utils/constants";
 
 export default function NewPasswordScreen() {
   const { t } = useTranslation();
@@ -61,7 +62,6 @@ export default function NewPasswordScreen() {
     setIsLoading(true);
 
     try {
-      const { API_BASE_URL } = await import("@/utils/constants");
       const res = await fetch(`${API_BASE_URL}/auth/reset-password/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

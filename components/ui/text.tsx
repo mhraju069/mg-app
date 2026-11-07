@@ -6,6 +6,7 @@ import {
   Text as RNText,
   TextProps as RNTextProps,
   TextStyle,
+  type TextInstance,
 } from 'react-native';
 
 type TextVariant =
@@ -23,7 +24,7 @@ interface TextProps extends RNTextProps {
   children: React.ReactNode;
 }
 
-export const Text = forwardRef<RNText, TextProps>(
+export const Text = forwardRef<TextInstance, TextProps>(
   (
     { variant = 'body', lightColor, darkColor, style, children, ...props },
     ref
@@ -86,3 +87,5 @@ export const Text = forwardRef<RNText, TextProps>(
     );
   }
 );
+
+Text.displayName = 'Text';

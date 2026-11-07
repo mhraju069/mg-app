@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -49,7 +50,7 @@ export default function SelectDateScreen() {
 
     try {
       const serviceType = storeState.serviceType === "saltroom" ? "saltroom" : storeState.serviceType || "sauna";
-      const res = await fetch(`${API_BASE_URL}/services/slots/?type=${serviceType}&date=${dateStr}`);
+      const res = await appFetch(`${API_BASE_URL}/services/slots/?type=${serviceType}&date=${dateStr}`);
       if (res.ok) {
         const json = await res.json();
         if (json.is_blocked) {

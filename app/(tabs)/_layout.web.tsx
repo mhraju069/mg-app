@@ -2,7 +2,6 @@ import React from 'react';
 import { useColor } from '@/hooks/useColor';
 import { Tabs } from 'expo-router';
 import { Home, Calendar, Key, User } from 'lucide-react-native';
-import { HapticTab } from '@/components/ui/haptic-tab';
 import { useTranslation } from 'react-i18next';
 import { View, StyleSheet } from 'react-native';
 
@@ -14,7 +13,6 @@ export default function WebTabsLayout() {
     headerShown: false,
     tabBarActiveTintColor: brownGold,
     tabBarInactiveTintColor: '#94A3B8',
-    tabBarButton: HapticTab,
     tabBarStyle: {
       borderTopWidth: 0.5,
       borderTopColor: 'rgba(0,0,0,0.08)',

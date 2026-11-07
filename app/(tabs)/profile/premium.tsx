@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import Header from "@/components/shared/inside-header";
@@ -62,7 +63,7 @@ export default function PlansAndPassesScreen() {
 
       // 2. Fetch All Plans and Passes catalog from Backend
       try {
-        const res = await fetch(`${API_BASE_URL}/payments/plans-and-passes/`);
+        const res = await appFetch(`${API_BASE_URL}/payments/plans-and-passes/`);
         if (res.ok) {
           const data = await res.json();
           if (data) {
@@ -72,8 +73,8 @@ export default function PlansAndPassesScreen() {
         } else {
           // Fallback individual endpoints
           const [subRes, passRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/payments/subscription-plans/`).catch(() => null),
-            fetch(`${API_BASE_URL}/payments/session-passes/`).catch(() => null),
+            appFetch(`${API_BASE_URL}/payments/subscription-plans/`).catch(() => null),
+            appFetch(`${API_BASE_URL}/payments/session-passes/`).catch(() => null),
           ]);
           if (subRes && subRes.ok) {
             const sData = await subRes.json();
@@ -95,7 +96,7 @@ export default function PlansAndPassesScreen() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [i18n.language]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -110,7 +111,7 @@ export default function PlansAndPassesScreen() {
       <Layout>
         <Header
           title={t("profile.menu.premium") || "Plans & Passes"}
-          subtitle="Manage active memberships and explore wellness passes"
+          subtitle={t("profile.premium.subtitle", { defaultValue: "Manage active memberships and explore wellness passes" })}
         />
 
         <ScrollView

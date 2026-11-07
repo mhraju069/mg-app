@@ -155,7 +155,9 @@ export default function CancellationPolicyCard({
                   <Text style={styles.noticeTitle}>{t("bookingFlow.checkout.importantNotice", { defaultValue: "Important Notice:" })}</Text>
                   <Text style={styles.noticeText}>
                     Please cancel or reschedule at least{" "}
-                    <Text style={{ fontWeight: "700" }}>24 hours</Text> before
+                    <Text style={{ fontWeight: "700" }}>
+                      {t("bookingDetailPolicy.freeCancellationPeriod", { hours: 24, defaultValue: "24 hours" })}
+                    </Text> before
                     your scheduled session to avoid losing your booked session
                     or credit. Late cancellations and missed appointments will
                     result in the booked session or credit being considered used,

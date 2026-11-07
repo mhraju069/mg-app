@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -27,7 +28,7 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
   ActivityIndicator,
@@ -39,12 +40,54 @@ import { CardNumberElement } from "@stripe/react-stripe-js";
 
 export default function ConfirmationScreen() {
   const textMuted = useColor("textMuted");
+  const borderColor = useColor("border");
   const brownGold = "#9B7C56";
   const lightBeige = "#F8F5F2";
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { confirmMobilePayment } = useStripePayment();
 
   const storeState = useBookingStore.getState();
+
+  const localizedServiceTitle = useMemo(() => {
+    const raw = storeState.serviceTitle;
+    if (!raw) return "";
+
+    // 1. Direct translation key lookup
+    if (i18n.exists(`bookingFlow.services.${raw}`)) {
+      return t(`bookingFlow.services.${raw}`);
+    }
+
+    // Lunchroom reservation titles are stored in English in the booking flow.
+    if (storeState.serviceType?.toLowerCase().includes("lunchroom") || raw.toLowerCase().includes("lunchroom")) {
+      return t("bookingFlow.review.lunchroomTableReservation", { defaultValue: raw });
+    }
+
+    // 2. Salt room normalization
+    if (raw.toLowerCase().includes("salt") || storeState.serviceType === "saltroom" || storeState.isSaltRoom) {
+      if (raw.toLowerCase().includes("10 session")) {
+        return t("bookingFlow.services.10 Session pass", { defaultValue: "10 Session Pass" });
+      }
+      if (raw.toLowerCase().includes("once a week")) {
+        return t("bookingFlow.services.Once a Week", { defaultValue: "Once a Week" });
+      }
+      if (raw.toLowerCase().includes("unlimited")) {
+        return t("bookingFlow.services.Unlimited", { defaultValue: "Unlimited" });
+      }
+      return t("bookingFlow.saltRoom.title", { defaultValue: "Salt Room" });
+    }
+
+    // 3. Sauna normalization
+    if (storeState.serviceType === "sauna") {
+      if (raw.toLowerCase().includes("vip")) {
+        return t(`bookingFlow.services.VIP Sauna (${storeState.durationHours || 3} Hours)`, {
+          defaultValue: `VIP Sauna (${storeState.durationHours || 3} Hours)`,
+        });
+      }
+      return t("bookingFlow.services.Sauna Experience", { defaultValue: "Sauna Experience" });
+    }
+
+    return raw;
+  }, [storeState.serviceTitle, storeState.serviceType, storeState.isSaltRoom, storeState.durationHours, t, i18n.language]);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "ideal">("card");
   const [selectedBank, setSelectedBank] = useState<string>("ing");
 
@@ -65,10 +108,17 @@ export default function ConfirmationScreen() {
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string>("");
+  const [confirmedRemainingSessions, setConfirmedRemainingSessions] = useState<number | string | null>(null);
   const [policyAccepted, setPolicyAccepted] = useState<boolean>(false);
 
   const priceVal = storeState.price || 0;
   const isFree = storeState.isFree || priceVal === 0;
+  const isLunchroomReservation = storeState.serviceType?.toLowerCase().includes("lunchroom")
+    || storeState.serviceTitle?.toLowerCase().includes("lunchroom");
+  const isSaltRoomReservation = Boolean(storeState.isSaltRoom)
+    || storeState.serviceType === "salt_room"
+    || storeState.serviceType === "saltroom"
+    || storeState.serviceTitle?.toLowerCase().includes("salt");
 
   // Breakdown calculations
   const isSauna = storeState.serviceType === "sauna";
@@ -96,7 +146,7 @@ export default function ConfirmationScreen() {
     setIsProcessing(true);
 
     try {
-      // 1. Handle Free Reservations (e.g. Lunchroom)
+      // 1. Handle Free Reservations (e.g. Salt Room pass/subscription or Lunchroom)
       if (isFree) {
         let bookingTime = "12:00:00";
         if (storeState.timeSlot) {
@@ -106,8 +156,72 @@ export default function ConfirmationScreen() {
           }
         }
 
+        // Salt Room Free Pass / Subscription Booking Branch
+        if (storeState.serviceType === "saltroom" || storeState.serviceType === "salt_room" || storeState.isSaltRoom) {
+          const passIdentifier = storeState.purchaseId || storeState.passId;
+          const saltPaymentMode = storeState.paymentMode || (storeState.passType === "10_session_pass" ? "pass" : "subscription");
+
+          const saltPayload: any = {
+            name: cardHolder.trim() || storeState.fullName || "Guest",
+            email: storeState.email || "guest@example.com",
+            phone: storeState.phone || "+31612345678",
+            date: storeState.date || new Date().toISOString().split("T")[0],
+            start_time: bookingTime,
+            capacity: 1,
+            payment_mode: saltPaymentMode,
+            ...(storeState.specialRequests ? { special_request: storeState.specialRequests } : {}),
+            ...(passIdentifier ? { purchase_id: passIdentifier } : {}),
+          };
+
+          console.log("[DEV LOG - SALTROOM BOOKING REQUEST]", {
+            url: `${API_BASE_URL}/bookings/saltroom/`,
+            payload: saltPayload,
+          });
+
+          const saltRes = await appFetch(`${API_BASE_URL}/bookings/saltroom/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(saltPayload),
+          });
+
+          console.log("[DEV LOG - SALTROOM BOOKING RESPONSE STATUS]", saltRes.status);
+
+          if (!saltRes.ok) {
+            const errData = await saltRes.json().catch(() => ({}));
+            console.log("[DEV LOG - SALTROOM BOOKING ERROR PAYLOAD]", errData);
+            const rawErr = String(errData?.error || errData?.message || errData?.detail || "").toLowerCase();
+
+            let localizedErr = t("bookingFlow.errors.genericFailure", { defaultValue: "Failed to create booking. Please try again." });
+            if (rawErr.includes("weekly session limit") || rawErr.includes("weekly limit")) {
+              localizedErr = t("bookingFlow.errors.weeklyLimitReached", { defaultValue: "Weekly session limit already reached for this week." });
+            } else if (rawErr.includes("exhausted") || rawErr.includes("remaining sessions")) {
+              localizedErr = t("bookingFlow.errors.noRemainingSessions", { defaultValue: "You have exhausted the sessions for this pass or subscription." });
+            } else if (rawErr.includes("expired")) {
+              localizedErr = t("bookingFlow.errors.subscriptionExpired", { defaultValue: "Your subscription has expired. Please renew to book." });
+            } else if (rawErr.includes("remaining") && rawErr.includes("spot")) {
+              localizedErr = t("bookingFlow.errors.slotUnavailable", { defaultValue: "This time slot is no longer available. Please select another time." });
+            } else if (rawErr.includes("concurrent") || rawErr.includes("already booked")) {
+              localizedErr = t("bookingFlow.errors.alreadyBooked", { defaultValue: "You already have an active booking for this time slot." });
+            }
+
+            throw new Error(localizedErr);
+          }
+
+          const saltJson = await saltRes.json();
+          console.log("[DEV LOG - SALTROOM BOOKING SUCCESS PAYLOAD]", saltJson);
+
+          setConfirmedBookingId(saltJson.booking_id || "SR-CONFIRMED");
+          if (saltJson.remaining_sessions !== undefined) {
+            setConfirmedRemainingSessions(saltJson.remaining_sessions);
+          }
+
+          setIsProcessing(false);
+          setIsSuccess(true);
+          return;
+        }
+
         const celebration = storeState.celebration;
-        const res = await fetch(`${API_BASE_URL}/bookings/lunchroom/`, {
+        const res = await appFetch(`${API_BASE_URL}/bookings/lunchroom/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -177,7 +291,7 @@ export default function ConfirmationScreen() {
           total_price: priceVal,
         };
 
-        bookingRes = await fetch(`${API_BASE_URL}/bookings/sauna/`, {
+        bookingRes = await appFetch(`${API_BASE_URL}/bookings/sauna/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -196,7 +310,7 @@ export default function ConfirmationScreen() {
           total_price: priceVal.toFixed(2),
         };
 
-        bookingRes = await fetch(`${API_BASE_URL}/bookings/activities/`, {
+        bookingRes = await appFetch(`${API_BASE_URL}/bookings/activities/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -213,7 +327,7 @@ export default function ConfirmationScreen() {
           special_request: storeState.specialRequests || undefined,
         };
 
-        bookingRes = await fetch(`${API_BASE_URL}/bookings/saltroom/`, {
+        bookingRes = await appFetch(`${API_BASE_URL}/bookings/saltroom/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -274,13 +388,13 @@ export default function ConfirmationScreen() {
           ...(saltroom_booking ? { saltroom_booking } : {}),
         };
 
-        bookingRes = await fetch(`${API_BASE_URL}/bookings/packages/`, {
+        bookingRes = await appFetch(`${API_BASE_URL}/bookings/packages/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(pkgPayload),
         });
       } else {
-        bookingRes = await fetch(`${API_BASE_URL}/bookings/sauna/`, {
+        bookingRes = await appFetch(`${API_BASE_URL}/bookings/sauna/`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -371,7 +485,7 @@ export default function ConfirmationScreen() {
 
           if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
             try {
-              await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+              await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -406,7 +520,7 @@ export default function ConfirmationScreen() {
 
         if (nativeRes.paymentIntent?.id) {
           try {
-            await fetch(`${API_BASE_URL}/payments/confirm-payment/`, {
+            await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -444,8 +558,8 @@ export default function ConfirmationScreen() {
             </Text>
 
             <Card style={styles.successSummaryCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <Text style={styles.serviceName}>{storeState.serviceTitle}</Text>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <Text style={[styles.serviceName, { flex: 1 }]}>{localizedServiceTitle}</Text>
                 {confirmedBookingId ? (
                   <View style={styles.bookingIdBadge}>
                     <Text style={styles.bookingIdText}>{confirmedBookingId}</Text>
@@ -471,6 +585,38 @@ export default function ConfirmationScreen() {
                   {t("bookingFlow.checkout.paymentStatusConfirmed", { defaultValue: "Payment Status: Confirmed & Paid" })}
                 </Text>
               </View>
+              {confirmedRemainingSessions !== null && (
+                <View style={[styles.detailRow, { marginTop: 4 }]}>
+                  <Zap size={16} color={brownGold} />
+                  <Text style={[styles.detailValue, { color: brownGold, fontWeight: "600" }]}>
+                    {t("bookingDetailPolicy.remainingCredits", { defaultValue: "Remaining credits: " })}
+                    {String(confirmedRemainingSessions)}
+                  </Text>
+                </View>
+              )}
+            </Card>
+
+            <Card style={styles.extraInfoCard}>
+              <Text style={styles.extraInfoTitle}>
+                {isSaltRoomReservation
+                  ? t("bookingFlow.confirmation.saltRoomReminderTitle", { defaultValue: "Additional Information" })
+                  : isLunchroomReservation
+                  ? t("bookingFlow.confirmation.lunchroomReminderTitle", { defaultValue: "Additional Information" })
+                  : t("bookingFlow.confirmation.wellnessReminderTitle", { defaultValue: "Additional Information" })}
+              </Text>
+              <Text style={styles.extraInfoText}>
+                {isSaltRoomReservation
+                  ? t("bookingFlow.confirmation.saltRoomReminderText", {
+                      defaultValue: "Please arrive 10 minutes before your halotherapy session. Comfortable clothing is recommended. Please show your booking reference on arrival.",
+                    })
+                  : isLunchroomReservation
+                  ? t("bookingFlow.confirmation.lunchroomReminderText", {
+                      defaultValue: "Wednesday through Sunday (09:00–16:00). Walk-ins are welcome. Please present your booking reference upon arrival.",
+                    })
+                  : t("bookingFlow.confirmation.wellnessReminderText", {
+                      defaultValue: "Please arrive 15 minutes before your scheduled session.",
+                    })}
+              </Text>
             </Card>
 
             <Button
@@ -532,7 +678,9 @@ export default function ConfirmationScreen() {
 
         {/* Booking Details Card */}
         <Card style={styles.summaryCard}>
-          <Text style={styles.serviceName}>{storeState.serviceTitle}</Text>
+          <Text style={styles.serviceName}>
+            {localizedServiceTitle}
+          </Text>
 
           <View style={styles.detailRow}>
             <View style={[styles.iconBox, { backgroundColor: lightBeige }]}>
@@ -566,7 +714,12 @@ export default function ConfirmationScreen() {
               <Text variant="caption" style={{ color: textMuted }}>
                 {t("booking.details.labels.guests") || "Guests"}
               </Text>
-              <Text style={styles.detailValue}>{storeState.guestsCount} Persons</Text>
+              <Text style={styles.detailValue}>
+                {t("bookingFlow.saltroom.person", {
+                  count: storeState.guestsCount,
+                  defaultValue: `${storeState.guestsCount} ${storeState.guestsCount === 1 ? "Person" : "People"}`,
+                })}
+              </Text>
             </View>
           </View>
 
@@ -652,7 +805,7 @@ export default function ConfirmationScreen() {
             </View>
           ) : (
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>{storeState.serviceTitle}</Text>
+              <Text style={styles.priceLabel}>{localizedServiceTitle}</Text>
               <Text style={styles.priceValue}>
                 {isFree ? t("bookingFlow.checkout.free", { defaultValue: "Free" }) : `€${priceVal.toFixed(2)}`}
               </Text>
@@ -713,7 +866,7 @@ export default function ConfirmationScreen() {
         </Card>
       </Layout>
 
-      <View style={[styles.footer, { borderTopColor: useColor("border") }]}>
+      <View style={[styles.footer, { borderTopColor: borderColor }]}>
         <Button onPress={handlePayAndConfirm} disabled={isProcessing}>
           {isProcessing ? (
             <ActivityIndicator color="#fff" />
@@ -922,13 +1075,36 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 10,
   },
-  bookingIdBadge: {
-    backgroundColor: "#FCF2E9",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
+  extraInfoCard: {
+    width: "100%",
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#EBE3DA",
+    gap: 8,
+    marginTop: 4,
+  },
+  extraInfoTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    fontFamily: Fonts.serif,
+    color: "#1d1a17",
+  },
+  extraInfoText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#475569",
+  },
+  bookingIdBadge: {
+    backgroundColor: "#FCF2E9",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#EBE3DA",
+    flexShrink: 0,
+    alignSelf: "flex-start",
   },
   bookingIdText: {
     fontSize: 12,
@@ -939,6 +1115,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: "#9B7C56",
     borderRadius: 25,
-    marginTop: 10,
+    marginTop: 24,
+    marginBottom: 40,
   },
 });

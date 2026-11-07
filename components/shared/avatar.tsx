@@ -15,13 +15,9 @@ type Props = {
 export function Avatar({ defaultValue, onChange, editable = false }: Props) {
   const primary = useColor("primary");
   const background = useColor("card");
-  const [imgUri, setImgUri] = useState<string | null>(defaultValue ? formatImageUrl(defaultValue) : null);
+  const [selectedUri, setSelectedUri] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (defaultValue) {
-      setImgUri(formatImageUrl(defaultValue));
-    }
-  }, [defaultValue]);
+  const imgUri = selectedUri || (defaultValue ? formatImageUrl(defaultValue) : null);
 
   return (
     <Pressable
@@ -29,7 +25,7 @@ export function Avatar({ defaultValue, onChange, editable = false }: Props) {
       onPress={() =>
         imagePicker((uri) => {
           if (!uri) return;
-          setImgUri(uri);
+          setSelectedUri(uri);
           if (onChange) {
             onChange(uri);
           }

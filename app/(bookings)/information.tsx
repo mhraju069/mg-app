@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -110,13 +111,13 @@ export default function InformationScreen() {
   // Fetch live Lunchroom slots for the selected reservation date
   const fetchLunchroomSlots = useCallback(async (targetDate: string) => {
     if (!targetDate) return;
-    setLoadingSlots(true);
-    setLunchroomIsBlocked(false);
-    setLunchroomIsClosed(false);
-    setLunchroomBlockMsg("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/services/slots/?type=lunchroom&date=${targetDate}`);
+      setLoadingSlots(true);
+      setLunchroomIsBlocked(false);
+      setLunchroomIsClosed(false);
+      setLunchroomBlockMsg("");
+      const res = await appFetch(`${API_BASE_URL}/services/slots/?type=lunchroom&date=${targetDate}`);
       if (res.ok) {
         const json = await res.json();
         const data = json.data || json;
@@ -216,7 +217,7 @@ export default function InformationScreen() {
                   (lunchroomIsBlocked || lunchroomIsClosed) && styles.hoursBannerBlocked,
                 ]}
               >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
                   <Clock size={16} color={lunchroomIsBlocked || lunchroomIsClosed ? "#DC2626" : brownGold} />
                   {loadingSlots ? (
                     <Text style={{ fontSize: 12, color: brownGold, fontStyle: "italic" }}>
@@ -227,13 +228,13 @@ export default function InformationScreen() {
                       {lunchroomBlockMsg || "Lunchroom is unavailable on this date."}
                     </Text>
                   ) : (
-                    <Text style={{ fontSize: 12, color: brownGold, fontWeight: "600" }}>
+                    <Text style={{ fontSize: 12, color: brownGold, fontWeight: "600", flexShrink: 1 }}>
                       Opening Hours: {lunchroomOpenTime} – {lunchroomCloseTime}
                     </Text>
                   )}
                 </View>
                 {!lunchroomIsBlocked && !lunchroomIsClosed && (
-                  <View style={styles.walkinBadge}>
+                  <View style={[styles.walkinBadge, { alignSelf: "flex-start" }]}>
                     <Footprints size={12} color="#9B7C56" />
                     <Text style={styles.walkinBadgeText}>{t("bookingFlow.info.walkInsWelcome", { defaultValue: "Walk-ins welcome" })}</Text>
                   </View>
@@ -382,10 +383,11 @@ export default function InformationScreen() {
                   </Text>
                 </View>
 
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                <View style={{ gap: 8 }}>
                   <Input
                     keyboardType="number-pad"
                     variant="outline"
+                    borderRadius={12}
                     placeholder={t("bookingFlow.info.guestCountPlaceholder", { defaultValue: "e.g. 2, 4, 8" })}
                     value={String(lunchGuests || "")}
                     onChangeText={(val) => {
@@ -396,9 +398,9 @@ export default function InformationScreen() {
                         setLunchGuests(Math.min(99, num));
                       }
                     }}
-                    containerStyle={{ flex: 1 }}
+                    containerStyle={{ width: "100%" }}
                   />
-                  <View style={{ flexDirection: "row", gap: 6 }}>
+                  <View style={{ flexDirection: "row", gap: 8, width: "100%" }}>
                     {[2, 4, 6, 8].map((preset) => (
                       <Pressable
                         key={preset}
@@ -406,7 +408,7 @@ export default function InformationScreen() {
                         style={[
                           styles.ticketOption,
                           lunchGuests === preset && styles.ticketOptionActive,
-                          { minWidth: 44, paddingVertical: 8, paddingHorizontal: 12 },
+                          { flex: 1, minWidth: 0, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12 },
                         ]}
                       >
                         <Text style={[styles.ticketNumber, lunchGuests === preset && styles.ticketNumberActive, { fontSize: 13 }]}>
@@ -421,12 +423,12 @@ export default function InformationScreen() {
 
             {/* CELEBRATION DETAILS CARD (IDENTICAL TO WEB) */}
             <Card style={styles.celebrationCard}>
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+              <View style={{ flexDirection: "column", alignItems: "stretch", gap: 12 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, width: "100%" }}>
                   <View style={styles.celebrationIconCircle}>
                     <Cake size={22} color={brownGold} />
                   </View>
-                  <View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={styles.celebrationTitle}>{t("bookingFlow.info.celebratingQuestion", { defaultValue: "Are you celebrating something?" })}</Text>
                     <Text style={styles.celebrationSub}>
                       Birthdays, anniversaries, or special milestones
@@ -435,7 +437,7 @@ export default function InformationScreen() {
                 </View>
 
                 {/* Yes / No Toggle Button */}
-                <View style={styles.togglePill}>
+                <View style={[styles.togglePill, { alignSelf: "flex-end" }]}>
                   <Pressable
                     style={[styles.toggleBtn, isCelebrating && styles.toggleBtnActive]}
                     onPress={() => setIsCelebrating(true)}
@@ -563,7 +565,7 @@ export default function InformationScreen() {
 
             {/* Schedule & Host Grid */}
             <View style={styles.activityMetaGrid}>
-              <View style={styles.metaCol}>
+              <View style={[styles.metaCol, { flex: 1.2 }]}>
                 <Text style={styles.metaLabel}>{t("bookingFlow.info.dateAndSchedule", { defaultValue: "Date & Schedule" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <CalendarIcon size={14} color={brownGold} />
@@ -573,7 +575,7 @@ export default function InformationScreen() {
                 </View>
               </View>
 
-              <View style={styles.metaCol}>
+              <View style={[styles.metaCol, { flex: 1.2 }]}>
                 <Text style={styles.metaLabel}>{t("bookingFlow.info.timeSlot", { defaultValue: "Time Slot" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <Clock size={14} color={brownGold} />
@@ -583,7 +585,7 @@ export default function InformationScreen() {
                 </View>
               </View>
 
-              <View style={styles.metaCol}>
+              <View style={[styles.metaCol, { flex: 1 }]}>
                 <Text style={styles.metaLabel}>{t("bookingFlow.info.hostGuide", { defaultValue: "Host / Guide" })}</Text>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
                   <ShieldCheck size={14} color={brownGold} />
@@ -835,6 +837,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
+    gap: 8,
     padding: 12,
     borderRadius: 14,
     backgroundColor: "#FCF2E9",
@@ -855,6 +859,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#EBE3DA",
+    flexShrink: 0,
   },
   walkinBadgeText: {
     fontSize: 11,
@@ -1086,13 +1091,14 @@ const styles = StyleSheet.create({
   activityMetaGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: 10,
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: "#EBE3DA",
   },
   metaCol: {
-    flex: 1,
+    minWidth: 80,
   },
   metaLabel: {
     fontSize: 10,

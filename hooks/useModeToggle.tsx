@@ -39,7 +39,7 @@ export function useModeToggle(): UseModeToggleReturn {
     // Only use Appearance.setColorScheme on native platforms
     if (Platform.OS !== 'web') {
       if (newMode === 'system') {
-        Appearance.setColorScheme(null);
+        Appearance.setColorScheme('unspecified');
       } else {
         Appearance.setColorScheme(newMode);
       }

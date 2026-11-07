@@ -29,6 +29,7 @@ export interface BookingState {
   isPassCovered?: boolean;
   planId?: number | string;
   passId?: number | string;
+  purchaseId?: string;
   paymentMode?: "card" | "pass" | "subscription" | "weekly_subscription" | "unlimited_subscription" | "ideal";
   activeMembershipInfo?: any;
   // Extended activity options

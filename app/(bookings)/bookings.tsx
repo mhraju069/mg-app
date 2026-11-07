@@ -1,3 +1,4 @@
+import { appFetch } from '@/utils/apiClient';
 import { Layout } from "@/components/layout/Layout";
 import { BackHeader } from "@/components/shared/booking-header";
 import { useTranslation } from "react-i18next";
@@ -90,7 +91,7 @@ export default function SelectServicesScreen() {
     let isMounted = true;
     const fetchServices = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/services/`);
+        const response = await appFetch(`${API_BASE_URL}/services/`);
         if (response.ok) {
           const resJson = await response.json();
           const list = resJson?.data || (Array.isArray(resJson) ? resJson : []);
@@ -165,7 +166,7 @@ export default function SelectServicesScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [i18n.language]);
 
   const getLocalizedTitle = (item: any) => {
     const lang = i18n?.language?.split("-")[0] || "en";
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   categoryOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.42)",
     justifyContent: "space-between",
     padding: 16,

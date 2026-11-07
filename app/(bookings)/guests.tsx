@@ -59,13 +59,7 @@ export default function GuestsScreen() {
       <Layout>
         <Header
           title={t("createBooking.guests.title") || "Number of Guests"}
-          subtitle={
-            isPrivateSauna
-              ? "Private sanctuary accommodates 2 to 6 guests (+€50 per extra guest above 2)"
-              : isSharedSauna
-              ? "Reserve places for your party in this 90-minute shared session"
-              : t("createBooking.guests.subtitle") || "Select the number of people attending"
-          }
+          subtitle={""}
         />
 
         <Card style={styles.summaryCard}>
