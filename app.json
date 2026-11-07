@@ -49,12 +49,13 @@
         "expo-build-properties",
         {
           "android": {
-            "compileSdkVersion": 36,
+            "compileSdkVersion": 37,
             "targetSdkVersion": 35,
             "buildToolsVersion": "35.0.0",
             "googleServicesFile": "./google-services.json",
             "enableProguardInRelease": true,
-            "enableShrinkResourcesInRelease": true
+            "enableShrinkResourcesInRelease": true,
+            "extraProguardRules": "-dontwarn com.stripe.android.pushProvisioning.**"
           },
           "ios": {
             "deploymentTarget": "16.4",
