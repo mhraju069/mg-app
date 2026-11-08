@@ -28,7 +28,7 @@ import {
   ShieldCheck,
   AlertCircle,
 } from "lucide-react-native";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   StyleSheet,
   ActivityIndicator,
@@ -105,6 +105,8 @@ export default function ConfirmationScreen() {
   const [elementsInstance, setElementsInstance] = useState<any>(null);
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const submitGuardRef = useRef(false);
+  const packagePaymentSessionRef = useRef<{ bookingId: string; clientSecret: string } | null>(null);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmedBookingId, setConfirmedBookingId] = useState<string>("");
@@ -112,7 +114,8 @@ export default function ConfirmationScreen() {
   const [policyAccepted, setPolicyAccepted] = useState<boolean>(false);
 
   const priceVal = storeState.price || 0;
-  const isFree = storeState.isFree || priceVal === 0;
+  const isPackageReservation = storeState.serviceType === "package" || storeState.serviceType === "packages";
+  const isFree = !isPackageReservation && (storeState.isFree || priceVal === 0);
   const isLunchroomReservation = storeState.serviceType?.toLowerCase().includes("lunchroom")
     || storeState.serviceTitle?.toLowerCase().includes("lunchroom");
   const isSaltRoomReservation = Boolean(storeState.isSaltRoom)
@@ -131,7 +134,40 @@ export default function ConfirmationScreen() {
   const extraGuestsCount = Math.max(0, guestsCount - 2);
   const extrasList = storeState.selectedExtras || [];
 
+  const localizePackageBookingError = (status: number, payload: any) => {
+    const rawMessage = String(payload?.message || payload?.detail || payload?.error || "").toLowerCase();
+    if ((rawMessage.includes("slot") || rawMessage.includes("capacity") || rawMessage.includes("available")) && (rawMessage.includes("book") || rawMessage.includes("spot") || rawMessage.includes("capacity") || rawMessage.includes("slot"))) {
+      return t("bookingFlow.arrangementFlow.bookingSlotUnavailable");
+    }
+    if (["name", "email", "phone", "date", "guests"].some((field) => rawMessage.includes(field))) {
+      return t("bookingFlow.arrangementFlow.bookingDetailsInvalid");
+    }
+    if (status >= 500) return t("bookingFlow.arrangementFlow.bookingServerError");
+    return t("bookingFlow.arrangementFlow.bookingFailed");
+  };
+
+  const confirmBookingPayment = async (paymentIntentId: string, bookingId: string) => {
+    const url = `${API_BASE_URL}/payments/confirm-payment/`;
+    const body = {
+      payment_intent_id: paymentIntentId,
+      booking_id: bookingId,
+      ...(!isPackageReservation ? { purchase_id: bookingId } : {}),
+    };
+    if (isPackageReservation) console.log("[DEV LOG - PACKAGE PAYMENT CONFIRM REQUEST]", { url, method: "POST", body });
+    const response = await appFetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (isPackageReservation) {
+      const payload = await response.clone().json().catch(() => ({}));
+      console.log("[DEV LOG - PACKAGE PAYMENT CONFIRM RESPONSE]", { status: response.status, payload });
+    }
+    return response;
+  };
+
   const handlePayAndConfirm = async () => {
+    if (submitGuardRef.current || isProcessing) return;
     setErrorMessage(null);
 
     if (!policyAccepted) {
@@ -143,6 +179,7 @@ export default function ConfirmationScreen() {
       return;
     }
 
+    submitGuardRef.current = true;
     setIsProcessing(true);
 
     try {
@@ -275,7 +312,7 @@ export default function ConfirmationScreen() {
       }
 
       // 3. Create Booking & Generate Stripe PaymentIntent from Backend API
-      let bookingRes: Response;
+      let bookingRes: Response | null = null;
       if (isSauna) {
         const payload = {
           sauna_type: isSharedSauna ? "shared" : "private",
@@ -320,7 +357,7 @@ export default function ConfirmationScreen() {
           name: cardHolder.trim() || storeState.fullName || "Guest",
           email: storeState.email || "guest@example.com",
           phone: storeState.phone || "+31612345678",
-          date: storeState.date || "2026-10-30",
+          date: storeState.date || new Date().toISOString().split("T")[0],
           start_time: bookingTime,
           capacity: Math.min(Math.max(guestsCount, 1), 2),
           payment_mode: paymentMethod === "ideal" ? "ideal" : "card",
@@ -340,16 +377,26 @@ export default function ConfirmationScreen() {
           sauna_booking = {
             sauna_type: pkgSelections.saunaSlot.type || "private",
             booking_time: pkgSelections.saunaSlot.startTime ? `${pkgSelections.saunaSlot.startTime}:00` : "14:00:00",
-            time_slot: timeSlotEnum,
+            time_slot: pkgSelections.saunaSlot.type === "shared" ? "90_mins" : (durationHours === 4 ? "4_hours" : "3_hours"),
             capacity: guestsCount,
           };
         }
 
         let lunchroom_booking: any = undefined;
         if (pkgSelections?.lunchroomTime) {
+          const celebration = storeState.celebration;
           lunchroom_booking = {
             booking_time: `${pkgSelections.lunchroomTime}:00`,
             capacity: guestsCount,
+            ...(celebration?.isCelebrating
+              ? {
+                  celebration_type: celebration.occasion || undefined,
+                  name_of_celebrant: celebration.celebrantName || undefined,
+                  age_of_celebrant: celebration.age ? parseInt(String(celebration.age), 10) : undefined,
+                  hobbies: celebration.hobbiesInterests || undefined,
+                  celebration_details: celebration.otherDetails || undefined,
+                }
+              : {}),
           };
         }
 
@@ -377,7 +424,7 @@ export default function ConfirmationScreen() {
           name: cardHolder.trim() || storeState.fullName || "Guest",
           email: storeState.email || "guest@example.com",
           phone: storeState.phone || "+31612345678",
-          date: storeState.date || "2026-10-30",
+          date: storeState.date || new Date().toISOString().split("T")[0],
           guests: guestsCount,
           total_price: priceVal.toFixed(2),
           is_custom: false,
@@ -388,11 +435,20 @@ export default function ConfirmationScreen() {
           ...(saltroom_booking ? { saltroom_booking } : {}),
         };
 
-        bookingRes = await appFetch(`${API_BASE_URL}/bookings/packages/`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(pkgPayload),
-        });
+        if (!packagePaymentSessionRef.current) {
+          const packageBookingUrl = `${API_BASE_URL}/bookings/packages/`;
+          console.log("[DEV LOG - PACKAGE BOOKING REQUEST]", { url: packageBookingUrl, method: "POST", body: pkgPayload });
+          try {
+            bookingRes = await appFetch(packageBookingUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(pkgPayload),
+            });
+          } catch (requestError) {
+            console.log("[DEV LOG - PACKAGE BOOKING NETWORK ERROR]", requestError);
+            throw new Error(t("bookingFlow.arrangementFlow.bookingFailed"));
+          }
+        }
       } else {
         bookingRes = await appFetch(`${API_BASE_URL}/bookings/sauna/`, {
           method: "POST",
@@ -411,15 +467,42 @@ export default function ConfirmationScreen() {
         });
       }
 
-      if (!bookingRes.ok) {
-        const errJson = await bookingRes.json().catch(() => ({}));
-        throw new Error(errJson.message || errJson.detail || "Server rejected booking creation.");
+      let bookingData: any;
+      if (isPackageReservation && packagePaymentSessionRef.current) {
+        bookingData = {
+          booking_id: packagePaymentSessionRef.current.bookingId,
+          client_secret: packagePaymentSessionRef.current.clientSecret,
+        };
+      } else {
+        if (!bookingRes) throw new Error(isPackageReservation ? t("bookingFlow.arrangementFlow.bookingFailed") : "Server rejected booking creation.");
+        const responsePayload = isPackageReservation
+          ? await bookingRes.clone().json().catch(() => ({}))
+          : undefined;
+        if (isPackageReservation) {
+          console.log("[DEV LOG - PACKAGE BOOKING RESPONSE]", { status: bookingRes.status, payload: responsePayload });
+        }
+        if (!bookingRes.ok) {
+          const errJson = responsePayload || await bookingRes.json().catch(() => ({}));
+          throw new Error(isPackageReservation
+            ? localizePackageBookingError(bookingRes.status, errJson)
+            : errJson.message || errJson.detail || "Server rejected booking creation.");
+        }
+        bookingData = await bookingRes.json();
+        if (isPackageReservation) {
+          const responseBookingId = String(bookingData.booking_id || "");
+          const responseClientSecret = String(bookingData.client_secret || "");
+          if (responseBookingId) {
+            packagePaymentSessionRef.current = { bookingId: responseBookingId, clientSecret: responseClientSecret };
+          }
+        }
       }
 
-      const bookingData = await bookingRes.json();
       const clientSecret = bookingData.client_secret;
       const bookingId = bookingData.booking_id;
       setConfirmedBookingId(bookingId || "PS-CONFIRMED");
+      if (isPackageReservation && !clientSecret) {
+        throw new Error(t("bookingFlow.arrangementFlow.paymentSetupFailed"));
+      }
 
       // 4. Authenticate & Confirm Payment via Stripe
       if (Platform.OS === "web") {
@@ -458,6 +541,13 @@ export default function ConfirmationScreen() {
           if (confirmRes.error) {
             throw new Error(confirmRes.error.message || "iDEAL confirmation error.");
           }
+          if (isPackageReservation && confirmRes.paymentIntent?.id) {
+            try {
+              await confirmBookingPayment(confirmRes.paymentIntent.id, bookingId);
+            } catch (e) {
+              console.warn("Package payment confirmation sync notice:", e);
+            }
+          }
         } else {
           // Standard Stripe Elements flow (compliant with PCI requirements on Web)
           let confirmRes: any;
@@ -485,15 +575,7 @@ export default function ConfirmationScreen() {
 
           if (confirmRes?.paymentIntent && (confirmRes.paymentIntent.status === "succeeded" || confirmRes.paymentIntent.status === "processing")) {
             try {
-              await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  payment_intent_id: confirmRes.paymentIntent.id,
-                  booking_id: bookingId,
-                  purchase_id: bookingId,
-                }),
-              });
+              await confirmBookingPayment(confirmRes.paymentIntent.id, bookingId);
             } catch (e) {
               console.warn("Backend confirm sync notice:", e);
             }
@@ -501,10 +583,9 @@ export default function ConfirmationScreen() {
         }
       } else {
         // Native mobile flow (Android / iOS) via official @stripe/stripe-react-native SDK
-        if (paymentMethod === "ideal") {
+        if (paymentMethod === "ideal" && !isPackageReservation) {
           throw new Error("iDEAL banking is available on web checkout. Please select Card payment on mobile.");
         }
-
         const nativeRes = await confirmMobilePayment(clientSecret, {
           name: cardHolder.trim() || storeState.fullName || "Guest",
           email: storeState.email || "guest@example.com",
@@ -512,7 +593,7 @@ export default function ConfirmationScreen() {
           address: {
             postalCode: postalCode.trim() || undefined,
           },
-        });
+        }, isPackageReservation ? { paymentMethod, idealBank: selectedBank } : { paymentMethod: "card" });
 
         if (!nativeRes.success) {
           throw new Error(nativeRes.error || "Payment verification failed. Please check your card details.");
@@ -520,15 +601,7 @@ export default function ConfirmationScreen() {
 
         if (nativeRes.paymentIntent?.id) {
           try {
-            await appFetch(`${API_BASE_URL}/payments/confirm-payment/`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                payment_intent_id: nativeRes.paymentIntent.id,
-                booking_id: bookingId,
-                purchase_id: bookingId,
-              }),
-            });
+            await confirmBookingPayment(nativeRes.paymentIntent.id, bookingId);
           } catch (e) {
             console.warn("Backend confirm sync notice:", e);
           }
@@ -539,7 +612,11 @@ export default function ConfirmationScreen() {
       setIsSuccess(true);
     } catch (err: any) {
       setIsProcessing(false);
-      setErrorMessage(err?.message || "An unexpected error occurred during payment processing.");
+      setErrorMessage(isPackageReservation && !packagePaymentSessionRef.current
+        ? err?.message || t("bookingFlow.arrangementFlow.bookingFailed")
+        : err?.message || t("bookingFlow.arrangementFlow.paymentSetupFailed"));
+    } finally {
+      submitGuardRef.current = false;
     }
   };
 
@@ -619,12 +696,14 @@ export default function ConfirmationScreen() {
               </Text>
             </Card>
 
-            <Button
-              style={styles.doneBtn}
-              onPress={() => router.replace("/(tabs)/home")}
-            >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>{t("bookingFlow.checkout.backToHome", { defaultValue: "Back to Home" })}</Text>
-            </Button>
+            <View style={styles.doneBtnContainer}>
+              <Button
+                style={styles.doneBtn}
+                onPress={() => router.replace("/(tabs)/home")}
+              >
+                <Text style={{ color: "#fff", fontWeight: "700" }}>{t("bookingFlow.checkout.backToHome", { defaultValue: "Back to Home" })}</Text>
+              </Button>
+            </View>
           </View>
         </Layout>
       </>
@@ -637,8 +716,8 @@ export default function ConfirmationScreen() {
 
       <Layout>
         <Header
-          title={t("createBooking.confirmation.title") || "Confirm & Pay"}
-          subtitle={t("createBooking.confirmation.subtitle") || "Complete your reservation with confidence via Stripe"}
+          title={isPackageReservation ? t("bookingFlow.arrangementFlow.reviewTitle") : t("createBooking.confirmation.title") || "Confirm & Pay"}
+          subtitle={isPackageReservation ? t("bookingFlow.arrangementFlow.reviewSubtitle") : t("createBooking.confirmation.subtitle") || "Complete your reservation with confidence via Stripe"}
         />
 
         {errorMessage ? (
@@ -746,11 +825,37 @@ export default function ConfirmationScreen() {
               )}
               {storeState.packageSelections.activitySession && (
                 <Text style={{ fontSize: 12, color: "#475569" }}>
-                  • Activity: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.activitySession.title}</Text>
+                  • {t("bookingFlow.arrangementFlow.activityLabel")}: <Text style={{ fontWeight: "700", color: "#1d1a17" }}>{storeState.packageSelections.activitySession.title}{storeState.packageSelections.activitySession.startTime ? `, ${storeState.packageSelections.activitySession.startTime}${storeState.packageSelections.activitySession.endTime ? ` – ${storeState.packageSelections.activitySession.endTime}` : ""}` : ""}</Text>
                 </Text>
               )}
             </View>
           )}
+          {isPackageReservation && (
+            <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "#EDE7E1", gap: 6 }}>
+              <Text style={{ fontSize: 11, fontWeight: "800", color: "#9B7C56", textTransform: "uppercase" }}>
+                {t("bookingFlow.arrangementFlow.contactDetails")}
+              </Text>
+              <Text style={styles.detailValue}>{t("bookingFlow.arrangementFlow.name")}: {storeState.fullName || "—"}</Text>
+              <Text style={styles.detailValue}>{t("bookingFlow.arrangementFlow.email")}: {storeState.email || "—"}</Text>
+              <Text style={styles.detailValue}>{t("bookingFlow.arrangementFlow.phone")}: {storeState.phone || "—"}</Text>
+            </View>
+          )}
+          {isPackageReservation && (storeState.packageSelections?.includedServices || []).filter((service) => {
+            const key = service.toLowerCase().replace(/[\s_-]+/g, "");
+            return key.includes("sauna")
+              ? !storeState.packageSelections?.saunaSlot
+              : key.includes("lunchroom") || key === "lunch"
+                ? !storeState.packageSelections?.lunchroomTime
+                : key.includes("saltroom") || key === "salt"
+                  ? !storeState.packageSelections?.saltRoomSlot
+                  : key.includes("activity") || key.includes("activities")
+                    ? !storeState.packageSelections?.activitySession
+                    : true;
+          }).map((service, index) => (
+            <Text key={`${service}-${index}`} style={styles.detailValue}>
+              {service.replace(/[_-]+/g, " ")}: {t("bookingFlow.arrangementFlow.notSelected")}
+            </Text>
+          ))}
         </Card>
 
         {/* Pricing & Cost Breakdown */}
@@ -872,7 +977,9 @@ export default function ConfirmationScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={{ color: "#fff", fontWeight: "700" }}>
-              {isFree
+                {isPackageReservation
+                  ? t("bookingFlow.arrangementFlow.payPackage", { amount: `€${priceVal.toFixed(2)}` })
+                  : isFree
                 ? t("bookingFlow.checkout.confirmTableReservation", { defaultValue: "Confirm Table Reservation" })
                 : t("bookingFlow.checkout.payViaStripe", { amount: priceVal.toFixed(2), defaultValue: `Pay via Stripe (€${priceVal.toFixed(2)})` })}
             </Text>
@@ -1112,9 +1219,13 @@ const styles = StyleSheet.create({
     color: "#9B7C56",
   },
   doneBtn: {
-    width: "100%",
+    alignSelf: "stretch",
     backgroundColor: "#9B7C56",
     borderRadius: 25,
+  },
+  doneBtnContainer: {
+    width: "100%",
+    alignSelf: "stretch",
     marginTop: 24,
     marginBottom: 40,
   },

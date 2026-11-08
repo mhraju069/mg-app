@@ -655,7 +655,11 @@ export default function InformationScreen() {
 
             <Text style={styles.activityName}>{storeState.serviceTitle}</Text>
             <Text style={[styles.activityDesc, { color: textMuted }]}>
-              Scheduled components for {storeState.date} ({storeState.guestsCount} Guests)
+              {t("bookingFlow.info.scheduledComponentsFor", {
+                date: storeState.date,
+                guestCount: storeState.guestsCount,
+                guestLabel: t(storeState.guestsCount === 1 ? "bookingFlow.info.guestSingular" : "bookingFlow.info.guestPlural"),
+              })}
             </Text>
 
             <View style={{ gap: 8, marginTop: 10 }}>

@@ -17,7 +17,8 @@ export function useStripePayment() {
 
   const confirmMobilePayment = async (
     clientSecret: string,
-    billingDetails?: MobileBillingDetails
+    billingDetails?: MobileBillingDetails,
+    options?: { paymentMethod?: "card" | "ideal"; idealBank?: string }
   ): Promise<{ success: boolean; paymentIntent?: any; error?: string }> => {
     try {
       if (!clientSecret) {
@@ -27,17 +28,24 @@ export function useStripePayment() {
         };
       }
 
-      const { paymentIntent, error } = await confirmPayment(clientSecret, {
-        paymentMethodType: "Card",
-        paymentMethodData: {
-          billingDetails: {
-            name: billingDetails?.name,
-            email: billingDetails?.email,
-            phone: billingDetails?.phone,
-            address: billingDetails?.address,
-          },
-        },
-      });
+      const stripeBillingDetails = {
+        name: billingDetails?.name,
+        email: billingDetails?.email,
+        phone: billingDetails?.phone,
+        address: billingDetails?.address,
+      };
+      const { paymentIntent, error } = await confirmPayment(clientSecret, options?.paymentMethod === "ideal"
+        ? {
+            paymentMethodType: "Ideal",
+            paymentMethodData: {
+              bankName: options.idealBank,
+              billingDetails: stripeBillingDetails,
+            },
+          }
+        : {
+            paymentMethodType: "Card",
+            paymentMethodData: { billingDetails: stripeBillingDetails },
+          });
 
       if (error) {
         return {

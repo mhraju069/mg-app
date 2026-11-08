@@ -885,9 +885,9 @@ export default function HomeScreen() {
 
       {/* Memberships, Plans & Passes Section */}
       <View style={styles.sectionHeader}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <View>
-            <Text style={styles.sectionTitle}>
+        <View style={{ width: "100%" }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={[styles.sectionTitle, { width: "100%", flexWrap: "wrap" }]}>
               {t("home.passesSection.title", { defaultValue: "Memberships, Plans & Passes" })}
             </Text>
           </View>
@@ -912,7 +912,7 @@ export default function HomeScreen() {
                 activePlanTab === "subscriptions" && stylesPlanCard.tabTextActive,
               ]}
             >
-              Subscription Plans ({plans.length})
+              {t("home.passesSection.subscriptionPlans", { count: plans.length, defaultValue: `Subscription Plans (${plans.length})` })}
             </Text>
           </Pressable>
 
@@ -933,7 +933,7 @@ export default function HomeScreen() {
                 activePlanTab === "passes" && stylesPlanCard.tabTextActive,
               ]}
             >
-              Session Passes ({sessionPasses.length})
+              {t("home.passesSection.sessionPasses", { count: sessionPasses.length, defaultValue: `Session Passes (${sessionPasses.length})` })}
             </Text>
           </Pressable>
         </View>
@@ -1029,7 +1029,7 @@ export default function HomeScreen() {
                         isPopular ? { color: darkBrown } : { color: "#fff" },
                       ]}
                     >
-                      Apply Now • Choose Plan
+                      {t("home.passesSection.purchase", { defaultValue: "Purchase" })}
                     </Text>
                     <ChevronRight size={18} color={isPopular ? darkBrown : "#fff"} />
                   </Button>
@@ -1107,7 +1107,7 @@ export default function HomeScreen() {
                     onPress={() => openPurchaseModal("session_pass", pass)}
                   >
                     <Text style={[stylesPlanCard.actionBtnText, { color: "#fff" }]}>
-                      Apply Now • Get Session Pass
+                      {t("home.passesSection.purchase", { defaultValue: "Purchase" })}
                     </Text>
                     <ChevronRight size={18} color="#fff" />
                   </Button>

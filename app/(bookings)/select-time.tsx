@@ -39,6 +39,8 @@ export default function SelectTimeScreen() {
   const isSharedSauna = isSauna && (storeState.isSharedSauna || storeState.saunaType === "shared");
   const durationHours = storeState.durationHours || 3;
   const guestsCount = storeState.guestsCount || (isSharedSauna || isSaltRoom ? 1 : 2);
+  const includedServices: string[] = storeState.packageSelections?.includedServices || [];
+  const normalizedServices = includedServices.map((s) => s.toLowerCase().replace(/[\s_-]+/g, ""));
 
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedTime, setSelectedTime] = useState<string>("");
@@ -55,12 +57,18 @@ export default function SelectTimeScreen() {
 
   // Package Sub-Service Slots State (matching Web choose-time)
   const [packageSlotsData, setPackageSlotsData] = useState<any | null>(null);
+  const [packageRequestError, setPackageRequestError] = useState<string | null>(null);
+  const [retryPackageRequest, setRetryPackageRequest] = useState(0);
   const [pkgSaunaSlot, setPkgSaunaSlot] = useState<string | null>(
     storeState.packageSelections?.saunaSlot
       ? `${storeState.packageSelections.saunaSlot.startTime} - ${storeState.packageSelections.saunaSlot.endTime}`
       : null
   );
-  const [pkgSaunaType, setPkgSaunaType] = useState<"private" | "shared">("private");
+  const [pkgSaunaType, setPkgSaunaType] = useState<"private" | "shared">(
+    normalizedServices.some((s) => s.includes("shared") || s === "normalsauna") && !normalizedServices.some((s) => s.includes("private") || s === "vipsauna")
+      ? "shared"
+      : "private"
+  );
   const [pkgLunchTime, setPkgLunchTime] = useState<string>(
     storeState.packageSelections?.lunchroomTime || ""
   );
@@ -74,36 +82,39 @@ export default function SelectTimeScreen() {
     storeState.packageSelections?.activitySession?.id || null
   );
 
-  const includedServices: string[] = storeState.packageSelections?.includedServices || [];
-  const normalizedServices = includedServices.map((s) => s.toLowerCase().replace(/[\s_-]+/g, ""));
-  const packageIncludesSauna = isPackage && (
-    normalizedServices.some((s) => s.includes("sauna")) || !includedServices.length
-  );
-  const packageIncludesLunchroom = isPackage && (
-    normalizedServices.some((s) => s.includes("lunchroom") || s.includes("lunch")) || !includedServices.length
-  );
-  const packageIncludesSaltRoom = isPackage && (
-    normalizedServices.some((s) => s.includes("salt") || s.includes("saltroom"))
-  );
-  const packageIncludesActivity = isPackage && (
-    normalizedServices.some((s) => s.includes("activity") || s.includes("yoga"))
-  );
+  const packageId = storeState.packageSelections?.packageId;
+  const packageIncludesSauna = isPackage && normalizedServices.some((s) => s.includes("sauna"));
+  const packageIncludesLunchroom = isPackage && normalizedServices.some((s) => s.includes("lunchroom") || s === "lunch");
+  const packageIncludesSaltRoom = isPackage && normalizedServices.some((s) => s.includes("saltroom") || s === "salt");
+  const packageIncludesActivity = isPackage && normalizedServices.some((s) => s.includes("activity") || s.includes("activities"));
+  const packageHasBookableServices = packageIncludesSauna || packageIncludesLunchroom || packageIncludesSaltRoom || packageIncludesActivity;
+
+  const mapPackageRequestError = (status: number, payload: any) => {
+    const rawMessage = String(payload?.message || payload?.detail || payload?.error || "").toLowerCase();
+    if (rawMessage.includes("package_id")) return t("bookingFlow.arrangementFlow.packageIdMissing");
+    if (rawMessage.includes("package not found")) return t("bookingFlow.arrangementFlow.packageNotFound");
+    if (rawMessage.includes("no supported booking services") || rawMessage.includes("not included")) return t("bookingFlow.arrangementFlow.noBookableServices");
+    if (status >= 500) return t("bookingFlow.arrangementFlow.packageServerError");
+    if (status === 0) return t("bookingFlow.arrangementFlow.packageNetworkError");
+    return t("bookingFlow.arrangementFlow.packageRequestFailed");
+  };
 
   // Dynamically compute Lunchroom 1-hour interval slots from backend open_time and close_time
   const dynamicLunchSlots = useMemo(() => {
-    const openTime = packageSlotsData?.lunchroom?.open_time || "06:00";
-    const closeTime = packageSlotsData?.lunchroom?.close_time || "23:59";
+    const openTime = packageSlotsData?.lunchroom?.open_time;
+    const closeTime = packageSlotsData?.lunchroom?.close_time;
+    if (!openTime || !closeTime) return [];
 
     const [startH, startM] = openTime.split(":").map(Number);
     const [endH, endM] = closeTime.split(":").map(Number);
     if (isNaN(startH) || isNaN(endH)) {
-      return ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+      return [];
     }
 
     const startMinutes = startH * 60 + (startM || 0);
     const endMinutes = endH * 60 + (endM || 0);
     if (startMinutes >= endMinutes) {
-      return ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+      return [];
     }
 
     const slots: string[] = [];
@@ -112,12 +123,56 @@ export default function SelectTimeScreen() {
       const mm = String(m % 60).padStart(2, "0");
       slots.push(`${hh}:${mm}`);
     }
-    return slots.length > 0 ? slots : ["11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30"];
+    return slots;
   }, [packageSlotsData?.lunchroom?.open_time, packageSlotsData?.lunchroom?.close_time]);
+
+  const packageActivitiesList: any[] = Array.isArray(packageSlotsData?.activities)
+    ? packageSlotsData.activities
+    : packageSlotsData?.activities?.activities || [];
+  const packageActivitiesClosed = Boolean(packageSlotsData?.activities?.is_closed);
+  const getPackageServiceName = (...serviceRecords: any[]) => {
+    for (const record of serviceRecords) {
+      const name = record?.service_name_form_api
+        || record?.serviceNameFormApi
+        || record?.service_name
+        || record?.name
+        || record?.title;
+      if (typeof name === "string" && name.trim()) return name.trim();
+    }
+    return "";
+  };
+  const packageSaunaSlots = pkgSaunaType === "shared"
+    ? packageSlotsData?.sauna?.shared_sauna?.slots || []
+    : [
+        ...(packageSlotsData?.sauna?.private_sauna?.slots?.["3_hours"] || []),
+        ...(packageSlotsData?.sauna?.private_sauna?.slots?.["4_hours"] || []),
+      ];
+  const packageSaunaAvailableSlots = packageSaunaSlots.filter((slot: any) =>
+    pkgSaunaType === "shared"
+      ? !slot.is_fully_booked && (slot.remaining_capacity ?? 0) >= guestsCount
+      : !slot.is_fully_booked
+  );
+  const packageHasReturnedServices = Boolean(packageSlotsData && [
+    "sauna", "private_sauna", "shared_sauna", "lunchroom", "saltroom", "activities",
+  ].some((key) => packageSlotsData[key] !== undefined && packageSlotsData[key] !== null));
+  const packageHasNoBookableResponse = isPackage && packageSlotsData !== null && !packageHasReturnedServices;
 
   const textMuted = useColor("textMuted");
   const brownGold = "#9B7C56";
   const { t } = useTranslation();
+  const saunaApiServiceName = getPackageServiceName(
+    packageSlotsData?.sauna,
+    packageSlotsData?.sauna?.private_sauna,
+    packageSlotsData?.sauna?.shared_sauna,
+  ) || t(pkgSaunaType === "shared" ? "bookingFlow.arrangementFlow.sharedSauna" : "bookingFlow.arrangementFlow.privateSauna");
+  const lunchroomApiServiceName = getPackageServiceName(packageSlotsData?.lunchroom)
+    || t("bookingFlow.arrangementFlow.lunchroomService");
+  const saltRoomApiServiceName = getPackageServiceName(packageSlotsData?.saltroom)
+    || t("bookingFlow.arrangementFlow.saltRoomService");
+  const activityApiServiceName = getPackageServiceName(
+    ...packageActivitiesList.filter((activity: any) => activity.id === pkgSelectedActivityId),
+    ...packageActivitiesList,
+  ) || t("bookingFlow.arrangementFlow.activityService");
 
   useEffect(() => {
     let isMounted = true;
@@ -127,41 +182,96 @@ export default function SelectTimeScreen() {
       setIsBlocked(false);
       setIsClosed(false);
       setClosedInfo("");
+      setPackageRequestError(null);
       try {
         if (isPackage) {
-          const res = await appFetch(`${API_BASE_URL}/services/slots/?type=package&date=${date}`);
-          if (res.ok) {
-            const json = await res.json();
+          if (!packageHasBookableServices) {
+            setPackageSlotsData({});
+            setLoading(false);
+            return;
+          }
+          if (!packageId) {
+            setPackageRequestError(mapPackageRequestError(400, { message: "package_id is required" }));
+            setLoading(false);
+            return;
+          }
+          const requestUrl = `${API_BASE_URL}/services/slots/?type=package&date=${encodeURIComponent(date)}&package_id=${encodeURIComponent(String(packageId))}`;
+          console.log("[DEV LOG - PACKAGE SLOTS REQUEST]", { url: requestUrl, method: "GET", body: null });
+          const res = await appFetch(requestUrl);
+          const json = await res.json().catch(() => ({}));
+          console.log("[DEV LOG - PACKAGE SLOTS RESPONSE]", { status: res.status, payload: json });
+          if (res.ok && json?.is_blocked) {
             if (isMounted) {
-              if (json.is_blocked) setIsBlocked(true);
-              if (json.is_closed || json?.data?.is_closed) {
-                setIsClosed(true);
-                setClosedInfo(json?.data?.info || json.message || "Packages are closed on this date.");
-              }
-              const pData = json?.data;
-              setPackageSlotsData(pData);
-
-              // Auto-select initial slots if available
-              if (pData?.sauna?.private_sauna?.slots) {
-                const s3 = pData.sauna.private_sauna.slots["3_hours"] || [];
-                const s4 = pData.sauna.private_sauna.slots["4_hours"] || [];
-                const all = [...s3, ...s4];
-                if (all.length > 0 && !pkgSaunaSlot) {
-                  setPkgSaunaSlot(`${all[0].start_time} - ${all[0].end_time}`);
-                }
-              }
-              if (pData?.saltroom?.slots && Array.isArray(pData.saltroom.slots) && pData.saltroom.slots.length > 0 && !pkgSaltRoomSlot) {
-                const firstAvail = pData.saltroom.slots.find((s: any) => !s.is_fully_booked) || pData.saltroom.slots[0];
-                setPkgSaltRoomSlot(`${firstAvail.start_time} - ${firstAvail.end_time}`);
-              }
-              if (pData?.activities && Array.isArray(pData.activities) && pData.activities.length > 0 && !pkgSelectedActivityId) {
-                const firstAct = pData.activities.find((a: any) => a.available_slots > 0) || pData.activities[0];
-                setPkgSelectedActivityId(firstAct.id);
-              }
-              if (pData?.lunchroom?.open_time && !pkgLunchTime) {
-                setPkgLunchTime(pData.lunchroom.open_time.slice(0, 5));
-              }
+              setIsBlocked(true);
+              setPackageSlotsData({});
             }
+            return;
+          }
+          if (res.ok && (json?.is_closed || json?.data?.is_closed)) {
+            if (isMounted) {
+              setIsClosed(true);
+              setClosedInfo(json?.data?.info || json.message || "");
+              setPackageSlotsData(json?.data || {});
+            }
+            return;
+          }
+          if (!res.ok || json?.success === false) {
+            if (isMounted) {
+              setPackageSlotsData(null);
+              setPackageRequestError(mapPackageRequestError(res.status, json));
+            }
+            return;
+          }
+          if (isMounted) {
+            setIsBlocked(Boolean(json.is_blocked));
+            setIsClosed(Boolean(json.is_closed || json?.data?.is_closed));
+            setClosedInfo(json?.data?.info || json.message || "");
+            const rawData = json?.data || {};
+            const pData = {
+              ...rawData,
+              sauna: rawData.sauna || ((rawData.private_sauna || rawData.shared_sauna) ? {
+                private_sauna: rawData.private_sauna || null,
+                shared_sauna: rawData.shared_sauna || null,
+                is_closed: (!rawData.private_sauna || Boolean(rawData.private_sauna.is_closed)) && (!rawData.shared_sauna || Boolean(rawData.shared_sauna.is_closed)),
+              } : undefined),
+            };
+            setPackageSlotsData(pData);
+
+            const privateSlots = [...(pData.sauna?.private_sauna?.slots?.["3_hours"] || []), ...(pData.sauna?.private_sauna?.slots?.["4_hours"] || [])].filter((slot: any) => !slot.is_fully_booked);
+            const sharedSlotOptions = (pData.sauna?.shared_sauna?.slots || []).filter((slot: any) => !slot.is_fully_booked && (slot.remaining_capacity ?? 0) >= guestsCount);
+            const saunaOptions = pData.sauna?.is_closed
+              ? []
+              : (pkgSaunaType === "shared" ? sharedSlotOptions : privateSlots);
+            const validSaunaSelection = saunaOptions.some((slot: any) => `${slot.start_time} - ${slot.end_time}` === pkgSaunaSlot);
+            setPkgSaunaSlot(saunaOptions.length > 0
+              ? (validSaunaSelection ? pkgSaunaSlot : `${saunaOptions[0].start_time} - ${saunaOptions[0].end_time}`)
+              : null);
+            const saltSlotsForPackage = pData.saltroom?.is_closed
+              ? []
+              : (pData.saltroom?.slots || []).filter((slot: any) => !slot.is_fully_booked && (slot.remaining_capacity ?? 0) >= guestsCount);
+            const validSaltSelection = saltSlotsForPackage.some((slot: any) => `${slot.start_time} - ${slot.end_time}` === pkgSaltRoomSlot);
+            setPkgSaltRoomSlot(saltSlotsForPackage.length > 0
+              ? (validSaltSelection ? pkgSaltRoomSlot : `${saltSlotsForPackage[0].start_time} - ${saltSlotsForPackage[0].end_time}`)
+              : null);
+            const activityList: any[] = Array.isArray(pData.activities) ? pData.activities : pData.activities?.activities || [];
+            const availableActivity = pData.activities?.is_closed ? undefined : activityList.find((activity: any) => activity.available_slots > 0);
+            const selectedActivityAvailable = !pData.activities?.is_closed && activityList.some((activity: any) => activity.id === pkgSelectedActivityId && activity.available_slots > 0);
+            setPkgSelectedActivityId(selectedActivityAvailable ? pkgSelectedActivityId : (availableActivity?.id || null));
+            const lunchTimes = pData.lunchroom?.open_time && pData.lunchroom?.close_time
+              ? (() => {
+                  const [startH, startM] = pData.lunchroom.open_time.split(":").map(Number);
+                  const [endH, endM] = pData.lunchroom.close_time.split(":").map(Number);
+                  const startMinutes = startH * 60 + (startM || 0);
+                  const endMinutes = endH * 60 + (endM || 0);
+                  return Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && startMinutes < endMinutes
+                    ? Array.from({ length: Math.floor((endMinutes - startMinutes) / 60) + 1 }, (_, index) => {
+                        const minutes = startMinutes + index * 60;
+                        return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+                      })
+                    : [];
+                })()
+              : [];
+            setPkgLunchTime(pData.lunchroom?.is_closed ? "" : (lunchTimes.includes(pkgLunchTime) ? pkgLunchTime : (lunchTimes[0] || "")));
           }
           return;
         }
@@ -232,6 +342,12 @@ export default function SelectTimeScreen() {
           }
         }
       } catch (err) {
+        if (isPackage && isMounted) {
+          console.log("[DEV LOG - PACKAGE SLOTS NETWORK ERROR]", err);
+          setPackageSlotsData(null);
+          setPackageRequestError(mapPackageRequestError(0, {}));
+          return;
+        }
         console.warn("Failed to fetch slots from API, using fallbacks:", err);
       } finally {
         if (isMounted) setLoading(false);
@@ -243,7 +359,7 @@ export default function SelectTimeScreen() {
     return () => {
       isMounted = false;
     };
-  }, [serviceType, isSaltRoom, isPackage, date, durationHours, isSharedSauna, guestsCount]);
+  }, [serviceType, isSaltRoom, isPackage, date, durationHours, isSharedSauna, guestsCount, packageId, packageHasBookableServices, retryPackageRequest]);
 
   const handleContinue = () => {
     if (isPackage) {
@@ -267,7 +383,9 @@ export default function SelectTimeScreen() {
       }
 
       let activitySessionData: any = undefined;
-      const actList: any[] = packageSlotsData?.activities || [];
+      const actList: any[] = Array.isArray(packageSlotsData?.activities)
+        ? packageSlotsData.activities
+        : packageSlotsData?.activities?.activities || [];
       if (pkgSelectedActivityId && actList.length > 0) {
         const found = actList.find((a: any) => a.id === pkgSelectedActivityId);
         if (found) {
@@ -395,7 +513,9 @@ export default function SelectTimeScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.alertTitleBlocked}>{t("bookingFlow.time.dateBlockedTitle", { defaultValue: "Date Blocked" })}</Text>
               <Text style={styles.alertDescBlocked}>
-                This date has been marked as unavailable by administration. Please select another date.
+                {isPackage
+                  ? t("bookingFlow.arrangementFlow.packageDateBlocked")
+                  : t("bookingFlow.time.dateBlockedMsg", { defaultValue: "This date has been marked as unavailable by administration. Please select another date." })}
               </Text>
             </View>
           </View>
@@ -406,17 +526,39 @@ export default function SelectTimeScreen() {
             <Info size={22} color="#D97706" />
             <View style={{ flex: 1 }}>
               <Text style={styles.alertTitleClosed}>{t("bookingFlow.time.serviceClosedTitle", { defaultValue: "Service Closed on This Date" })}</Text>
-              <Text style={styles.alertDescClosed}>{closedInfo}</Text>
+              <Text style={styles.alertDescClosed}>{isPackage
+                ? t("bookingFlow.arrangementFlow.packageClosed")
+                : closedInfo}</Text>
             </View>
           </View>
+        )}
+
+        {isPackage && !loading && packageRequestError && (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>{packageRequestError}</Text>
+            <Pressable
+              onPress={() => setRetryPackageRequest((attempt) => attempt + 1)}
+              style={{ alignSelf: "flex-start", marginTop: 12, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: brownGold }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700" }}>{t("bookingFlow.arrangementFlow.retry")}</Text>
+            </Pressable>
+          </Card>
+        )}
+
+        {isPackage && !loading && !isBlocked && !isClosed && !packageRequestError && (!packageHasBookableServices || packageHasNoBookableResponse) && (
+          <Card style={styles.emptyCard}>
+            <Text style={styles.emptyText}>{t("bookingFlow.arrangementFlow.noBookableServices")}</Text>
+          </Card>
         )}
 
         {loading ? (
           <View style={{ padding: 40, alignItems: "center" }}>
             <ActivityIndicator size="large" color={brownGold} />
-            <Text style={{ marginTop: 12, color: textMuted }}>{t("bookingFlow.time.checkingSlots", { defaultValue: "Checking live available slots..." })}</Text>
+            <Text style={{ marginTop: 12, color: textMuted }}>{isPackage
+              ? t("bookingFlow.arrangementFlow.loadingSlots")
+              : t("bookingFlow.time.checkingSlots", { defaultValue: "Checking live available slots..." })}</Text>
           </View>
-        ) : !isBlocked && !isClosed ? (
+        ) : !isBlocked && !isClosed && !packageRequestError && (!isPackage || (packageHasBookableServices && !packageHasNoBookableResponse)) ? (
           <View style={{ gap: 14 }}>
             {/* 1. SALT ROOM SLOTS (Identical to Web choose-time) */}
             {isSaltRoom && (
@@ -601,6 +743,11 @@ export default function SelectTimeScreen() {
             {isPackage && (
               <View style={{ gap: 16 }}>
                 {/* 4.1 Sauna Sub-Service Slot (If included) */}
+                {packageIncludesSauna && !packageSlotsData?.sauna && (
+                  <Card style={styles.packageSubServiceCard}>
+                    <Text style={styles.subServiceClosedText}>{t("bookingFlow.arrangementFlow.noSaunaSlots")}</Text>
+                  </Card>
+                )}
                 {packageIncludesSauna && packageSlotsData?.sauna && (
                   <Card style={styles.packageSubServiceCard}>
                     <View style={styles.subServiceHeader}>
@@ -609,7 +756,7 @@ export default function SelectTimeScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.subServiceTitle}>
-                          Sauna Session Time Slot
+                          {t("bookingFlow.arrangementFlow.choosePreferredTimeFor", { serviceName: saunaApiServiceName })}
                         </Text>
                         <Text style={styles.subServiceDesc}>
                           {pkgSaunaType === "shared" ? "Shared sauna • 90 mins" : "Private sanctuary session"}
@@ -617,28 +764,44 @@ export default function SelectTimeScreen() {
                       </View>
                     </View>
 
+                    {packageSlotsData.sauna.private_sauna && packageSlotsData.sauna.shared_sauna && (
+                      <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
+                        {(["private", "shared"] as const).map((type) => (
+                          <Pressable
+                            key={type}
+                            onPress={() => { setPkgSaunaType(type); setPkgSaunaSlot(null); }}
+                            style={[styles.lunchPill, pkgSaunaType === type && styles.lunchPillActive]}
+                          >
+                            <Text style={[styles.lunchPillText, pkgSaunaType === type && styles.lunchPillTextActive]}>
+                              {type === "private"
+                                ? t("bookingFlow.arrangementFlow.privateSauna")
+                                : t("bookingFlow.arrangementFlow.sharedSauna")}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+
                     {packageSlotsData.sauna.is_closed ? (
                       <View style={styles.subServiceClosedBox}>
                         <Info size={16} color="#D97706" />
-                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.time.saunaClosed", { defaultValue: "Sauna is closed on this date." })}</Text>
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.arrangementFlow.saunaClosed")}</Text>
                       </View>
                     ) : (
                       <View style={{ gap: 8, marginTop: 10 }}>
                         {/* Private sauna slots */}
                         {(() => {
-                          const p3 = packageSlotsData.sauna.private_sauna?.slots?.["3_hours"] || [];
-                          const p4 = packageSlotsData.sauna.private_sauna?.slots?.["4_hours"] || [];
-                          const allSlots = [...p3, ...p4];
+                          const allSlots = packageSaunaSlots;
 
-                          if (allSlots.length === 0) {
+                          if (packageSaunaAvailableSlots.length === 0) {
                             return (
                               <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic" }}>
-                                No private sauna slots available on this date.
+                                {t("bookingFlow.arrangementFlow.noSaunaSlots")}
                               </Text>
                             );
                           }
 
-                          return allSlots.map((slot: any, idx: number) => {
+                          return packageSaunaAvailableSlots.map((slot: any, idx: number) => {
                             const label = `${slot.start_time} - ${slot.end_time}`;
                             const isSel = pkgSaunaSlot === label;
                             return (
@@ -677,12 +840,12 @@ export default function SelectTimeScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.subServiceTitle}>
-                          Lunchroom Preferred Dining Arrival
+                          {t("bookingFlow.arrangementFlow.choosePreferredTimeFor", { serviceName: lunchroomApiServiceName })}
                         </Text>
                         <Text style={styles.subServiceDesc}>
                           {packageSlotsData?.lunchroom?.open_time && packageSlotsData?.lunchroom?.close_time
                             ? `Operating hours: ${packageSlotsData.lunchroom.open_time} - ${packageSlotsData.lunchroom.close_time}`
-                            : "Flexible dining during daytime hours (11:00 - 15:00)"}
+                            : t("bookingFlow.arrangementFlow.lunchroomHoursUnavailable")}
                         </Text>
                       </View>
                     </View>
@@ -690,10 +853,17 @@ export default function SelectTimeScreen() {
                     {packageSlotsData?.lunchroom?.is_closed ? (
                       <View style={styles.subServiceClosedBox}>
                         <Info size={16} color="#D97706" />
-                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.time.lunchroomClosed", { defaultValue: "Lunchroom is closed on this date." })}</Text>
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.arrangementFlow.lunchroomClosed")}</Text>
                       </View>
-                    ) : (
-                      <View style={{ marginTop: 12, gap: 10 }}>
+                    ) : !packageSlotsData?.lunchroom?.open_time || !packageSlotsData?.lunchroom?.close_time ? (
+                      <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
+                        {t("bookingFlow.arrangementFlow.lunchroomHoursUnavailable")}
+                      </Text>
+                    ) : dynamicLunchSlots.length === 0 ? (
+                          <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
+                            {t("bookingFlow.arrangementFlow.lunchroomNoTimes")}
+                          </Text>
+                        ) : <View style={{ marginTop: 12, gap: 10 }}>
                         {/* Interactive Dropdown Selector for Compact Display */}
                         <TouchableOpacity
                           activeOpacity={0.8}
@@ -741,7 +911,7 @@ export default function SelectTimeScreen() {
                           })}
                         </View>
                       </View>
-                    )}
+                    }
                   </Card>
                 )}
 
@@ -754,7 +924,7 @@ export default function SelectTimeScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.subServiceTitle}>
-                          Salt Room Session
+                          {t("bookingFlow.arrangementFlow.choosePreferredTimeFor", { serviceName: saltRoomApiServiceName })}
                         </Text>
                         <Text style={styles.subServiceDesc}>
                           45-minute aerosol halotherapy session
@@ -762,9 +932,14 @@ export default function SelectTimeScreen() {
                       </View>
                     </View>
 
-                    {packageSlotsData?.saltroom?.slots && Array.isArray(packageSlotsData.saltroom.slots) && packageSlotsData.saltroom.slots.length > 0 ? (
+                    {packageSlotsData?.saltroom?.is_closed ? (
+                      <View style={styles.subServiceClosedBox}>
+                        <Info size={16} color="#D97706" />
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.arrangementFlow.saltRoomClosed")}</Text>
+                      </View>
+                    ) : packageSlotsData?.saltroom?.slots && Array.isArray(packageSlotsData.saltroom.slots) && packageSlotsData.saltroom.slots.some((slot: any) => !slot.is_fully_booked && (slot.remaining_capacity ?? 0) >= guestsCount) ? (
                       <View style={{ gap: 8, marginTop: 10 }}>
-                        {packageSlotsData.saltroom.slots.map((slot: any, idx: number) => {
+                        {packageSlotsData.saltroom.slots.filter((slot: any) => !slot.is_fully_booked && (slot.remaining_capacity ?? 0) >= guestsCount).map((slot: any, idx: number) => {
                           const label = `${slot.start_time} - ${slot.end_time}`;
                           const isSel = pkgSaltRoomSlot === label;
                           const isSoldOut = slot.is_fully_booked || slot.remaining_capacity <= 0;
@@ -794,7 +969,7 @@ export default function SelectTimeScreen() {
                       </View>
                     ) : (
                       <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
-                        No scheduled salt room sessions on this date.
+                        {t("bookingFlow.arrangementFlow.saltRoomNoSessions")}
                       </Text>
                     )}
                   </Card>
@@ -809,7 +984,7 @@ export default function SelectTimeScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.subServiceTitle}>
-                          Activity Session
+                          {t("bookingFlow.arrangementFlow.choosePreferredTimeFor", { serviceName: activityApiServiceName })}
                         </Text>
                         <Text style={styles.subServiceDesc}>
                           Scheduled wellness studio activity
@@ -817,9 +992,14 @@ export default function SelectTimeScreen() {
                       </View>
                     </View>
 
-                    {packageSlotsData?.activities && Array.isArray(packageSlotsData.activities) && packageSlotsData.activities.length > 0 ? (
+                    {packageActivitiesClosed ? (
+                      <View style={styles.subServiceClosedBox}>
+                        <Info size={16} color="#D97706" />
+                        <Text style={styles.subServiceClosedText}>{t("bookingFlow.arrangementFlow.activityClosed")}</Text>
+                      </View>
+                    ) : packageActivitiesList.length > 0 ? (
                       <View style={{ gap: 8, marginTop: 10 }}>
-                        {packageSlotsData.activities.map((act: any) => {
+                        {packageActivitiesList.map((act: any) => {
                           const isSel = pkgSelectedActivityId === act.id;
                           const isSoldOut = act.available_slots <= 0;
                           return (
@@ -848,7 +1028,7 @@ export default function SelectTimeScreen() {
                       </View>
                     ) : (
                       <Text style={{ fontSize: 12, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
-                        No activities scheduled for this date.
+                        {t("bookingFlow.arrangementFlow.activityNoSessions")}
                       </Text>
                     )}
                   </Card>
@@ -991,8 +1171,10 @@ export default function SelectTimeScreen() {
           disabled={
             isBlocked ||
             isClosed ||
+            loading ||
+            Boolean(packageRequestError) ||
             (isPackage
-              ? (packageIncludesSauna && !pkgSaunaSlot && packageSlotsData?.sauna && !packageSlotsData.sauna.is_closed)
+              ? (!packageHasBookableServices || packageHasNoBookableResponse || (packageIncludesSauna && !packageSlotsData?.sauna?.is_closed && packageSaunaAvailableSlots.length > 0 && !pkgSaunaSlot))
               : !selectedTime)
           }
         >

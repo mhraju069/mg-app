@@ -63,6 +63,7 @@ export interface BookingState {
   // Extended package options (matching Web booking/packages & choose-time)
   isCustomPackage?: boolean;
   packageSelections?: {
+    packageId?: string | number;
     includedServices?: string[];
     saunaSlot?: {
       type: "private" | "shared" | string;

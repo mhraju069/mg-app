@@ -655,6 +655,7 @@ export default function CategoryScreen() {
         isCustomPackage: false,
         guestsCount: 2,
         packageSelections: {
+          packageId: selectedService.id,
           includedServices: selectedService.subServicesList || [],
         },
       });

@@ -120,14 +120,14 @@ export default function MyReservationsScreen() {
     >
       <Card style={[styles.bookingCard, { borderColor: border }]}>
         <View style={styles.cardHeader}>
-          <View style={{ width: "70%" }}>
+          <View style={styles.cardTitle}>
             <Text style={styles.bookingTitle}>{booking.service_name}</Text>
             <Text variant="caption" style={{ color: textMuted, textTransform: "capitalize" }}>
               {booking.service_type}
             </Text>
           </View>
           <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{booking.status || "Confirmed"}</Text>
+            <Text style={styles.statusText}>{(booking.status || "Confirmed").replace(/_/g, " ")}</Text>
           </View>
         </View>
 
@@ -332,6 +332,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    gap: 8,
+  },
+  cardTitle: {
+    flex: 1,
+    minWidth: 0,
   },
   bookingTitle: {
     fontSize: 18,
@@ -349,6 +354,7 @@ const styles = StyleSheet.create({
     color: "#166534",
     fontWeight: "600",
     textTransform: "capitalize",
+    textAlign: "center",
   },
   cardInfo: {
     gap: 8,

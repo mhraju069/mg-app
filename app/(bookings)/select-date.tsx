@@ -48,6 +48,12 @@ export default function SelectDateScreen() {
     setIsBlocked(false);
     setBlockedMessage(null);
 
+    // Package availability is fetched once on the time-selection screen with
+    // the selected package ID. This preliminary date check is for single services.
+    if (storeState.serviceType === "package" || storeState.serviceType === "packages") {
+      return;
+    }
+
     try {
       const serviceType = storeState.serviceType === "saltroom" ? "saltroom" : storeState.serviceType || "sauna";
       const res = await appFetch(`${API_BASE_URL}/services/slots/?type=${serviceType}&date=${dateStr}`);

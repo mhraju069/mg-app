@@ -421,19 +421,19 @@ export default function BookingDetailsScreen() {
                 {/* Booking Info Box */}
                 <View style={styles.bookingRefBox}>
                   <Text style={styles.bookingRefText}>
-                    Booking Reference:{" "}
+                    {t("bookingDetailPolicy.bookingRefLabel", { defaultValue: "Booking Reference: " })}
                     <Text style={styles.boldMono}>
                       {bookingDetail.booking_id || params.id}
                     </Text>
                   </Text>
                   <Text style={styles.bookingRefText}>
-                    Experience:{" "}
+                    {t("bookingDetailPolicy.serviceLabel", { defaultValue: "Service: " })}
                     <Text style={styles.boldText}>{bookingDetail.title}</Text>
                   </Text>
                   <Text style={styles.bookingRefText}>
-                    Scheduled:{" "}
+                    {t("bookingDetailPolicy.scheduledLabel", { defaultValue: "Scheduled: " })}
                     <Text style={styles.boldText}>
-                      {bookingDetail.date} at {bookingDetail.time}
+                      {bookingDetail.date}{t("bookingDetailPolicy.atText", { defaultValue: " at " })}{bookingDetail.time}
                     </Text>
                   </Text>
                 </View>
@@ -452,9 +452,9 @@ export default function BookingDetailsScreen() {
                 {/* Optional Reason Input */}
                 <View style={styles.reasonBlock}>
                   <Text style={styles.reasonLabel}>
-                    Reason for cancellation{" "}
+                    {t("bookingDetailPolicy.reasonLabel", { defaultValue: "Reason for cancellation" })}{" "}
                     <Text style={{ fontWeight: "400", color: "#94A3B8" }}>
-                      (optional)
+                      {t("bookingDetailPolicy.reasonOptional", { defaultValue: "(optional)" })}
                     </Text>
                   </Text>
                   <TextInput
@@ -485,7 +485,7 @@ export default function BookingDetailsScreen() {
                     disabled={isCancelling}
                   >
                     <Text style={styles.modalKeepBtnText}>
-                      Keep Reservation
+                      {t("bookingDetailPolicy.keepReservation", { defaultValue: "Keep Reservation" })}
                     </Text>
                   </Pressable>
 
